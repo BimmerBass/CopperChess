@@ -404,6 +404,12 @@ int Search::search_widen(S_BOARD* pos, S_SEARCHINFO* info, int depth, int value)
 	return temp;
 }
 
+
+/*
+
+MTD(f) is experimental and not used yet.
+
+*/
 int Search::MTDF(S_BOARD* pos, S_SEARCHINFO* info, int estimate, int depth) {
 	int lowerBound = -INFINITE;
 	int upperBound = INFINITE;
@@ -505,11 +511,6 @@ void Search::searchPosition(S_BOARD* pos, S_SEARCHINFO* info) {
 
 
 void Search::clearForSearch(S_BOARD* pos, S_SEARCHINFO *info){
-	
-	// Clear history heuristics and killer moves here.
-	
-	//TT::clearTable(pos->transpositionTable);
-	// Won't clear transposition table. Only if it was a PV table
 	pos->ply = 0;
 	
 

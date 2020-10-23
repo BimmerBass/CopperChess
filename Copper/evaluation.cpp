@@ -156,16 +156,7 @@ int eval::staticEval(const S_BOARD* pos, int depth, int alpha, int beta) {
 	score += (countBits(pos->position[WB]) >= 2) ? 50 : 0;
 	score -= (countBits(pos->position[BB]) >= 2) ? 50 : 0;
 
-
-	/*if (((pos->position[WP] & RankMasks8[RANK_2]) & (FileMasks8[FILE_E] | FileMasks8[FILE_D])) != 0 && (((pos->position[WB] >> 19) & 1) == 1
-		|| ((pos->position[WB] >> 20) & 1) == 1)) {
-		score -= 30;
-	}
-	if (((pos->position[BP] & RankMasks8[RANK_7]) & (FileMasks8[FILE_E] | FileMasks8[FILE_D])) != 0 && (((pos->position[BB] >> 43) & 1) == 1
-		|| ((pos->position[BB] >> 44) & 1) == 1)) {
-		score += 30;
-	}*/
-
+	// Penalize placing bishops in front of the E and D pawns if they are on the second rank.
 	if (((pos->position[WP] & RankMasks8[RANK_2]) & FileMasks8[FILE_E]) != 0 && ((pos->position[WB] >> 20) & 1) == 1) { score -= 20; }
 	if (((pos->position[WP] & RankMasks8[RANK_2]) & FileMasks8[FILE_D]) != 0 && ((pos->position[WB] >> 19) & 1) == 1) { score -= 20; }
 

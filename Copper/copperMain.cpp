@@ -8,7 +8,6 @@ int main() {
 	initAll(SetMask, ClearMask);
 
 
-
 	Uci_Loop();
 
 	cleanPolyBook();
