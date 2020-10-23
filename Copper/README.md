@@ -1,4 +1,6 @@
-# <link rel="apple-touch-icon-precomposed" href="https://github.com/BimmerBass/CopperChess/blob/master/Copper/icon.ico"> Copper Chess engine
+![Icon](https://github.com/BimmerBass/CopperChess/blob/master/Copper/icon.ico)
+
+# Copper Chess engine
 A (semi)[1] UCI-compliant chess engine rated at least 2100, written in C++11 by Niels Abildskov (BimmerBass).
 
 At the moment Copper is a command-line engine only, and can only be used graphically with a chess GUI such as Arena og Lucas Chess.
