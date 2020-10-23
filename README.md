@@ -55,6 +55,7 @@ The engine still has bugs (described below) and weaknesses, and have therefore n
     - Principal variation search in the root node.
     - A 500MB evaluation cache that stores previously calculated static evaluations.
 
+Copper achieves an overall move ordering of around 89-90%.
 
 #### TO-DO's
 1. MTD(f) will be tried instead of aspiration windows, and if it has better performance, it'll be implemented.
