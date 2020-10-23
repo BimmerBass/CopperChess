@@ -53,7 +53,7 @@ The engine still has bugs (described below) and weaknesses, and have therefore n
     - Futility pruning
     - Null move pruning
     - Principal variation search in the root node.
-    - An evaluation cache that stores previously calculated static evaluations.
+    - A 500MB evaluation cache that stores previously calculated static evaluations.
 
 
 #### TO-DO's
