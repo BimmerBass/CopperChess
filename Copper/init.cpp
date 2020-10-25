@@ -9,6 +9,7 @@ INCLUDES THE FUNCTIONS:
 - initPawnMasks
 - initMvvLva()
 - initAll
+- initRookSupportMasks()
 */
 
 
@@ -27,6 +28,7 @@ void initAll(BitBoard(&set)[64], BitBoard(&clear)[64]) {
 	initBitMasks(set, clear);
 	initPawnMasks();
 	initHashKeys();
+	initRookSupportMasks();
 
 	initPolyBook();
 }
@@ -222,5 +224,35 @@ void initMvvLva() {
 		for (int vic = WP; vic <= BK; vic++) {
 			MvvLva[vic][att] = victimScores[vic] + (6 - (victimScores[att] / 100));
 		}
+	}
+}
+
+
+BitBoard whiteRookSupport[64] = { 0 };
+BitBoard blackRookSupport[64] = { 0 };
+
+void initRookSupportMasks() {
+
+	BitBoard mask;
+
+	for (int sq = 0; sq < 64; sq++) {
+		mask = 0;
+
+		int tsq = sq - 8;
+		while (tsq >= 0) {
+			mask |= (uint64_t)1 << tsq;
+			tsq -= 8;
+		}
+		whiteRookSupport[sq] = mask;
+
+		mask = 0;
+
+		tsq = sq + 8;
+		while (tsq <= 63) {
+			mask |= (uint64_t)1 << tsq;
+			tsq += 8;
+		}
+		blackRookSupport[sq] = mask;
+	
 	}
 }

@@ -41,13 +41,18 @@ int eval::staticEval(const S_BOARD* pos, int depth, int alpha, int beta) {
 			else {
 				score += pawnVal + psqt::PawnTableMg[sq];
 			}
-			score += ((whitePassedPawnMasks[sq] & pos->position[BP]) == 0) ? passedPawnValue[rankNum] : 0; // Reward if the pawn is a passed pawn
+			
+			if ((whitePassedPawnMasks[sq] & pos->position[BP]) == 0) { // It is a passed pawn
+				score += passedPawnValue[rankNum];
+
+				// Reward having a rook behind a passed pawn
+				score += ((pos->position[WR] & whiteRookSupport[sq]) != 0) ? 40 : 0;
+				// Perhaps change this static value to something like passedPawnValue[rankNum] / 2
+			}
 
 			// Penalize isolated and doubled pawns.
 			score -= ((isolatedPawnMasks[fileNum] & (pos->position[WP] ^ ((uint64_t)1 << sq))) == 0) ? 28 : 0;
 			score -= (countBits(pos->position[WP] & FileMasks8[fileNum]) >= 2) ? 20 : 0;
-			
-
 		}
 		else if (pos->pieceList[sq] == WN) {
 			score += knightVal + psqt::KnightTable[sq];
@@ -88,9 +93,13 @@ int eval::staticEval(const S_BOARD* pos, int depth, int alpha, int beta) {
 				score -= (pawnVal + psqt::PawnTableMg[psqt::Mirror64[sq]]);
 			}
 
+			if ((blackPassedPawnMasks[sq] & pos->position[WP]) == 0) { // The pawn is a passed pawn
+				score -= passedPawnValue[mirrorRankNum[rankNum]];
 
-			//score -= ((blackPassedPawnMasks[sq] & pos->position[WP]) == 0) ? passedPawnValue[rankNum] : 0;
-			score -= ((blackPassedPawnMasks[sq] & pos->position[WP]) == 0) ? passedPawnValue[mirrorRankNum[rankNum]] : 0;
+
+				// Reward having a rook supporting a passed pawn
+				score -= ((pos->position[BR] & blackRookSupport[sq]) != 0) ? 40 : 0;
+			}
 
 
 			// Penalize isolated and doubled pawns
@@ -147,6 +156,11 @@ int eval::staticEval(const S_BOARD* pos, int depth, int alpha, int beta) {
 
 	if (((pos->position[BP] & RankMasks8[RANK_7]) & FileMasks8[FILE_E]) != 0 && ((pos->position[BB] >> 44) & 1) == 1) { score += 20; }
 	if (((pos->position[BP] & RankMasks8[RANK_7]) & FileMasks8[FILE_D]) != 0 && ((pos->position[BB] >> 43) & 1) == 1) { score += 20; }
+
+	// Give bonus for having two rooks on the seventh or second rank.
+	// The piece-square tables already give bonuses for having one rook there, so this is just to make sure Copper knows that two rooks are even better.
+	score += (countBits(pos->position[WR] & RankMasks8[RANK_7]) > 1) ? 30 : 0;
+	score -= (countBits(pos->position[BR] & RankMasks8[RANK_2]) > 1) ? 30 : 0;
 
 	// Penalize being in check
 	if (pos->inCheck) {

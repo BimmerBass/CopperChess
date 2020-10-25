@@ -45,6 +45,10 @@ extern BitBoard whitePassedPawnMasks[64];
 extern BitBoard blackPassedPawnMasks[64];
 extern BitBoard isolatedPawnMasks[8]; // One for each file.
 
+// Bitmasks for lines behind passed pawns
+extern BitBoard whiteRookSupport[64];
+extern BitBoard blackRookSupport[64];
+
 // Bitmasks for setting and clearing bits.
 extern BitBoard SetMask[64];
 extern BitBoard ClearMask[64];
@@ -240,7 +244,7 @@ struct S_BOARD {
 	int fiftyMove = 0;
 	
 	// Create a transposition table with default size of 2GB.
-	S_TABLE *transpositionTable = new S_TABLE(2, true);
+	S_TABLE *transpositionTable = new S_TABLE(1, true);
 	S_EVALCACHE* evaluationCache = new S_EVALCACHE(500); // Allocate 500MB for static evaluations.
 	
 	bool is_checkmate = false;
@@ -430,9 +434,6 @@ namespace BoardRep {
 	void clearBoard(S_BOARD* pos);
 };
 
-// copperMain.cpp
-
-
 // evaluation.cpp
 namespace eval {
 	int staticEval(const S_BOARD* pos, int depth, int alpha, int beta);
@@ -458,8 +459,6 @@ namespace eval {
 
 	static int pieceVal[13] = { pawnVal, knightVal, bishopVal, rookVal, queenVal, kingVal,
 	pawnVal, knightVal, bishopVal, rookVal, queenVal, kingVal, 0 };
-
-	const static int endgameMaterial = 1300;
 }
 
 
@@ -475,6 +474,7 @@ void initBitMasks(BitBoard(&set)[64], BitBoard(&clear)[64]);
 void initHashKeys();
 void initPawnMasks();
 void initAll(BitBoard(&set)[64], BitBoard(&clear)[64]);
+void initRookSupportMasks();
 
 
 // makemove.cpp, movegen.cpp and utils.cpp

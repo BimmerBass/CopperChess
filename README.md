@@ -41,6 +41,8 @@ The engine still has bugs (described below) and weaknesses, and have therefore n
     - Rooks and knights recieve bonuses and penalties respectively, depending on the number of pawns present on the board.
     - If the e- or d-pawns are still on the second rank, bishops are penalized for occupying e3 and d3 respectively.
     - Being in check is penalized.
+    - Having rooks behind passed pawns are rewarded.
+    - Having two rooks on the seventh rank as white or on the second as black are also rewarded.
 - **Search function**: The search includes the following methods and tables
     - Iterative deepening with Alpha-Beta Pruning.
     - Aspiration windows for narrowed search.
