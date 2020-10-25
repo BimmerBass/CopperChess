@@ -32,7 +32,7 @@ void BoardRep::displayBoardState(S_BOARD board) {
 	for (int rank = 7; rank >= 0; rank--) {
 		std::cout << rank + 1 << "  ";
 		for (int file = 0; file < 8; file++) {
-			std::cout << output[(int)8 * rank + file] << " ";
+			std::cout << output[8 * rank + file] << " ";
 		}
 		std::cout << "\n";
 	}

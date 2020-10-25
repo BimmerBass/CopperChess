@@ -198,18 +198,16 @@ private:
 
 // Undo-move structure. Contains information that can't be implied directly from a current position.
 struct S_UNDO {
-	BitBoard bitboards[12];
-	int pieces[64];
-	S_SIDE side;
-	bool inCheck;
+	BitBoard bitboards[12] = { 0 };
+	int pieces[64] = { 0 };
+	S_SIDE side = WHITE;
+	bool inCheck = false;
 	
-	
-	//bool castlingPermissions[4];
 	int castlingPerms = 0;
-	int enPassantSq;
-	int fiftyMove;
+	int enPassantSq = NO_SQ;
+	int fiftyMove = 0;
 
-	BitBoard key;
+	BitBoard key = 0;
 	
 };
 
@@ -262,21 +260,21 @@ struct S_BOARD {
 };
 
 struct S_SEARCHINFO{
-	long long starttime;
-	long long stoptime;
-	int depth;
-	int depthset;
-	bool timeset;
-	int movestogo;
-	bool infinite;
+	long long starttime = 0;
+	long long stoptime = 0;
+	int depth = MAXDEPTH;
+	int depthset = MAXDEPTH;
+	bool timeset = false;
+	int movestogo = 0;
+	bool infinite = -1;
 
-	long nodes;
+	long nodes = 0;
 
 	bool quit = false;
 	bool stopped = false;
 
-	float fh;
-	float fhf;
+	float fh = 0;
+	float fhf = 0;
 };
 
 
@@ -424,7 +422,7 @@ namespace attacks {
 // bitboards.cpp and board.cpp
 namespace BoardRep {
 
-	S_BOARD arrayToBitboards(std::string arrayRepresentation[8][8], S_SIDE white, bool castlingPermitions[4], int enPassant = NO_SQ);
+	S_BOARD* arrayToBitboards(std::string arrayRepresentation[8][8], S_SIDE white, bool castlingPermitions[4], int enPassant = NO_SQ);
 
 	void displayBoardState(S_BOARD board); // print out position from 12 bitboards
 	void parseFen(const char* fen, S_BOARD& pos);

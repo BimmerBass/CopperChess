@@ -9,8 +9,6 @@ All of the uci implementation is taken nearly or completely directly from the vi
 */
 
 
-#define INPUTBUFFER 400 * 6
-
 void ParseGo(char* line, S_SEARCHINFO* info, S_BOARD* pos) {
 	int depth = -1, movestogo = 30, movetime = -1;
 	long long time = -1, inc = 0;
@@ -125,8 +123,9 @@ void Uci_Loop() {
 	setvbuf(stdout, NULL, _IOLBF, sizeof(NULL));
 	setvbuf(stdin, NULL, _IOLBF, sizeof(NULL));
 
-	S_BOARD pos[1];
-	S_SEARCHINFO info[1];
+	//S_BOARD pos[1];
+	S_BOARD* pos = new S_BOARD;
+	S_SEARCHINFO* info = new S_SEARCHINFO;
 
 	char line[INPUTBUFFER];
 	printf("id name %s\n", NAME);
