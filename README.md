@@ -50,7 +50,7 @@ The engine still has bugs[4][5][6] (described below) and weaknesses, and have th
     - Killer moves
     - Quiescence search
         - Delta pruning
-    - 2GB Transposition table. (Will be reduced soon)
+    - 1GB Transposition table. (Will be reduced when a function that measures the percentage of space used in the transposition table is implemented)
     - MvvLva (Most-valuable-victim Least-valuable-attacker.)
     - Late move reductions
     - Futility pruning
