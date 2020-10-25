@@ -20,7 +20,7 @@ The engine still has bugs (described below) and weaknesses, and have therefore n
 #### Implementation details
 - Bitboards for board representation.
     - Ray-lookup tables for sliding pieces.
-    - Legal-move generation function.
+    - Legal-move generation function[2].
     - **Perft @ depth 5 speed is around: 1 second.** (from starting position)
 - Relatively simple static evaluation function
     - Has the following piece-values in centipawns:
@@ -63,8 +63,9 @@ Copper achieves an overall move ordering of around 89-90%.
 3. Further pruning techniques will be added (especially to quiescence search) to get an average search depth of 15 plies in the middlegame.
 4. The evaluation function will be improved and optimized for speed.
 5. Chess960 support.
-6. Some day, I would like to create a convolutional neural network, and train it with self-play[2] to get a better evaluation function.
+6. Some day, I would like to create a convolutional neural network, and train it with self-play[3] to get a better evaluation function.
 
 ##### Notes
 1. The engine is only semi-UCI compliant since the protocol hasn't been completely implemented, and it has some bugs. (works fine most of the time)
-2. Self-play training will be accomplished by creating around 15.000 positions from self-play (first six moves will be randomized so the network won't overfit). Then, a batch of around 2.000 positions will be selected randomly, their evaluations will be compared to the actual outcomes from the games, and the error function will be computed by taking the squared sum of there differences. Backpropagation will be used to adjust the network.
+2. Although it is inefficient to check all pseudo-legal moves generated, i have decided to keep this implementation as it is more intuitive and the algorithm for doing this is still quite efficient. It works by first seeing if the side to move is in check. If this is true, it tries all moves and see if they still leave the side in check. If it isn't, it creates a bitmask for the king square that has all the squares a queen would be able to move to, and then it checks the moves for pieces that start on these squares. For king moves it checks to see if the destination square is attacked, and for en-passant it just makes the move and sees if the side to move is in check.
+3. Self-play training will be accomplished by creating around 15.000 positions from self-play (first six moves will be randomized so the network won't overfit). Then, a batch of around 2.000 positions will be selected randomly, their evaluations will be compared to the actual outcomes from the games, and the error function will be computed by taking the squared sum of there differences. Backpropagation will be used to adjust the network.

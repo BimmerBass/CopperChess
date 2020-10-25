@@ -1,10 +1,3 @@
-//
-//  code_analysis.h
-//  CopperXcode
-//
-//  Created by Niels Valentin Abildskov on 10/09/2020.
-//  Copyright © 2020 Niels Valentin Abildskov. All rights reserved.
-//
 #include <chrono>
 #include <iostream>
 #ifndef code_analysis_h

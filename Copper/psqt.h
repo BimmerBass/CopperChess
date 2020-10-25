@@ -4,43 +4,6 @@
 Header file containing all the piece-square tables
 */
 
-/*
-		0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0,
-		0, 0, 0, 0, 0, 0, 0, 0
-
-
-{
-		a  b  c  d  e  f  g  h
-
-		0, 0, 0, 0, 0, 0, 0, 0,  1
-		0, 0, 0, 0, 0, 0, , 0,  2
-		0, 0, 0, 0, 0, 0, 0, 0,  3
-		0, 0, 0, 0, 0, 0, 0, 0,  4
-		0, 0, 0, 0, 0, 0, 0, 0,  5
-		0, 0, 0, 0, 0, 0, 0, 0,  6
-		0, 0, 0, 0, 0, 0, 0, 0,  7
-		0, 0, 0, 0, 0, 0, 0, 0   8
-	};
-
-
-		const int PawnTableEg[64]{
-		0   ,   0   ,   0   ,   0   ,   0   ,   0   ,   0   ,   0   ,
-		0   ,   0   ,   0   ,   0   ,   0   ,   0   ,   0   ,   0   ,
-		0   ,   0   ,   0   ,   0   ,   0   ,   0   ,   0   ,   0   ,
-		0   ,   0   ,   0   ,   0   ,   0   ,   0   ,   0   ,   0   ,
-		0   ,   0   ,   0   ,   0   ,   0   ,   0   ,   0   ,   0   ,
-		0   ,   0   ,   0   ,   0   ,   0   ,   0   ,   0   ,   0   ,
-		0   ,   0   ,   0   ,   0   ,   0   ,   0   ,   0   ,   0   ,
-		0   ,   0   ,   0   ,   0   ,   0   ,   0   ,   0   ,   0   ,
-	};
-*/
-
 namespace psqt {
 	// Pawns are incentivized to develop in the center, and to not move in front of a castled king.
 	// The f-pawn is punished for being pushed, as this usually weakens the structure too much.

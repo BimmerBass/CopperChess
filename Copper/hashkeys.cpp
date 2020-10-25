@@ -27,13 +27,7 @@ BitBoard generatePosKey(const S_BOARD* pos) {
         ASSERT(pos->enPassantSquare >= 0 && pos->enPassantSquare <= 63);
         finalKey ^= pieceKeys[NO_PIECE][pos->enPassantSquare];
     }
-    /*
-    int castleNum = 0;
-    castleNum |= (pos->castlingRights[WKS]) ? 1 : 0;
-    castleNum |= (pos->castlingRights[WQS]) ? 2 : 0;
-    castleNum |= (pos->castlingRights[BKS]) ? 4 : 0;
-    castleNum |= (pos->castlingRights[BQS]) ? 8 : 0;
-    */
+
     ASSERT(castleNum >= 0 && castleNum <= 15);
 
     finalKey ^= castleKeys[pos->castlePerms];

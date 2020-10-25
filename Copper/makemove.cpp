@@ -31,7 +31,6 @@ void MoveGeneration::undoMove(S_BOARD &board){
 
 		board.inCheck = previousPos.inCheck;
 
-		//std::copy(previousPos.castlingPermissions, previousPos.castlingPermissions + 4, board.castlingRights);
 		board.castlePerms = previousPos.castlingPerms;
 		board.enPassantSquare = previousPos.enPassantSq;
 		board.fiftyMove = previousPos.fiftyMove;
@@ -66,9 +65,6 @@ void MoveGeneration::makeMove(S_BOARD &board, int move){
 	}
 	positionDescriptors.side = board.whitesMove;
 	
-	/*for (int i = 0; i < 4; i++){
-		positionDescriptors.castlingPermissions[i] = board.castlingRights[i];
-	}*/
 	positionDescriptors.castlingPerms = board.castlePerms;
 	positionDescriptors.enPassantSq = board.enPassantSquare;
 	positionDescriptors.fiftyMove = board.fiftyMove;
@@ -163,8 +159,6 @@ void MoveGeneration::makeMove(S_BOARD &board, int move){
 					board.castlePerms = CLRBIT(board.castlePerms, WKCA);
 					board.castlePerms = CLRBIT(board.castlePerms, WQCA);
 
-					//board.castlingRights[WKS] = false;
-					//board.castlingRights[WQS] = false;
 				}
 				else {
 					board.position[BR] = SETBIT(CLRBIT(board.position[BR], 63), destination - 1);
@@ -174,8 +168,6 @@ void MoveGeneration::makeMove(S_BOARD &board, int move){
 					board.castlePerms = CLRBIT(board.castlePerms, BKCA);
 					board.castlePerms = CLRBIT(board.castlePerms, BQCA);
 
-					//board.castlingRights[BKS] = false;
-					//board.castlingRights[BQS] = false;
 				}
 			}
 
@@ -188,8 +180,6 @@ void MoveGeneration::makeMove(S_BOARD &board, int move){
 					board.castlePerms = CLRBIT(board.castlePerms, WKCA);
 					board.castlePerms = CLRBIT(board.castlePerms, WQCA);
 
-					//board.castlingRights[WKS] = false;
-					//board.castlingRights[WQS] = false;
 				}
 				else {
 					board.position[BR] = SETBIT(CLRBIT(board.position[BR], 56), destination + 1);
@@ -199,8 +189,6 @@ void MoveGeneration::makeMove(S_BOARD &board, int move){
 					board.castlePerms = CLRBIT(board.castlePerms, BKCA);
 					board.castlePerms = CLRBIT(board.castlePerms, BQCA);
 
-					//board.castlingRights[BKS] = false;
-					//board.castlingRights[BQS] = false;
 				}
 			}
 		}
@@ -218,14 +206,10 @@ void MoveGeneration::makeMove(S_BOARD &board, int move){
 			if (board.whitesMove == WHITE) {
 				board.castlePerms = CLRBIT(board.castlePerms, WKCA);
 				board.castlePerms = CLRBIT(board.castlePerms, WQCA);
-				//board.castlingRights[WKS] = false;
-				//board.castlingRights[WQS] = false;
 			}
 			else {
 				board.castlePerms = CLRBIT(board.castlePerms, BKCA);
 				board.castlePerms = CLRBIT(board.castlePerms, BQCA);
-				//board.castlingRights[BKS] = false;
-				//board.castlingRights[BQS] = false;
 			}
 
 		}

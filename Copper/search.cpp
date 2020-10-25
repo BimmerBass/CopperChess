@@ -105,19 +105,6 @@ int Search::Quiescence(int alpha, int beta, S_BOARD* pos, S_SEARCHINFO* info) {
 			|| SPECIAL(list.moves[moveNum].move) == 1) {
 			captures++;
 
-
-			/*// Delta cutoff - remove if engine plays weaker.
-			if ((stand_pat + eval::pieceVal[pos->pieceList[TOSQ(list.moves[moveNum].move)]] + 200) < alpha) {
-				if ((eval::getMaterial(pos, !pos->whitesMove) - eval::pieceVal[pos->pieceList[TOSQ(list.moves[moveNum].move)]] > eval::endgameMaterial)
-					&& SPECIAL(list.moves[moveNum].move) != 0) {
-					continue;
-				}
-			}
-			// End of delta cutoff*/
-
-			// Weed out bad captures.
-
-
 			MoveGeneration::makeMove(*pos, list.moves[moveNum].move);
 
 			score = -Quiescence(-beta, -alpha, pos, info);
@@ -148,7 +135,6 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 	int kingSq = (pos->whitesMove == WHITE) ? pos->kingPos[0] : pos->kingPos[1];
 	if (pos->inCheck) { depth++; }
 	if (depth == 0) {
-		//return side * eval::staticEval(pos);
 		return Quiescence(alpha, beta, pos, info);
 		
 	}
@@ -391,7 +377,7 @@ int Search::searchRoot(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, i
 
 // Aspiration window search.
 int Search::search_widen(S_BOARD* pos, S_SEARCHINFO* info, int depth, int value) {
-	int temp = value, alpha = value - 50, beta = value + 50;
+	int temp = value, alpha = value - ASPIRATION, beta = value + ASPIRATION;
 	int alphaCount = 2;
 	int betaCount = 2;
 
@@ -459,10 +445,6 @@ void Search::searchPosition(S_BOARD* pos, S_SEARCHINFO* info) {
 
 			nps = (info->nodes) / ((getTimeMs() - info->starttime) * 0.001);
 
-			/*if (abs(score) > MATE) {
-				int side = (pos->whitesMove == WHITE) ? 1 : -1;
-				mateDist = side * (INFINITE - score) / 2;
-			}*/
 			if (score > MATE) {
 				int side = (pos->whitesMove == WHITE) ? 1 : -1;
 				mateDist = side * (INFINITE - score) / 2;
@@ -481,9 +463,9 @@ void Search::searchPosition(S_BOARD* pos, S_SEARCHINFO* info) {
 
 			if (mateDist != 0) { // If there's been found a mate, print score in mate distance instead of centipawns
 				std::cout << "info score mate " << mateDist << " depth " << currDepth
-					<< " nodes " << info->nodes << " time " << getTimeMs() - info->starttime << " nps " << nps << std::endl;
+					<< " nodes " << info->nodes << " time " << getTimeMs() - info->starttime << " nps " << nps;
 
-				std::cout << "pv ";
+				std::cout << " pv ";
 				for (int i = 0; i < pvMoves; i++) {
 					std::cout << printMove(pos->pvArray[i]) << " ";
 				}
@@ -501,7 +483,7 @@ void Search::searchPosition(S_BOARD* pos, S_SEARCHINFO* info) {
 				}
 				std::cout << "\n";
 			}
-			std::cout << "Ordering: " << (info->fhf / info->fh) << std::endl;
+			std::cout << "Ordering: " << (info->fhf / info->fh)*100 << "%" << std::endl;
 
 		}
 	}

@@ -5,6 +5,8 @@ INCLUDES THE FUNCTIONS:
 - arrayToBitBoards
 */
 
+
+// This function either needs to be removed or updated as the engine uses FEN-strings now.
 S_BOARD BoardRep::arrayToBitboards(std::string arrayRepresentation[8][8], S_SIDE white, bool castlingPermitions[4], int enPassant) {
     S_BOARD positionBitboards;
     BitBoard WP = 0, WN = 0, WB = 0, WR = 0, WQ = 0, WK = 0, BP = 0, BN = 0, BB = 0, BR = 0, BQ = 0, BK = 0;

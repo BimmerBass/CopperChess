@@ -1,11 +1,3 @@
-//
-//  transposition.cpp
-//  CopperXcode
-//
-//  Created by Niels Valentin Abildskov on 30/09/2020.
-//  Copyright © 2020 Niels Valentin Abildskov. All rights reserved.
-//
-
 #include "defs.h"
 
 

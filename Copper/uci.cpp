@@ -1,6 +1,6 @@
 #include "defs.h"
 
-#define NAME "CopperChess1.0"
+#define NAME "CopperChess2.0"
 #define INPUTBUFFER 4000*6
 
 /*

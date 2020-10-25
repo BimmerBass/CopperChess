@@ -19,11 +19,6 @@ S_EVALCACHE::~S_EVALCACHE(){
 	delete[] entry;
 }
 
-/*
-bool probeCache(const S_BOARD* pos, int& score);
-void storeEvaluation(const S_BOARD* pos, int score);
-*/
-
 bool S_EVALCACHE::probeCache(const S_BOARD* pos, int& score) {
 	int index = pos->posKey % numEntries;
 

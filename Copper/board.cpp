@@ -47,9 +47,6 @@ void BoardRep::parseFen(const char* fen, S_BOARD& pos){
 	ASSERT(fen != NULL);
 	
 	clearBoard(&pos);
-	/*for (int i = 0; i < 4; i++){
-		pos.castlingRights[i] = false;
-	}*/
 	pos.castlePerms = 0;
 	
 	int rank = RANK_8;

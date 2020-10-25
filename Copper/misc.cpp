@@ -5,6 +5,11 @@
 #include "windows.h"
 #include "io.h"
 
+/*
+This is the reason Copper is not yet cross-platform compatible. We need to listen for input from the GUI while we're searching,
+and the code for OSX hasn't been implemented.
+*/
+
 // http://home.arcor.de/dreamlike/chess/
 int InputWaiting()
 {

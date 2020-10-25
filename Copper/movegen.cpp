@@ -48,10 +48,7 @@ void MoveGeneration::validMoves(S_BOARD* board, S_MOVELIST &legalMoves){
 		//board->inCheck = true;
 		for (int moveNum = 0; moveNum < pseudoLegal.count; moveNum++){
 			if (((pseudoLegal.moves[moveNum].move >> 4) & 63) == kingSq){
-				/*S_BOARD without_king  = *board;
-				piece kingSide = (without_king.whitesMove == WHITE) ? WK:BK;
-				without_king.position[kingSide] = (uint64_t)0;
-				*/
+
 				piece king = (board->whitesMove == WHITE) ? WK : BK;
 				board->position[king] = 0;
 				if (!sqAttacked((pseudoLegal.moves[moveNum].move >> 10), !board->whitesMove, board)){
@@ -301,10 +298,6 @@ void MoveGeneration::rookMoves(S_BOARD* board, S_MOVELIST& s_moves, bool queen) 
 
 	while (R != 0) {
 		index = bitScanForward(R);
-		// Maybe switch to using O^(O-2R) instead of lookup table...
-		/*
-		BitBoard fileMask = FileMasks8[index % 8];
-		destinationSquares = (((~board->EMPTY_SQUARES & fileMask) - 2 * ((uint64_t)1 << index)) ^ (~board->EMPTY_SQUARES)) & fileMask;*/
 
 		destinationSquares = 0;
 		attacks::positiveLineAttacks(destinationSquares, ~board->EMPTY_SQUARES, 0, index); // North

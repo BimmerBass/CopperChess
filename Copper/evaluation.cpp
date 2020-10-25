@@ -4,22 +4,7 @@
 /*
 INCLUDES THE FUNCTIONS:
 	- staticEval(S_BOARD* board)
-
-EVALUATION FUNCTION:
-The evaluation function will be a linear combination of the following parameters:
-f(p) =
-	20000*(K-K')
-	+ 900*(Q-Q')
-	+ 500*(R-R')
-	+ 330*(B-B')
-	+ 300*(N-N')
-	+ 100*(P-P')
-	- 50*(D-D' + S-S' + I-I')
-	+ 10*(M-M')
-	+ 10*T
-
-Where PNBRQK is the amount of white pieces and the ones with prime are the amount of black pieces. (Their piece-square values are added to these.)
-DIS is the amount of doubled, blocked and isolated pawns. M is mobility (amount of legal moves.). T is tempo (+1 if white's move, -1 if black's move)
+	- getMaterial(const S_BOARD* pos, bool side)
 */
 
 const int passedPawnValue[8] = { 0, 5, 10, 25, 35, 60, 100, 250 };

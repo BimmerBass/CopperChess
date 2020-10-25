@@ -98,20 +98,6 @@ bool sqAttacked(int sq, bool side, const S_BOARD* pos) { // Attacked by side == 
 }
 
 
-
-/*void positiveLineAttacks(BitBoard &attackRays, BitBoard OCCUPIED, int direction, int sq) {
-    BitBoard attacks = LineAttackRays[direction][sq];
-    if ((attacks & OCCUPIED) != 0) {
-        for (int i = 0; i < 64; i++) {
-            if ((((attacks & OCCUPIED) >> i) & 1) == 1) {
-                attacks ^= LineAttackRays[direction][i];
-            }
-        }
-    }
-    attackRays |= attacks;
-}*/
-
-
 void attacks::positiveLineAttacks(BitBoard &attackRays, BitBoard OCCUPIED, int direction, int sq){
     BitBoard attacks = LineAttackRays[direction][sq];
     BitBoard blockers = attacks & OCCUPIED;
@@ -121,17 +107,6 @@ void attacks::positiveLineAttacks(BitBoard &attackRays, BitBoard OCCUPIED, int d
     }
     attackRays |= attacks;
 }
-/*void negativeLineAttacks(BitBoard &attackRays, BitBoard OCCUPIED, int direction, int sq) {
-    BitBoard attacks = LineAttackRays[direction][sq];
-    if ((attacks & OCCUPIED) != 0) {
-        for (int i = 63; i >= 0; i--) {
-            if ((((attacks & OCCUPIED) >> i) & 1) == 1) {
-                attacks ^= LineAttackRays[direction][i];
-            }
-        }
-    }
-    attackRays |= attacks;
-}*/
 
 void attacks::negativeLineAttacks(BitBoard &attackRays, BitBoard OCCUPIED, int direction, int sq){
     BitBoard attacks = LineAttackRays[direction][sq];
