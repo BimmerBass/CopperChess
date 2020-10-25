@@ -9,7 +9,7 @@ At the moment Copper is a command-line engine only, and can only be used graphic
 Due to issues with the UCI-protocol, Copper unfortunately only runs on windows at the moment.
 
 #### Strength
-The engine still has bugs (described below) and weaknesses, and have therefore not been tested thoroughly yet. Despite of this, it easily beats Stockfish rated 2000 on lichess.org.
+The engine still has bugs[4][5][6] (described below) and weaknesses, and have therefore not been tested thoroughly yet. Despite of this, it easily beats Stockfish rated 2000 on lichess.org.
 
 
 #### Special thanks to
@@ -68,7 +68,10 @@ Copper achieves an overall move ordering of around 89-90%.
 5. Chess960 support.
 6. Some day, I would like to create a convolutional neural network, and train it with self-play[3] to get a better evaluation function.
 
-##### Notes
+##### Notes and bugs
 1. The engine is only semi-UCI compliant since the protocol hasn't been completely implemented, and it has some bugs. (works fine most of the time)
 2. Although it is inefficient to check all pseudo-legal moves generated, i have decided to keep this implementation as it is more intuitive and the algorithm for doing this is still quite efficient. It works by first seeing if the side to move is in check. If this is true, it tries all moves and see if they still leave the side in check. If it isn't, it creates a bitmask for the king square that has all the squares a queen would be able to move to, and then it checks the moves for pieces that start on these squares. For king moves it checks to see if the destination square is attacked, and for en-passant it just makes the move and sees if the side to move is in check.
 3. Self-play training will be accomplished by creating around 15.000 positions from self-play (first six moves will be randomized so the network won't overfit). Then, a batch of around 2.000 positions will be selected randomly, their evaluations will be compared to the actual outcomes from the games, and the error function will be computed by taking the squared sum of there differences. Backpropagation will be used to adjust the network.
+4. The engine sometimes makes inaccuracies in the endgame, but this will most likely be fixed using a tapered eval and more endgame-specific heuristics.
+5. If the game is really long (usually over 100 plies), Copper doesn't receive the entire UCI-command causing it to evaluate another position and therefore loose by making illegal moves. This will probably be fixed by increasing the input buffer size.
+6. When Copper has a really favourable position (e.g. mate in x), it sometimes resigns. I have also noticed that it usually has a good position but the evaluation looks like it favours the opponent (the number is the close to Stockfish's evaluation, but it is the sign that is opposite). This is probably because i have failed to add a plus or minus sign somewhere in the search function, and should therefore be fixed easily.
