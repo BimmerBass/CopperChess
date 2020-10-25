@@ -203,6 +203,29 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 		}
 	}
 
+
+	/*
+	STATIC NULL MOVE PRUNING / EVAL PRUNING
+	*/
+
+	if (depth < 3
+		&& !pos->inCheck
+		&& abs(beta - 1) > -MATE) {
+		int static_eval = side * eval::staticEval(pos, depth, alpha, beta);
+
+		int eval_margin = 120 * depth;
+		
+		if (static_eval - eval_margin >= beta) {
+			return (static_eval - eval_margin);
+		}
+
+	}
+
+	/*
+	END OF EVAL PRUNING
+	*/
+
+
 	/*
 	
 	NULL MOVE PRUNING
