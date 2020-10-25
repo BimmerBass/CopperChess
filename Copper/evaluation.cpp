@@ -173,7 +173,7 @@ int eval::getMaterial(const S_BOARD* pos, bool side) {
 	}
 	else {
 		for (int pce = 6; pce < 12; pce++) {
-			material -= ((pieceVal[pce]) * countBits(pos->position[pce]));
+			material += ((pieceVal[pce]) * countBits(pos->position[pce]));
 		}
 	}
 	return material;

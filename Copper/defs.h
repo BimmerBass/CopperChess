@@ -439,12 +439,20 @@ namespace eval {
 
 	int getMaterial(const S_BOARD* pos, bool side);
 
+	/*
+	The piece values are inspired by the ones found on chessprogramming.org in the sense that they meet the same requirements:
+
+	1. B > N > 3P
+	2. B + N > R + P
+	3. 2R > Q
+	4. R > B + 2P > N + 2P
+	*/
 	enum values : int {
 		pawnVal = 100,
-		knightVal = 310,
+		knightVal = 320,
 		bishopVal = 350,
-		rookVal = 520,
-		queenVal = 900,
+		rookVal = 560,
+		queenVal = 1050,
 		kingVal = 20000
 	};
 

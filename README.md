@@ -47,6 +47,7 @@ The engine still has bugs (described below) and weaknesses, and have therefore n
     - History heuristics
     - Killer moves
     - Quiescence search
+        - Delta pruning
     - 2GB Transposition table. (Will be reduced soon)
     - MvvLva (Most-valuable-victim Least-valuable-attacker.)
     - Late move reductions

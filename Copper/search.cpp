@@ -2,6 +2,9 @@
 
 #define ASPIRATION 50 // Size of aspiration window on each side of previous score. Taken from https://www.chessprogramming.org/CPW-Engine_search
 
+#define ENDGAME_MAT 1350 // The lower this value becomes, the more delta-cutoffs we get. It is a fine balance between accuracy and speed in quiescence search.
+#define DELTA 200 // The delta safety margin for quiescence search. Raise this to get a more accurate quiescence evaluation at the cost of lowered speed.
+
 /*
 INCLUDES THE FUNCTIONS:
 	- isRepetition
@@ -104,6 +107,20 @@ int Search::Quiescence(int alpha, int beta, S_BOARD* pos, S_SEARCHINFO* info) {
 		if (pos->pieceList[TOSQ(list.moves[moveNum].move)] != NO_PIECE || SPECIAL(list.moves[moveNum].move) == 0
 			|| SPECIAL(list.moves[moveNum].move) == 1) {
 			captures++;
+
+			/*
+			DELTA PRUNING
+			*/
+
+			if ((stand_pat + eval::pieceVal[pos->pieceList[TOSQ(list.moves[moveNum].move)]] + DELTA < alpha)
+				&& (eval::getMaterial(pos, !pos->whitesMove) - eval::pieceVal[pos->pieceList[TOSQ(list.moves[moveNum].move)]] > ENDGAME_MAT)
+				&& SPECIAL(list.moves[moveNum].move) != 0) {
+				continue;
+			}
+
+			/*
+			END OF DELTA PRUNING
+			*/
 
 			MoveGeneration::makeMove(*pos, list.moves[moveNum].move);
 
