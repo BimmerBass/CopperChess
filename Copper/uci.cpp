@@ -100,21 +100,19 @@ void ParsePosition(char* lineIn, S_BOARD* pos) {
 		ptrChar += 6;
 		while (*ptrChar) {
 			std::string moveStr = "";
-			for (int i = 0; i < 4; i++) {
+			for (int i = 0; i < 5; i++) {
 				moveStr += *(ptrChar + i);
 			}
+
 			move = parseMove(moveStr, pos);
-			if (move == NOMOVE) {
-				break;
-			}
+			if (move == NOMOVE) { break; }
 			MoveGeneration::makeMove(*pos, move);
 			pos->ply = 0;
-			while (*ptrChar && *ptrChar != ' ') {
-				ptrChar++;
-			}
+			while (*ptrChar && *ptrChar != ' ') { ptrChar++; }
 			ptrChar++;
 		}
 	}
+
 	BoardRep::displayBoardState(*pos);
 }
 
