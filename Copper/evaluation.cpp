@@ -7,12 +7,21 @@ INCLUDES THE FUNCTIONS:
 	- getMaterial(const S_BOARD* pos, bool side)
 */
 
-const int passedPawnValue[8] = { 0, 5, 10, 25, 35, 60, 100, 250 };
+const int passedPawnValue[8] = { 0, 5, 10, 25, 35, 60, 100, 140 };
 
 const int mirrorRankNum[8] = { 7 , 6 , 5 , 4 , 3 , 2 , 1 , 0 };
 
 int eval::staticEval(const S_BOARD* pos, int depth, int alpha, int beta) {
 	int score = 0;
+
+	int mgScore = 0;
+	int mgWeight = 0;
+
+	int egScore = 0;
+	int egWeight = 0;
+
+	int phase = 0;
+
 	int move = NOMOVE;
 	/*if (TT::probePos(pos, depth, alpha, beta, &move, &score)) {
 		return score;
@@ -35,108 +44,177 @@ int eval::staticEval(const S_BOARD* pos, int depth, int alpha, int beta) {
 		}
 
 		else if (pos->pieceList[sq] == WP) {
-			if (endgame) {
+			/*if (endgame) {
 				score += pawnVal + psqt::PawnTableEg[sq];
 			}
 			else {
 				score += pawnVal + psqt::PawnTableMg[sq];
-			}
+			}*/
+			mgScore += pawnVal + psqt::PawnTableMg[sq];
+			egScore += pawnVal + psqt::PawnTableEg[sq];
 			
 			if ((whitePassedPawnMasks[sq] & pos->position[BP]) == 0) { // It is a passed pawn
-				score += passedPawnValue[rankNum];
-
+				mgScore += passedPawnValue[rankNum];
+				egScore += passedPawnValue[rankNum];
 				// Reward having a rook behind a passed pawn
-				score += ((pos->position[WR] & whiteRookSupport[sq]) != 0) ? 40 : 0;
+				mgScore += ((pos->position[WR] & whiteRookSupport[sq]) != 0) ? 25 : 0;
+				egScore += ((pos->position[WR] & whiteRookSupport[sq]) != 0) ? 40 : 0; // Rook behind passed pawn is more important in endgame.
 				// Perhaps change this static value to something like passedPawnValue[rankNum] / 2
 			}
 
 			// Penalize isolated and doubled pawns.
-			score -= ((isolatedPawnMasks[fileNum] & (pos->position[WP] ^ ((uint64_t)1 << sq))) == 0) ? 28 : 0;
-			score -= (countBits(pos->position[WP] & FileMasks8[fileNum]) >= 2) ? 20 : 0;
+			mgScore -= ((isolatedPawnMasks[fileNum] & (pos->position[WP] ^ ((uint64_t)1 << sq))) == 0) ? 28 : 0;
+			mgScore -= (countBits(pos->position[WP] & FileMasks8[fileNum]) >= 2) ? 20 : 0;
+
+			egScore -= ((isolatedPawnMasks[fileNum] & (pos->position[WP] ^ ((uint64_t)1 << sq))) == 0) ? 28 : 0;
+			egScore -= (countBits(pos->position[WP] & FileMasks8[fileNum]) >= 2) ? 20 : 0;
 		}
 		else if (pos->pieceList[sq] == WN) {
-			score += knightVal + psqt::KnightTable[sq];
-			score -= (8 - (WpawnCnt + BpawnCnt)) * 5;
+			phase += 1;
+
+			mgScore += knightVal + psqt::KnightTable[sq];
+			egScore += knightVal + psqt::KnightTable[sq];
+
+			mgScore -= (8 - WpawnCnt) * 5;
+			egScore -= (8 - WpawnCnt) * 7;
 		}
 
 		else if (pos->pieceList[sq] == WB) {
-			score += bishopVal + psqt::BishopTable[sq];
+			phase += 1;
+
+			mgScore += bishopVal + psqt::BishopTable[sq];
+			egScore += bishopVal + psqt::BishopTable[sq];
 		}
 
 		else if (pos->pieceList[sq] == WR) {
-			score += rookVal + psqt::RookTable[sq];
-			score += (8 - (BpawnCnt + WpawnCnt)) * 5; // Add value depending on pawn amount
+			phase += 2;
+
+			mgScore += rookVal + psqt::RookTable[sq];
+			egScore += rookVal + psqt::RookTable[sq];
+
+			mgScore += (8 - WpawnCnt) * 5; // Add value depending on pawn amount
+			egScore += (8 - WpawnCnt) * 7;
+
 			// Reward rooks on open files
-			score += ((((pos->position[WP] | pos->position[BP]) & FileMasks8[fileNum]) == 0)
-			    && (pos->position[WR] & FileMasks8[fileNum]) != 0) ? 30 : 0;
+			mgScore += ((((pos->position[WP] | pos->position[BP]) & FileMasks8[fileNum]) == 0)
+			    && (pos->position[WR] & FileMasks8[fileNum]) != 0) ? 35 : 0;
+
+			egScore += ((((pos->position[WP] | pos->position[BP]) & FileMasks8[fileNum]) == 0)
+				&& (pos->position[WR] & FileMasks8[fileNum]) != 0) ? 20 : 0;
 		}
 
 		else if (pos->pieceList[sq] == WQ) {
-			score += queenVal + psqt::QueenTable[sq];
+			phase += 4;
+
+			mgScore += queenVal + psqt::QueenTable[sq];
+			egScore += queenVal + psqt::QueenTable[sq];
 		}
 
 		else if (pos->pieceList[sq] == WK) {
-			if (endgame) {
+			/*if (endgame) {
 				score += kingVal + psqt::KingTableEg[sq];
 			}
 			else {
 				score += kingVal + psqt::KingTableMg[sq];
-			}
+			}*/
+			mgScore += kingVal + psqt::KingTableMg[sq];
+			egScore += kingVal + psqt::KingTableEg[sq];
 		}
 
 
 		else if (pos->pieceList[sq] == BP) {
-			if (endgame) {
+			/*if (endgame) {
 				score -= (pawnVal + psqt::PawnTableEg[psqt::Mirror64[sq]]);
 			}
 			else {
 				score -= (pawnVal + psqt::PawnTableMg[psqt::Mirror64[sq]]);
-			}
+			}*/
+
+			mgScore -= (pawnVal + psqt::PawnTableMg[psqt::Mirror64[sq]]);
+			egScore -= (pawnVal + psqt::PawnTableEg[psqt::Mirror64[sq]]);
 
 			if ((blackPassedPawnMasks[sq] & pos->position[WP]) == 0) { // The pawn is a passed pawn
-				score -= passedPawnValue[mirrorRankNum[rankNum]];
-
+				mgScore -= passedPawnValue[mirrorRankNum[rankNum]];
+				egScore -= passedPawnValue[mirrorRankNum[rankNum]];
 
 				// Reward having a rook supporting a passed pawn
-				score -= ((pos->position[BR] & blackRookSupport[sq]) != 0) ? 40 : 0;
+				mgScore -= ((pos->position[BR] & blackRookSupport[sq]) != 0) ? 25 : 0;
+				egScore -= ((pos->position[BR] & blackRookSupport[sq]) != 0) ? 40 : 0;
 			}
 
 
 			// Penalize isolated and doubled pawns
-			score += ((isolatedPawnMasks[fileNum] & (pos->position[BP] ^ ((uint64_t)1 << sq))) == 0) ? 28 : 0;
-			score += (countBits(pos->position[BP] & FileMasks8[fileNum]) >= 2) ? 20 : 0;
+			mgScore += ((isolatedPawnMasks[fileNum] & (pos->position[BP] ^ ((uint64_t)1 << sq))) == 0) ? 28 : 0;
+			mgScore += (countBits(pos->position[BP] & FileMasks8[fileNum]) >= 2) ? 20 : 0;
+
+			egScore += ((isolatedPawnMasks[fileNum] & (pos->position[BP] ^ ((uint64_t)1 << sq))) == 0) ? 28 : 0;
+			egScore += (countBits(pos->position[BP] & FileMasks8[fileNum]) >= 2) ? 20 : 0;
 		}
 
 		else if (pos->pieceList[sq] == BN) {
-			score -= (knightVal + psqt::KnightTable[psqt::Mirror64[sq]]);
-			score += (8 - (BpawnCnt + WpawnCnt)) * 5;
+			phase += 1;
+		
+			mgScore -= (knightVal + psqt::KnightTable[psqt::Mirror64[sq]]);
+			egScore -= (knightVal + psqt::KnightTable[psqt::Mirror64[sq]]);
+
+			mgScore += (8 - BpawnCnt) * 5;
+			egScore += (8 - BpawnCnt) * 7;
 		}
 
 		else if (pos->pieceList[sq] == BB) {
-			score -= (bishopVal + psqt::BishopTable[psqt::Mirror64[sq]]);
+			phase += 1;
+
+			mgScore -= (bishopVal + psqt::BishopTable[psqt::Mirror64[sq]]);
+			egScore -= (bishopVal + psqt::BishopTable[psqt::Mirror64[sq]]);
 		}
 
 		else if (pos->pieceList[sq] == BR) {
-			score -= (rookVal + psqt::RookTable[psqt::Mirror64[sq]]);
-			score -= (8 - (BpawnCnt + WpawnCnt)) * 5; // Add value depending on pawn amount.
+			phase += 2;
+			
+			mgScore -= (rookVal + psqt::RookTable[psqt::Mirror64[sq]]);
+			egScore -= (rookVal + psqt::RookTable[psqt::Mirror64[sq]]);
 
-			score -= ((((pos->position[WP] | pos->position[BP]) & FileMasks8[fileNum]) == 0) &&
-			    ((pos->position[BR] & FileMasks8[fileNum]) != 0)) ? 30 : 0;
+			mgScore -= (8 - (BpawnCnt + WpawnCnt)) * 5; // Add value depending on pawn amount.
+			egScore -= (8 - (BpawnCnt + WpawnCnt)) * 7;
+
+			mgScore -= ((((pos->position[WP] | pos->position[BP]) & FileMasks8[fileNum]) == 0) &&
+			    ((pos->position[BR] & FileMasks8[fileNum]) != 0)) ? 35 : 0;
+
+			egScore -= ((((pos->position[WP] | pos->position[BP]) & FileMasks8[fileNum]) == 0) &&
+				((pos->position[BR] & FileMasks8[fileNum]) != 0)) ? 20 : 0;
 		}
 
 		else if (pos->pieceList[sq] == BQ) {
-			score -= (queenVal + psqt::QueenTable[psqt::Mirror64[sq]]);
+			phase += 4;
+
+			mgScore -= (queenVal + psqt::QueenTable[psqt::Mirror64[sq]]);
+			egScore -= (queenVal + psqt::QueenTable[psqt::Mirror64[sq]]);
 		}
 
 		else if (pos->pieceList[sq] == BK) {
-			if (endgame) {
+			/*if (endgame) {
 				score -= (kingVal + psqt::KingTableEg[psqt::Mirror64[sq]]);
 			}
 			else {
 				score -= (kingVal + psqt::KingTableMg[psqt::Mirror64[sq]]);
-			}
+			}*/
+			mgScore -= (kingVal + psqt::KingTableMg[psqt::Mirror64[sq]]);
+			egScore -= (kingVal + psqt::KingTableEg[psqt::Mirror64[sq]]);
 		}
 	}
+
+	/*
+	TAPERED EVAL
+	*/
+	if (phase > 24) { phase = 24; }
+	mgWeight = phase;
+	egWeight = 24 - phase;
+
+	score = ((mgScore * mgWeight) + (egScore * egWeight)) / 24;
+
+	/*
+	END OF TAPERED EVAL
+	*/
 	
 	// Add or subtract 18 from score depending on who is to move.
 	score += (pos->whitesMove == WHITE) ? 18 : -18;
