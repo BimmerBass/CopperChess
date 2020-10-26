@@ -479,6 +479,9 @@ int Search::MTDF(S_BOARD* pos, S_SEARCHINFO* info, int estimate, int depth) {
 	}
 	return score;
 }
+/*
+END OF EXPERIMENTAL MTDF
+*/
 
 void Search::searchPosition(S_BOARD* pos, S_SEARCHINFO* info) {
 	int bestMove = NOMOVE;
