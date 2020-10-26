@@ -43,6 +43,7 @@ The engine still has bugs[4][5][6] (described below) and weaknesses, and have th
     - Being in check is penalized.
     - Having rooks behind passed pawns are rewarded.
     - Having two rooks on the seventh rank as white or on the second as black are also rewarded.
+    - Soon, a penalty will be added if the opponent has a rook behind one of "our" passed pawns.
     - Tapered evaluation based on amount of non-pawn and non-king material on the board.
 - **Search function**: The search includes the following methods and tables
     - Iterative deepening with Alpha-Beta Pruning.
@@ -57,6 +58,7 @@ The engine still has bugs[4][5][6] (described below) and weaknesses, and have th
     - Futility pruning
     - Null move pruning
     - Eval-/Static null move pruning.
+    - Mate distance pruning. If we have found a forced checkmate, we don't want to examine longer mate sequences than that one.
     - Principal variation search in the root node.
     - A 500MB evaluation cache that stores previously calculated static evaluations.
 

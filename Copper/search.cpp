@@ -150,6 +150,17 @@ int Search::Quiescence(int alpha, int beta, S_BOARD* pos, S_SEARCHINFO* info) {
 int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, int beta, bool doNull) {
 	int side = (pos->whitesMove == WHITE) ? 1 : -1;
 	int kingSq = (pos->whitesMove == WHITE) ? pos->kingPos[0] : pos->kingPos[1];
+
+	/*
+	MATE DISTANCE PRUNING
+	*/
+	if (alpha < -(INFINITE - pos->ply)) { alpha = -(INFINITE - pos->ply); }
+	if (beta > ((INFINITE - pos->ply) - 1)) { beta = (INFINITE - pos->ply) - 1; }
+	if (alpha >= beta) { return alpha; }
+	/*
+	END OF MATE DISTANCE PRUNING
+	*/
+
 	if (pos->inCheck) { depth++; }
 	if (depth == 0) {
 		return Quiescence(alpha, beta, pos, info);
@@ -379,6 +390,16 @@ int Search::searchRoot(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, i
 	int value = -INFINITE;
 	int oldAlpha = alpha;
 
+	if (moves.count == 0) {
+		int kingSq = (pos->whitesMove == WHITE) ? pos->kingPos[0] : pos->kingPos[1];
+		if (sqAttacked(kingSq, !pos->whitesMove, pos) == true) {
+			return -INFINITE;
+		}
+		else {
+			return 0;
+		}
+	}
+
 	for (int i = 0; i < moves.count; i++) {
 		pickNextMove(i, &moves);
 
@@ -485,13 +506,17 @@ void Search::searchPosition(S_BOARD* pos, S_SEARCHINFO* info) {
 
 			nps = (info->nodes) / ((getTimeMs() - info->starttime) * 0.001);
 
-			if (score > MATE) {
+			if (score > MATE) { // We can deliver checkmate
+				mateDist = INFINITE - score;
+				/*
 				int side = (pos->whitesMove == WHITE) ? 1 : -1;
-				mateDist = side * (INFINITE - score) / 2;
+				mateDist = side * (INFINITE - score) / 2;*/
 			}
-			else if (score < -MATE) {
+			else if (score < -MATE) { // We are being checkmated.
+				mateDist = -INFINITE - score;
+				/*
 				int side = (pos->whitesMove == WHITE) ? -1 : 1;
-				mateDist = side * (score + INFINITE) / 2;
+				mateDist = side * (score + INFINITE) / 2;*/
 			}
 
 			if (info->stopped == true) {
