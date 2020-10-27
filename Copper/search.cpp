@@ -522,12 +522,14 @@ void Search::searchPosition(S_BOARD* pos, S_SEARCHINFO* info) {
 				mateDist = side * (score + INFINITE) / 2;*/
 			}
 
+			// It is important to get the bestMove before we potentially break out of the loop. 
+			// If not, we risk exiting the loop at currDepth = 1 where we wouldn't have a bestMove yet.
+			pvMoves = TT::getPvLine(pos, currDepth);
+			bestMove = pos->pvArray[0];
+
 			if (info->stopped == true) {
 				break; // Break out if the GUI has interrupted the search
 			}
-
-			pvMoves = TT::getPvLine(pos, currDepth);
-			bestMove = pos->pvArray[0];
 
 			if (mateDist != 0) { // If there's been found a mate, print score in mate distance instead of centipawns
 				std::cout << "info score mate " << mateDist << " depth " << currDepth
