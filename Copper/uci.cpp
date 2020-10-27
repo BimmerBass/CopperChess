@@ -58,7 +58,13 @@ void ParseGo(char* line, S_SEARCHINFO* info, S_BOARD* pos) {
 	if (time != -1) {
 		info->timeset = true;
 		time /= movestogo;
-		time -= 50;
+		
+		if (time > 50) {
+			time -= 50;
+		}
+		else {
+			time = time;
+		}
 		info->stoptime = info->starttime + time + inc;
 	}
 	
