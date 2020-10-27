@@ -45,6 +45,7 @@ The engine still has bugs[4][5][6] (described below) and weaknesses, and have th
     - Having rooks behind passed pawns are rewarded.
     - Having two rooks on the seventh rank as white or on the second as black are also rewarded.
     - Soon, a penalty will be added if the opponent has a rook behind one of "our" passed pawns.
+    - Manhattan-center distance in the endgame.
     - Tapered evaluation based on amount of non-pawn and non-king material on the board.
 - **Search function**: The search includes the following methods and tables
     - Iterative deepening with Alpha-Beta Pruning.

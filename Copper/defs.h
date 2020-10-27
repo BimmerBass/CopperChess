@@ -57,6 +57,9 @@ extern BitBoard ClearMask[64];
 extern BitBoard LineAttackRays[4][64];
 extern BitBoard DiagonalAttackRays[4][64];
 
+// Array containing all Manhattan distances from sq1 to sq2. Indexed by: ManhattanDistance[sq1][sq2]
+extern int ManhattanDistance[64][64];
+
 // Array of values given to captures depending on the pieces in question (MVV-LVA)
 extern int MvvLva[12][12];
 
@@ -484,6 +487,7 @@ void initHashKeys();
 void initPawnMasks();
 void initAll(BitBoard(&set)[64], BitBoard(&clear)[64]);
 void initRookSupportMasks();
+void initManhattanDistances();
 
 
 // makemove.cpp, movegen.cpp and utils.cpp

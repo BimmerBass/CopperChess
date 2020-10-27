@@ -256,3 +256,36 @@ void initRookSupportMasks() {
 	
 	}
 }
+
+/*
+
+TODO: Check if the manhattan distances are calculated correctly
+
+*/
+
+
+inline int calcManhattanDistance(int sq1, int sq2) {
+	int rank1 = sq1 / 8;
+	int file1 = sq1 % 8;
+
+	int rank2 = sq2 / 8;
+	int file2 = sq2 % 8;
+
+	int rankDistance = abs(rank2 - rank1);
+	int fileDistance = abs(file2 - file1);
+	return rankDistance + fileDistance;
+}
+
+int ManhattanDistance[64][64] = { {0} };
+
+void initManhattanDistances() {
+
+	for (int sq1 = 0; sq1 < 64; sq1++) {
+
+		for (int sq2 = 0; sq2 < 64; sq2++) {
+			ManhattanDistance[sq1][sq2] = calcManhattanDistance(sq1, sq2);
+		}
+
+	}
+
+}
