@@ -31,6 +31,7 @@ The engine still has bugs[4][5][6] (described below) and weaknesses, and have th
         - Queen: 900
         - King: 20000
         - These values can be tweaked to adjust how bold the engine's playstyle is.
+        - I am currently working on giving different piece-values in the endgame as pwns for example become more valuable.
     - Piece-square tables. For the piece types where it is relevant, there are tables for both the middlegame and endgame.
     - Pawn structure.
         - Having all eight pawns is slightly penalized as they tend to clutter the board.

@@ -448,17 +448,26 @@ namespace eval {
 	3. 2R > Q
 	4. R > B + 2P > N + 2P
 	*/
-	enum values : int {
-		pawnVal = 100,
-		knightVal = 320,
-		bishopVal = 350,
-		rookVal = 560,
-		queenVal = 1050,
-		kingVal = 20000
+	enum mgValues : int {
+		pawnValMg = 100,
+		knightValMg = 320,
+		bishopValMg = 350,
+		rookValMg = 560,
+		queenValMg = 1050,
+		kingValMg = 20000
 	};
 
-	static int pieceVal[13] = { pawnVal, knightVal, bishopVal, rookVal, queenVal, kingVal,
-	pawnVal, knightVal, bishopVal, rookVal, queenVal, kingVal, 0 };
+	enum egValues : int {
+		pawnValEg = 200,
+		knightValEg = 560,
+		bishopValEg = 600,
+		rookValEg = 1200,
+		queenValEg = 2300,
+		kingValEg = 20000
+	};
+
+	static int pieceValMg[13] = { pawnValMg, knightValMg, bishopValMg, rookValMg, queenValMg, kingValMg,
+	pawnValMg, knightValMg, bishopValMg, rookValMg, queenValMg, kingValMg, 0 };
 }
 
 

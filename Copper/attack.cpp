@@ -143,7 +143,7 @@ bool badCapture(const S_BOARD* pos, int move) {
     if (pos->pieceList[FROMSQ(move)] == WP || pos->pieceList[FROMSQ(move)] == BP) { return false; }
 
     // If the piece captures is of much higher value than the one moved, it isn't a bad capture either.
-    if (eval::pieceVal[pos->pieceList[TOSQ(move)]] >= eval::pieceVal[pos->pieceList[FROMSQ(move)]] - 30) {
+    if (eval::pieceValMg[pos->pieceList[TOSQ(move)]] >= eval::pieceValMg[pos->pieceList[FROMSQ(move)]] - 30) {
         return false;
     }
 
@@ -152,7 +152,7 @@ bool badCapture(const S_BOARD* pos, int move) {
     BitBoard defendedSquares = (pos->whitesMove == WHITE) ? (((pos->position[WP] & ~FileMasks8[FILE_H]) << 9) | ((pos->position[WP] & ~FileMasks8[FILE_A]) << 7)) 
         : (((pos->position[BP] & ~FileMasks8[FILE_H]) >> 7) | ((pos->position[BP] & ~FileMasks8[FILE_A]) >> 9));
     if ((((uint64_t)1 << TOSQ(move)) & defendedSquares) != 0 &&
-        eval::pieceVal[pos->pieceList[TOSQ(move)]] + 200 - eval::pieceVal[pos->pieceList[TOSQ(move)]] < 0) {
+        eval::pieceValMg[pos->pieceList[TOSQ(move)]] + 200 - eval::pieceValMg[pos->pieceList[TOSQ(move)]] < 0) {
         return true;
     }
 

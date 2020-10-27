@@ -44,14 +44,8 @@ int eval::staticEval(const S_BOARD* pos, int depth, int alpha, int beta) {
 		}
 
 		else if (pos->pieceList[sq] == WP) {
-			/*if (endgame) {
-				score += pawnVal + psqt::PawnTableEg[sq];
-			}
-			else {
-				score += pawnVal + psqt::PawnTableMg[sq];
-			}*/
-			mgScore += pawnVal + psqt::PawnTableMg[sq];
-			egScore += pawnVal + psqt::PawnTableEg[sq];
+			mgScore += pawnValMg + psqt::PawnTableMg[sq];
+			egScore += pawnValMg + psqt::PawnTableEg[sq];
 			
 			if ((whitePassedPawnMasks[sq] & pos->position[BP]) == 0) { // It is a passed pawn
 				mgScore += passedPawnValue[rankNum];
@@ -72,8 +66,8 @@ int eval::staticEval(const S_BOARD* pos, int depth, int alpha, int beta) {
 		else if (pos->pieceList[sq] == WN) {
 			phase += 1;
 
-			mgScore += knightVal + psqt::KnightTable[sq];
-			egScore += knightVal + psqt::KnightTable[sq];
+			mgScore += knightValMg + psqt::KnightTable[sq];
+			egScore += knightValMg + psqt::KnightTable[sq];
 
 			mgScore -= (8 - WpawnCnt) * 5;
 			egScore -= (8 - WpawnCnt) * 7;
@@ -82,15 +76,15 @@ int eval::staticEval(const S_BOARD* pos, int depth, int alpha, int beta) {
 		else if (pos->pieceList[sq] == WB) {
 			phase += 1;
 
-			mgScore += bishopVal + psqt::BishopTable[sq];
-			egScore += bishopVal + psqt::BishopTable[sq];
+			mgScore += bishopValMg + psqt::BishopTable[sq];
+			egScore += bishopValMg + psqt::BishopTable[sq];
 		}
 
 		else if (pos->pieceList[sq] == WR) {
 			phase += 2;
 
-			mgScore += rookVal + psqt::RookTable[sq];
-			egScore += rookVal + psqt::RookTable[sq];
+			mgScore += rookValMg + psqt::RookTable[sq];
+			egScore += rookValMg + psqt::RookTable[sq];
 
 			mgScore += (8 - WpawnCnt) * 5; // Add value depending on pawn amount
 			egScore += (8 - WpawnCnt) * 7;
@@ -106,32 +100,19 @@ int eval::staticEval(const S_BOARD* pos, int depth, int alpha, int beta) {
 		else if (pos->pieceList[sq] == WQ) {
 			phase += 4;
 
-			mgScore += queenVal + psqt::QueenTable[sq];
-			egScore += queenVal + psqt::QueenTable[sq];
+			mgScore += queenValMg + psqt::QueenTable[sq];
+			egScore += queenValMg + psqt::QueenTable[sq];
 		}
 
 		else if (pos->pieceList[sq] == WK) {
-			/*if (endgame) {
-				score += kingVal + psqt::KingTableEg[sq];
-			}
-			else {
-				score += kingVal + psqt::KingTableMg[sq];
-			}*/
-			mgScore += kingVal + psqt::KingTableMg[sq];
-			egScore += kingVal + psqt::KingTableEg[sq];
+			mgScore += kingValMg + psqt::KingTableMg[sq];
+			egScore += kingValMg + psqt::KingTableEg[sq];
 		}
 
 
 		else if (pos->pieceList[sq] == BP) {
-			/*if (endgame) {
-				score -= (pawnVal + psqt::PawnTableEg[psqt::Mirror64[sq]]);
-			}
-			else {
-				score -= (pawnVal + psqt::PawnTableMg[psqt::Mirror64[sq]]);
-			}*/
-
-			mgScore -= (pawnVal + psqt::PawnTableMg[psqt::Mirror64[sq]]);
-			egScore -= (pawnVal + psqt::PawnTableEg[psqt::Mirror64[sq]]);
+			mgScore -= (pawnValMg + psqt::PawnTableMg[psqt::Mirror64[sq]]);
+			egScore -= (pawnValMg + psqt::PawnTableEg[psqt::Mirror64[sq]]);
 
 			if ((blackPassedPawnMasks[sq] & pos->position[WP]) == 0) { // The pawn is a passed pawn
 				mgScore -= passedPawnValue[mirrorRankNum[rankNum]];
@@ -154,8 +135,8 @@ int eval::staticEval(const S_BOARD* pos, int depth, int alpha, int beta) {
 		else if (pos->pieceList[sq] == BN) {
 			phase += 1;
 		
-			mgScore -= (knightVal + psqt::KnightTable[psqt::Mirror64[sq]]);
-			egScore -= (knightVal + psqt::KnightTable[psqt::Mirror64[sq]]);
+			mgScore -= (knightValMg + psqt::KnightTable[psqt::Mirror64[sq]]);
+			egScore -= (knightValMg + psqt::KnightTable[psqt::Mirror64[sq]]);
 
 			mgScore += (8 - BpawnCnt) * 5;
 			egScore += (8 - BpawnCnt) * 7;
@@ -164,15 +145,15 @@ int eval::staticEval(const S_BOARD* pos, int depth, int alpha, int beta) {
 		else if (pos->pieceList[sq] == BB) {
 			phase += 1;
 
-			mgScore -= (bishopVal + psqt::BishopTable[psqt::Mirror64[sq]]);
-			egScore -= (bishopVal + psqt::BishopTable[psqt::Mirror64[sq]]);
+			mgScore -= (bishopValMg + psqt::BishopTable[psqt::Mirror64[sq]]);
+			egScore -= (bishopValMg + psqt::BishopTable[psqt::Mirror64[sq]]);
 		}
 
 		else if (pos->pieceList[sq] == BR) {
 			phase += 2;
 			
-			mgScore -= (rookVal + psqt::RookTable[psqt::Mirror64[sq]]);
-			egScore -= (rookVal + psqt::RookTable[psqt::Mirror64[sq]]);
+			mgScore -= (rookValMg + psqt::RookTable[psqt::Mirror64[sq]]);
+			egScore -= (rookValMg + psqt::RookTable[psqt::Mirror64[sq]]);
 
 			mgScore -= (8 - (BpawnCnt + WpawnCnt)) * 5; // Add value depending on pawn amount.
 			egScore -= (8 - (BpawnCnt + WpawnCnt)) * 7;
@@ -187,19 +168,13 @@ int eval::staticEval(const S_BOARD* pos, int depth, int alpha, int beta) {
 		else if (pos->pieceList[sq] == BQ) {
 			phase += 4;
 
-			mgScore -= (queenVal + psqt::QueenTable[psqt::Mirror64[sq]]);
-			egScore -= (queenVal + psqt::QueenTable[psqt::Mirror64[sq]]);
+			mgScore -= (queenValMg + psqt::QueenTable[psqt::Mirror64[sq]]);
+			egScore -= (queenValMg + psqt::QueenTable[psqt::Mirror64[sq]]);
 		}
 
 		else if (pos->pieceList[sq] == BK) {
-			/*if (endgame) {
-				score -= (kingVal + psqt::KingTableEg[psqt::Mirror64[sq]]);
-			}
-			else {
-				score -= (kingVal + psqt::KingTableMg[psqt::Mirror64[sq]]);
-			}*/
-			mgScore -= (kingVal + psqt::KingTableMg[psqt::Mirror64[sq]]);
-			egScore -= (kingVal + psqt::KingTableEg[psqt::Mirror64[sq]]);
+			mgScore -= (kingValMg + psqt::KingTableMg[psqt::Mirror64[sq]]);
+			egScore -= (kingValMg + psqt::KingTableEg[psqt::Mirror64[sq]]);
 		}
 	}
 
@@ -259,13 +234,13 @@ int eval::staticEval(const S_BOARD* pos, int depth, int alpha, int beta) {
 int eval::getMaterial(const S_BOARD* pos, bool side) {
 	int material = 0;
 	if (side == WHITE) {
-		for (int pce = 0; pce < 6; pce++) {
-			material += (pieceVal[pce]) * countBits(pos->position[pce]);
+		for (int pce = 0; pce < 5; pce++) { // We don't want to include the king here.
+			material += (pieceValMg[pce]) * countBits(pos->position[pce]);
 		}
 	}
 	else {
-		for (int pce = 6; pce < 12; pce++) {
-			material += ((pieceVal[pce]) * countBits(pos->position[pce]));
+		for (int pce = 6; pce < 11; pce++) {
+			material += ((pieceValMg[pce]) * countBits(pos->position[pce]));
 		}
 	}
 	return material;

@@ -112,8 +112,8 @@ int Search::Quiescence(int alpha, int beta, S_BOARD* pos, S_SEARCHINFO* info) {
 			DELTA PRUNING
 			*/
 			
-			if ((stand_pat + eval::pieceVal[pos->pieceList[TOSQ(list.moves[moveNum].move)]] + DELTA < alpha)
-				&& (eval::getMaterial(pos, !pos->whitesMove) - eval::pieceVal[pos->pieceList[TOSQ(list.moves[moveNum].move)]] > ENDGAME_MAT)
+			if ((stand_pat + eval::pieceValMg[pos->pieceList[TOSQ(list.moves[moveNum].move)]] + DELTA < alpha)
+				&& (eval::getMaterial(pos, !pos->whitesMove) - eval::pieceValMg[pos->pieceList[TOSQ(list.moves[moveNum].move)]] > ENDGAME_MAT)
 				&& SPECIAL(list.moves[moveNum].move) != 0) {
 				continue;
 			}
