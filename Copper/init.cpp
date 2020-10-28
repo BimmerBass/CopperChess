@@ -29,6 +29,7 @@ void initAll(BitBoard(&set)[64], BitBoard(&clear)[64]) {
 	initPawnMasks();
 	initHashKeys();
 	initRookSupportMasks();
+	initManhattanDistances();
 
 	initPolyBook();
 }
@@ -256,12 +257,6 @@ void initRookSupportMasks() {
 	
 	}
 }
-
-/*
-
-TODO: Check if the manhattan distances are calculated correctly
-
-*/
 
 
 inline int calcManhattanDistance(int sq1, int sq2) {
