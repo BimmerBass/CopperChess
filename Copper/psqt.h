@@ -2,6 +2,8 @@
 
 /*
 Header file containing all the piece-square tables
+
+TODO: Adjust the endgame piece-square tables.
 */
 
 namespace psqt {
@@ -34,7 +36,7 @@ namespace psqt {
 
 
 	// Knights should be developed to the center, and stay away from the edges.
-	const int KnightTable[64] = {
+	const int KnightTableMg[64] = {
 		-5	,	-15	,	-5	,	-5	,	-5	,	-5	,	-15	,	-5	,
 		-5	,	0	,	0	,	5	,	5	,	0	,	0	,	-5	,
 		-5	,	0	,	15	,	0	,	0	,	15	,	0	,	-5	,
@@ -45,8 +47,19 @@ namespace psqt {
 		-5	,	-5	,	-5	,	-5	,	-5	,	-5	,	-5	,	-5
 	};
 
+	const int KnightTableEg[64] = {
+	-5	,	-15	,	-5	,	-5	,	-5	,	-5	,	-15	,	-5	,
+	-5	,	0	,	0	,	5	,	5	,	0	,	0	,	-5	,
+	-5	,	0	,	15	,	0	,	0	,	15	,	0	,	-5	,
+	-5	,	5	,	5	,	10	,	10	,	5	,	5	,	-5	,
+	-5	,	7	,	7	,	10	,	10	,	7	,	7	,	-5	,
+	-5	,	0	,	5	,	5	,	5	,	5	,	0	,	-5	,
+	-5	,	0	,	0	,	0	,	0	,	0	,	0	,	-5	,
+	-5	,	-5	,	-5	,	-5	,	-5	,	-5	,	-5	,	-5
+	};
+
 	// Bishops should also be developed in the center or to b2 og g2
-	const int BishopTable[64] = {
+	const int BishopTableMg[64] = {
 		-5	,	-5	,	-12	,	-5	,	-5	,	-12	,	-5	,	-5	,
 		-5	,	7	,	5	,	5	,	5	,	5	,	7	,	-5	,
 		-5	,	5	,	7	,	3	,	3	,	7	,	5	,	-5	,
@@ -57,8 +70,19 @@ namespace psqt {
 		-5	,	-5	,	-5	,	-5	,	-5	,	-5	,	-5	,	-5
 	};
 
+	const int BishopTableEg[64] = {
+	-5	,	-5	,	-12	,	-5	,	-5	,	-12	,	-5	,	-5	,
+	-5	,	7	,	5	,	5	,	5	,	5	,	7	,	-5	,
+	-5	,	5	,	7	,	3	,	3	,	7	,	5	,	-5	,
+	-5	,	4	,	7	,	10	,	10	,	7	,	4	,	-5	,
+	-5	,	0	,	5	,	9	,	9	,	5	,	0	,	-5	,
+	-5	,	0	,	0	,	0	,	0	,	0	,	0	,	-5	,
+	-5	,	0	,	0	,	0	,	0	,	0	,	0	,	-5	,
+	-5	,	-5	,	-5	,	-5	,	-5	,	-5	,	-5	,	-5
+	};
+
 	// Rooks are incentivized to move to the center and 7th rank. They will later gain value by occupying open files.
-	const int RookTable[64] = {
+	const int RookTableMg[64] = {
 		-5	,	0	,	0	,	4	,	4	,	0	,	0	,	-5	,
 		-5	,	0	,	0	,	0	,	0	,	0	,	0	,	-5	,
 		-5	,	0	,	0	,	0	,	0	,	0	,	0	,	-5	,
@@ -69,8 +93,19 @@ namespace psqt {
 		10	,	10	,	10	,	10	,	10	,	10	,	10	,	10
 	};
 
+	const int RookTableEg[64] = {
+	-5	,	0	,	0	,	4	,	4	,	0	,	0	,	-5	,
+	-5	,	0	,	0	,	0	,	0	,	0	,	0	,	-5	,
+	-5	,	0	,	0	,	0	,	0	,	0	,	0	,	-5	,
+	-5	,	0	,	0	,	0	,	0	,	0	,	0	,	-5	,
+	-5	,	0	,	0	,	0	,	0	,	0	,	0	,	-5	,
+	-5	,	0	,	0	,	0	,	0	,	0	,	0	,	-5	,
+	20	,	20	,	20	,	20	,	20	,	20	,	20	,	20	,
+	10	,	10	,	10	,	10	,	10	,	10	,	10	,	10
+	};
+
 	// Queen should not occupy the eight'th rank in middlegame, because we want the rooks connected. Small centralization bonus
-	const int QueenTable[64] = {
+	const int QueenTableMg[64] = {
 		-5	,	-5	,	-5	,	-5	,	-5	,	-5	,	-5	,	-5	,
 		0	,	0	,	1	,	1	,	1	,	1	,	0	,	0	,
 		0	,	0	,	1	,	2	,	2	,	1	,	0	,	0	,
@@ -79,6 +114,17 @@ namespace psqt {
 		0	,	0	,	1	,	2	,	2	,	1	,	0	,	0	,
 		0	,	0	,	1	,	1	,	1	,	1	,	0	,	0	,
 		0	,	0	,	0	,	0	,	0	,	0	,	0	,	0
+	};
+
+	const int QueenTableEg[64] = {
+	-5	,	-5	,	-5	,	-5	,	-5	,	-5	,	-5	,	-5	,
+	0	,	0	,	1	,	1	,	1	,	1	,	0	,	0	,
+	0	,	0	,	1	,	2	,	2	,	1	,	0	,	0	,
+	0	,	0	,	2	,	3	,	3	,	2	,	0	,	0	,
+	0	,	0	,	2	,	3	,	3	,	2	,	0	,	0	,
+	0	,	0	,	1	,	2	,	2	,	1	,	0	,	0	,
+	0	,	0	,	1	,	1	,	1	,	1	,	0	,	0	,
+	0	,	0	,	0	,	0	,	0	,	0	,	0	,	0
 	};
 
 

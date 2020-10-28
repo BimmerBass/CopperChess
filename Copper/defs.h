@@ -460,12 +460,21 @@ namespace eval {
 		kingValMg = 20000
 	};
 
-	enum egValues : int {
+	/*
 		pawnValEg = 200,
 		knightValEg = 560,
 		bishopValEg = 600,
 		rookValEg = 1200,
 		queenValEg = 2300,
+		kingValEg = 20000
+	*/
+
+	enum egValues : int {
+		pawnValEg = 100,
+		knightValEg = 320,
+		bishopValEg = 350,
+		rookValEg = 560,
+		queenValEg = 1050,
 		kingValEg = 20000
 	};
 
