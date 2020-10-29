@@ -37,3 +37,9 @@ void S_EVALCACHE::storeEvaluation(const S_BOARD* pos, int& score) {
 	entry[index].score = score;
 }
 
+void S_EVALCACHE::clearCache() {
+	for (int index = 0; index < numEntries; index++) {
+		entry[index].posKey = 0;
+		entry[index].score = 0;
+	}
+}

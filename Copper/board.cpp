@@ -7,7 +7,7 @@ INCLUDES THE FUNCTIONS:
 - BoardRepresentation::displayBoardState
 */
 
-void BoardRep::displayBoardState(S_BOARD board) {
+void BoardRep::displayBoardState(S_BOARD& board) {
 	std::string output = "................................................................";
 	for (int index = 0; index < 12; index++) {
 		for (int i = 0; i < 64; i++) {
@@ -182,6 +182,7 @@ void BoardRep::clearBoard(S_BOARD* pos) {
 	pos->fiftyMove = 0;
 
 	TT::clearTable(pos->transpositionTable);
+	pos->evaluationCache->clearCache();
 
 	pos->is_checkmate = false;
 	pos->is_stalemate = false;

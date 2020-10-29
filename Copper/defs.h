@@ -14,6 +14,7 @@
 
 // Returns x*1MB for transposition table size.
 //#define MB(x) (0x100000 * x)
+#define KB(x) (x << 10)
 #define MB(x) (x << 20)
 #define GB(x) (x << 30)
 
@@ -195,12 +196,12 @@ public:
 	bool probeCache(const S_BOARD* pos, int& score);
 	void storeEvaluation(const S_BOARD* pos, int& score);
 
+	void clearCache();
 private:
 
 	S_EVALENTRY* entry = nullptr;
 	int numEntries;
 };
-
 
 
 // Undo-move structure. Contains information that can't be implied directly from a current position.
@@ -214,8 +215,8 @@ struct S_UNDO {
 	int enPassantSq = NO_SQ;
 	int fiftyMove = 0;
 
-	BitBoard key = 0;
-	
+	uint64_t key = 0;
+	uint64_t pawnHash = 0;
 };
 
 // Contains all undo-move structures, to make it possible to undo many moves.
@@ -233,7 +234,7 @@ struct S_BOARD {
 	S_SIDE whitesMove;
 	bool inCheck = false;
 
-	BitBoard posKey = 0;
+	uint64_t posKey = 0;
 
 	// Special moves
 	int castlePerms = 0;
@@ -249,7 +250,7 @@ struct S_BOARD {
 	// Create a transposition table with default size of 2GB.
 	S_TABLE *transpositionTable = new S_TABLE(1, true);
 	S_EVALCACHE* evaluationCache = new S_EVALCACHE(500); // Allocate 500MB for static evaluations.
-	
+
 	bool is_checkmate = false;
 	bool is_stalemate = false;
 	
@@ -340,7 +341,7 @@ inline BitBoard CLRBIT(BitBoard bb, int sq) {
 	return (uint64_t)(bb & ClearMask[sq]);
 }
 
-// Find the max/min of two numbers. Will be used when tempered evaluation is included.
+
 template <class T> const T& max(const T& a, const T& b) {
 	return (a < b) ? b : a;     // or: return comp(a,b)?b:a; for version (2)
 }
@@ -431,7 +432,7 @@ namespace BoardRep {
 
 	S_BOARD* arrayToBitboards(std::string arrayRepresentation[8][8], S_SIDE white, bool castlingPermitions[4], int enPassant = NO_SQ);
 
-	void displayBoardState(S_BOARD board); // print out position from 12 bitboards
+	void displayBoardState(S_BOARD &board); // print out position from 12 bitboards
 	void parseFen(const char* fen, S_BOARD& pos);
 
 	void clearBoard(S_BOARD* pos);
@@ -484,7 +485,8 @@ namespace eval {
 
 
 // hashkeys.cpp
-BitBoard generatePosKey(const S_BOARD* pos);
+uint64_t generatePosKey(const S_BOARD* pos);
+uint64_t generatePawnHash(const S_BOARD* pos); // Will be used for the future pawn hash table.
 
 
 // init.cpp

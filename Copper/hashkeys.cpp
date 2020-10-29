@@ -3,10 +3,31 @@
 /*
 INCLUDES THE FUNCTIONS:
     - generatePosKey
+    - generatePawnHash
 */
 
-BitBoard generatePosKey(const S_BOARD* pos) {
-    BitBoard finalKey = 0;
+uint64_t generatePawnHash(const S_BOARD* pos) {
+    uint64_t finalKey = 0;
+
+    BitBoard pawnBoard = pos->position[WP];
+    if (pawnBoard != 0) {
+        while (pawnBoard != 0) {
+            finalKey ^= pieceKeys[WP][PopBit(&pawnBoard)];
+        }
+    }
+
+    pawnBoard = pos->position[BP];
+    if (pawnBoard != 0) {
+        while (pawnBoard != 0) {
+            finalKey ^= pieceKeys[BP][PopBit(&pawnBoard)];
+        }
+    }
+
+    return finalKey;
+}
+
+uint64_t generatePosKey(const S_BOARD* pos) {
+    uint64_t finalKey = 0;
 
     for (int pce_t = 0; pce_t < 12; pce_t++) {
         BitBoard brd = pos->position[pce_t];

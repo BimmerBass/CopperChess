@@ -47,6 +47,7 @@ void MoveGeneration::undoMove(S_BOARD &board){
 		board.EMPTY_SQUARES = ~(board.WHITE_PIECES | board.BLACK_PIECES);
 		
 		board.posKey = previousPos.key;
+
 		board.ply -= 1;
 		board.history.moveCount -= 1;
 	}
@@ -73,6 +74,7 @@ void MoveGeneration::makeMove(S_BOARD &board, int move){
 
 	positionDescriptors.key = board.posKey;
 	positionDescriptors.inCheck = board.inCheck;
+
 
 	int destination = move >> 10;
 	int origin = (move >> 4) & 63;
@@ -133,8 +135,6 @@ void MoveGeneration::makeMove(S_BOARD &board, int move){
 				board.position[pieceCaptured] = CLRBIT(board.position[pieceCaptured], destination);
 			}
 		}
-
-
 	}
 
 
