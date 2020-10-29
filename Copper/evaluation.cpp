@@ -27,7 +27,12 @@ int eval::staticEval(const S_BOARD* pos, int depth, int alpha, int beta) {
 	int bPawnCnt = countBits(pos->position[BP]);
 
 
-	// ADD EVALUATION CACHE HERE
+	/*
+	We'll first probe the evaluation hash table to see if this position has already been evaluated
+	*/
+	if (pos->evaluationCache->probeCache(pos, value)) {
+		return value;
+	}
 
 	for (int sq = 0; sq < 64; sq++) {
 		if (pos->pieceList[sq] == NO_PIECE) {
@@ -150,6 +155,9 @@ int eval::staticEval(const S_BOARD* pos, int depth, int alpha, int beta) {
 	else {
 		value -= 18;
 	}
+
+	// Add the evaluation to the evaluation has table for future lookup
+	pos->evaluationCache->storeEvaluation(pos, value);
 
 	return value;
 }

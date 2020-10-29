@@ -8,14 +8,16 @@ INCLUDES THE FUNCTIONS:
 
 inline bool InCheck(const S_BOARD* pos) {
 	if (pos->whitesMove == WHITE) {
-		if (sqAttacked(pos->kingPos[0], BLACK, pos)) {
+		/*if (sqAttacked(pos->kingPos[0], BLACK, pos)) {
 			return true;
-		}
+		}*/
+		return sqAttacked(pos->kingPos[0], BLACK, pos);
 	}
 	else {
-		if (sqAttacked(pos->kingPos[1], WHITE, pos)) {
+		/*if (sqAttacked(pos->kingPos[1], WHITE, pos)) {
 			return true;
-		}
+		}*/
+		return sqAttacked(pos->kingPos[1], WHITE, pos);
 	}
 	return false;
 }

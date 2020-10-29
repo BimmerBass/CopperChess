@@ -30,7 +30,7 @@ bool S_EVALCACHE::probeCache(const S_BOARD* pos, int& score) {
 }
 
 
-void S_EVALCACHE::storeEvaluation(const S_BOARD* pos, int score) {
+void S_EVALCACHE::storeEvaluation(const S_BOARD* pos, int& score) {
 	int index = pos->posKey % numEntries;
 
 	entry[index].posKey = pos->posKey;

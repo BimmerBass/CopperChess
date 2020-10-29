@@ -90,14 +90,14 @@ int Search::Quiescence(int alpha, int beta, S_BOARD* pos, S_SEARCHINFO* info) {
 
 	if (list.count == 0) {
 		if (sqAttacked(kingSq, !pos->whitesMove, pos)) {
-			return -INFINITE + pos->ply;
+			return -INF + pos->ply;
 		}
 		else {
 			return 0;
 		}
 	}
 
-	int score = -INFINITE;
+	int score = -INF;
 	int captures = 0;
 
 	for (int moveNum = 0; moveNum < list.count; moveNum++) {
@@ -111,7 +111,7 @@ int Search::Quiescence(int alpha, int beta, S_BOARD* pos, S_SEARCHINFO* info) {
 			/*
 			DELTA PRUNING
 			*/
-			/*
+
 			if ((stand_pat + eval::pieceValMg[pos->pieceList[TOSQ(list.moves[moveNum].move)]] + DELTA < alpha)
 				&& (eval::getMaterial(pos, !pos->whitesMove) - eval::pieceValMg[pos->pieceList[TOSQ(list.moves[moveNum].move)]] > ENDGAME_MAT)
 				&& SPECIAL(list.moves[moveNum].move) != 0) {
@@ -154,8 +154,8 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 	/*
 	MATE DISTANCE PRUNING
 	*/
-	if (alpha < -(INFINITE - pos->ply)) { alpha = -(INFINITE - pos->ply); }
-	if (beta > ((INFINITE - pos->ply) - 1)) { beta = (INFINITE - pos->ply) - 1; }
+	if (alpha < -(INF - pos->ply)) { alpha = -(INF - pos->ply); }
+	if (beta > ((INF - pos->ply) - 1)) { beta = (INF - pos->ply) - 1; }
 	if (alpha >= beta) { return alpha; }
 	/*
 	END OF MATE DISTANCE PRUNING
@@ -167,9 +167,9 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 		
 	}
 
-	int bestScore = -INFINITE;
+	int bestScore = -INF;
 	int bestMove = NOMOVE;
-	int value = -INFINITE;
+	int value = -INF;
 	int oldAlpha = alpha;
 
 	bool f_prune = false;
@@ -197,7 +197,7 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 	
 	if (list.count == 0) {
 		if (sqAttacked(kingSq, !pos->whitesMove, pos)) {
-			return -INFINITE + pos->ply; // Checkmate at this depth
+			return -INF + pos->ply; // Checkmate at this depth
 		}
 		else {
 			return 0; // stalemate
@@ -386,14 +386,14 @@ int Search::searchRoot(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, i
 	S_MOVELIST moves;
 	MoveGeneration::validMoves(pos, moves);
 	int bestMove = NOMOVE;
-	int bestScore = -INFINITE;
-	int value = -INFINITE;
+	int bestScore = -INF;
+	int value = -INF;
 	int oldAlpha = alpha;
 
 	if (moves.count == 0) {
 		int kingSq = (pos->whitesMove == WHITE) ? pos->kingPos[0] : pos->kingPos[1];
 		if (sqAttacked(kingSq, !pos->whitesMove, pos) == true) {
-			return -INFINITE;
+			return -INF;
 		}
 		else {
 			return 0;
@@ -446,7 +446,7 @@ int Search::search_widen(S_BOARD* pos, S_SEARCHINFO* info, int depth, int value)
 	
 	// If value is outside of [value-ASPIRATION, value+ASPIRATION], a re-search has to be done.
 	if ((temp <= alpha) || (temp >= beta)) {
-		temp = searchRoot(pos, info, depth, -INFINITE, INFINITE);
+		temp = searchRoot(pos, info, depth, -INF, INF);
 	}
 	return temp;
 }
@@ -458,8 +458,8 @@ MTD(f) is experimental and not used yet.
 
 */
 int Search::MTDF(S_BOARD* pos, S_SEARCHINFO* info, int estimate, int depth) {
-	int lowerBound = -INFINITE;
-	int upperBound = INFINITE;
+	int lowerBound = -INF;
+	int upperBound = INF;
 	int score = estimate;
 
 	int alpha = 0;
@@ -494,7 +494,7 @@ void Search::searchPosition(S_BOARD* pos, S_SEARCHINFO* info) {
 		std::cout << "Found a book move!" << std::endl;
 	}
 	// Search to depth 1 to get estimate of value, and pad this to get the aspiration window.
-	int score = searchRoot(pos, info, 1, -INFINITE, INFINITE);
+	int score = searchRoot(pos, info, 1, -INF, INF);
 	long long nps = 0;
 	int mateDist = 0;
 
@@ -510,13 +510,13 @@ void Search::searchPosition(S_BOARD* pos, S_SEARCHINFO* info) {
 			nps = (info->nodes) / ((getTimeMs() - info->starttime) * 0.001);
 
 			if (score > MATE) { // We can deliver checkmate
-				mateDist = (INFINITE - score) / 2;
+				mateDist = (INF - score) / 2;
 				/*
 				int side = (pos->whitesMove == WHITE) ? 1 : -1;
 				mateDist = side * (INFINITE - score) / 2;*/
 			}
 			else if (score < -MATE) { // We are being checkmated.
-				mateDist = -(INFINITE - score) / 2;
+				mateDist = -(INF - score) / 2;
 				/*
 				int side = (pos->whitesMove == WHITE) ? -1 : 1;
 				mateDist = side * (score + INFINITE) / 2;*/

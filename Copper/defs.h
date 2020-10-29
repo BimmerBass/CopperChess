@@ -23,8 +23,8 @@
 #define NOMOVE 0
 #define MAXDEPTH 64
 
-#define INFINITE 30000
-#define MATE (INFINITE - MAXDEPTH)
+#define INF 30000
+#define MATE (INF - MAXDEPTH)
 
 #define START_FEN "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
@@ -193,7 +193,7 @@ public:
 	~S_EVALCACHE();
 
 	bool probeCache(const S_BOARD* pos, int& score);
-	void storeEvaluation(const S_BOARD* pos, int score);
+	void storeEvaluation(const S_BOARD* pos, int& score);
 
 private:
 
