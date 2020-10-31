@@ -22,7 +22,8 @@ The engine still has bugs[4][5][6] (described below) and weaknesses, and have th
     - Ray-lookup tables for sliding pieces.
     - Legal-move generation function[2].
     - **Perft @ depth 5 speed is around: 1 second.** (from starting position)
-- Relatively simple static evaluation function
+- Static evaluation function
+    - It is being re-written at the moment.
     - Has the following piece-values in centipawns:
         - Pawn: 100
         - Knight: 310
@@ -32,21 +33,54 @@ The engine still has bugs[4][5][6] (described below) and weaknesses, and have th
         - King: 20000
         - These values can be tweaked to adjust how bold the engine's playstyle is.
         - I am currently working on giving different piece-values in the endgame as pwns for example become more valuable.
-    - Piece-square tables. For the piece types where it is relevant, there are tables for both the middlegame and endgame.
-    - Pawn structure.
-        - Having all eight pawns is slightly penalized as they tend to clutter the board.
-        - Isolated and doubled pawns are penalized.
-        - Passed pawns are rewarded.
-    - Reward for the side to move (18 cp)
-    - Having the bishop pair is rewarded.
-    - Rooks and knights recieve bonuses and penalties respectively, depending on the number of pawns present on the board.
-    - If the e- or d-pawns are still on the second rank, bishops are penalized for occupying e3 and d3 respectively.
-    - Being in check is penalized.
-    - Having rooks behind passed pawns are rewarded.
-    - Having two rooks on the seventh rank as white or on the second as black are also rewarded.
-    - Soon, a penalty will be added if the opponent has a rook behind one of "our" passed pawns.
-    - Manhattan-center distance in the endgame.
-    - Tapered evaluation based on amount of non-pawn and non-king material on the board.
+    - Piece-square tables. I am working on adjusting the endgame-specific tables (at the moment, many are the same as middlegame psqt's)
+    - King evaluation:
+        - Bonus for castling
+        - Penalty for being on other ranks than the back rank in middlegame.
+        - Bonus for manhattan distance to enemy king in endgame (should increase towards the late endgame)
+        - Bonus for centralization in endgame. Either using Manhattan center distance or just having a hardcoded piece-square table.
+    - Queen evaluation:
+        - Penalty for early development (only applicable in middlegame). Will perhaps be determined based on amount of pieces on the back rank.
+        - Bonus for decreased manhattan distance to opponent king. This bonus will be increased in the endgame.
+        - Bonus for being on the same file, rank or diagonal as the enemy king.
+    - Rook evaluation:
+        - Small bonus for being on the same file (perhaps also rank) as the enemy queen, and bigger bonus for being on the same file as enemy king.
+        - Bonus for having connected rooks on the back rank in the middlegame.
+        - Bonus for being doubled.
+        - Bonus for being on the seventh rank.
+        - Bonus for having to rooks on the seventh rank (also known as pigs on the seventh).
+        - Bonus for being on an open or semi open file. Could be done for white like this: rookVal += 40 - 13.3 * pawnCnt(file)
+        - Bonus for being on the E and D file in the middlegame.
+        - Inversely proportional bonus to the amount of own pawns on the board.
+        - Bonus for defending one of our own passed pawns.
+        - Extra bonus for being behind an enemy passed pawn.
+    - Bishop evaluation:
+        - Bonus if we have the bishop pair.
+        - Bonus inversely proportional to amount of pawns on the diagonals occupied.
+        - Bonus for being on our side of the board in the middlegame. (e.g. for white: being on the 1st, 2nd, 3rd or 4th rank).
+        - Bonus if there are pawns on both sides (queenside and kingside) of the board in the endgame.
+        - Bonus for being on the other side of the enemy king (for example, a bishop on B2 is better than one on G2 if black has castled kingside).
+        - Bonus for being on the same square color as the enemy king.
+        - Bonus for early development.
+        - Penalty for being developed such that it blocks either the E2 or D2 pawn.
+        - Bonus for being on the same diagonal as the enemy king.
+    - Knight evaluation:
+        - Bonus for centralization.
+        - Penalty each time a pawn of the same color gets removed from the board.
+        - Penalty in the endgame if there are pawns on both sides of the board.
+        - Bonus for being on an outpost (we can determine this using the passed pawn bitmasks, we just need to remove the middle file). Extra bonus if defended by a pawn.
+    - Pawn evaluation (pawn structure evaluation):
+        - I will be implementing a pawn hash table as pawn structure evaluation is quite slow, but i have not found an efficient way to do so yet.
+        - Bonus if defended by another pawn.
+        - Bonus if it is a passed pawn.
+        - Penalty for being advanced if it is in front of the castled king.
+        - Penalty for being doubled.
+        - Penalty if isolated. This should be smaller than the bonus for being passed as it would otherwise deincentivize having passed pawns.
+        - Extra bonus for connected passed pawns.
+        - Bonus for central advancement in the middlegame.
+        - Bonus for being advanced on the edge in the endgame.
+    - Small bonus for tempo (being the side to move).
+    - A tapered evaluation will be used to transition into a more endgame-specific evaluation as pieces dissapear from the board.
 - **Search function**: The search includes the following methods and tables
     - Iterative deepening with Alpha-Beta Pruning.
     - Aspiration windows for narrowed search.
