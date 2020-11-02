@@ -26,10 +26,10 @@ The engine still has bugs[4][5][6] (described below) and weaknesses, and have th
     - It is being re-written at the moment.
     - Has the following piece-values in centipawns:
         - Pawn: 100
-        - Knight: 310
+        - Knight: 320
         - Bishop: 350
-        - Rook: 520
-        - Queen: 900
+        - Rook: 560
+        - Queen: 1050
         - King: 20000
         - These values can be tweaked to adjust how bold the engine's playstyle is.
         - I am currently working on giving different piece-values in the endgame as pwns for example become more valuable.
