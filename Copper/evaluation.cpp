@@ -163,7 +163,6 @@ int eval::staticEval(const S_BOARD* pos, int depth, int alpha, int beta) {
 }
 
 
-
 int eval::getMaterial(const S_BOARD* pos, bool side) {
 	int material = 0;
 	if (side == WHITE) {

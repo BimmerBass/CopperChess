@@ -400,6 +400,7 @@ int Search::searchRoot(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, i
 		}
 	}
 
+
 	for (int i = 0; i < moves.count; i++) {
 		pickNextMove(i, &moves);
 
@@ -442,46 +443,22 @@ int Search::search_widen(S_BOARD* pos, S_SEARCHINFO* info, int depth, int value)
 	int alphaCount = 2;
 	int betaCount = 2;
 
+	aspiration_widen:
 	temp = searchRoot(pos, info, depth, alpha, beta);
 	
-	// If value is outside of [value-ASPIRATION, value+ASPIRATION], a re-search has to be done.
-	if ((temp <= alpha) || (temp >= beta)) {
-		temp = searchRoot(pos, info, depth, -INF, INF);
+	// For stability, it is usually best to only widen the bound that failed instead of both.
+	if (temp >= beta) {
+		beta += ASPIRATION / 2;
+		goto aspiration_widen;
 	}
+	else if (temp <= alpha) {
+		alpha -= ASPIRATION / 2;
+		goto aspiration_widen;
+	}
+
 	return temp;
 }
 
-
-/*
-
-MTD(f) is experimental and not used yet.
-
-*/
-int Search::MTDF(S_BOARD* pos, S_SEARCHINFO* info, int estimate, int depth) {
-	int lowerBound = -INF;
-	int upperBound = INF;
-	int score = estimate;
-
-	int alpha = 0;
-	int beta = 0;
-
-	while (lowerBound < upperBound) {
-		beta = max(score, lowerBound + 1);
-
-		score = searchRoot(pos, info, depth, beta - 1, beta);
-		
-		if (score < beta) {
-			upperBound = score;
-		}
-		else {
-			lowerBound = score;
-		}
-	}
-	return score;
-}
-/*
-END OF EXPERIMENTAL MTDF
-*/
 
 void Search::searchPosition(S_BOARD* pos, S_SEARCHINFO* info) {
 	int bestMove = NOMOVE;

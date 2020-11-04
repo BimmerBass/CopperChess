@@ -83,7 +83,7 @@ namespace psqt {
 
 	// Rooks are incentivized to move to the center and 7th rank. They will later gain value by occupying open files.
 	const int RookTableMg[64] = {
-		-5	,	0	,	0	,	4	,	4	,	0	,	0	,	-5	,
+		-5	,	0	,	0	,	6	,	6	,	0	,	0	,	-5	,
 		-5	,	0	,	0	,	0	,	0	,	0	,	0	,	-5	,
 		-5	,	0	,	0	,	0	,	0	,	0	,	0	,	-5	,
 		-5	,	0	,	0	,	0	,	0	,	0	,	0	,	-5	,

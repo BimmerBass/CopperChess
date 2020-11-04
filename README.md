@@ -37,7 +37,6 @@ The engine still has bugs[4][5][6] (described below) and weaknesses, and have th
     - King evaluation:
         - Bonus for castling
         - Penalty for being on other ranks than the back rank in middlegame.
-        - Bonus for manhattan distance to enemy king in endgame (should increase towards the late endgame)
         - Bonus for centralization in endgame. Either using Manhattan center distance or just having a hardcoded piece-square table.
     - Queen evaluation:
         - Penalty for early development (only applicable in middlegame). Will perhaps be determined based on amount of pieces on the back rank.
@@ -45,7 +44,6 @@ The engine still has bugs[4][5][6] (described below) and weaknesses, and have th
         - Bonus for being on the same file, rank or diagonal as the enemy king.
     - Rook evaluation:
         - Small bonus for being on the same file (perhaps also rank) as the enemy queen, and bigger bonus for being on the same file as enemy king.
-        - Bonus for having connected rooks on the back rank in the middlegame.
         - Bonus for being doubled.
         - Bonus for being on the seventh rank.
         - Bonus for having to rooks on the seventh rank (also known as pigs on the seventh).
@@ -57,7 +55,6 @@ The engine still has bugs[4][5][6] (described below) and weaknesses, and have th
     - Bishop evaluation:
         - Bonus if we have the bishop pair.
         - Bonus inversely proportional to amount of pawns on the diagonals occupied.
-        - Bonus for being on our side of the board in the middlegame. (e.g. for white: being on the 1st, 2nd, 3rd or 4th rank).
         - Bonus if there are pawns on both sides (queenside and kingside) of the board in the endgame.
         - Bonus for being on the other side of the enemy king (for example, a bishop on B2 is better than one on G2 if black has castled kingside).
         - Bonus for being on the same square color as the enemy king.

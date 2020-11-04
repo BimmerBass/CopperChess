@@ -69,6 +69,11 @@ extern int MvvLva[12][12];
 const int fMargin[4] = { 0, 200, 300, 500 };
 
 
+const uint64_t KING_SIDE = 17361641481138401520;
+const uint64_t QUEEN_SIDE = 1085102592571150095;
+const uint64_t DARK_SQUARES = 12273903644374837845;
+
+
 const BitBoard EMPTY = std::stoull("0000000000000000000000000000000000000000000000000000000000000000", nullptr, 2);
 const BitBoard UNIVERSE = std::stoull("1111111111111111111111111111111111111111111111111111111111111111", nullptr, 2);
 
@@ -81,6 +86,18 @@ const BitBoard FileMasks8[8] =/*from fileA to FileH*/
 	0x101010101010101L, 0x202020202020202L, 0x404040404040404L, 0x808080808080808L,
 	0x1010101010101010L, 0x2020202020202020L, 0x4040404040404040L, 0x8080808080808080L
 };
+
+// Indexed by 7 + rank - file
+// The diagonals start at the h1-h1 and end in the a8-a8
+const uint64_t diagonalMasks[15] = { 128, 32832, 8405024, 2151686160, 550831656968, 141012904183812, 36099303471055874,
+	9241421688590303745, 4620710844295151872, 2310355422147575808, 1155177711073755136, 577588855528488960,
+	288794425616760832, 144396663052566528, 72057594037927936 };
+
+// Indexed by: rank + file
+// Anti-diagonals go from a1-a1 to h8-h8
+const uint64_t antidiagonalMasks[15] = { 1, 258, 66052, 16909320, 4328785936, 1108169199648, 283691315109952,
+	72624976668147840, 145249953336295424, 290499906672525312, 580999813328273408,
+	1161999622361579520, 2323998145211531264, 4647714815446351872, 9223372036854775808 };
 
 // Constants for countBits function
 const uint64_t m1 = 0x5555555555555555;
@@ -296,6 +313,32 @@ INLINE FUNCTIONS
 					(BitBoard)std::rand() << 45 | \
 					((BitBoard)std::rand() & 0xf) << 60 )
 
+// Used for debugging bitboards in copperMain.cpp
+inline void printBitboard(uint64_t bb) {
+	for (int rank = 7; rank >= 0; rank--) {
+
+		for (int file = 0; file < 8; file++) {
+			if (((bb >> (8 * rank + file)) & 1) == 1) {
+				std::cout << "X";
+			}
+			else {
+				std::cout << "-";
+			}
+		}
+		std::cout << "\n";
+	}
+	std::cout << "\n\n";
+}
+
+
+// Used in evaluation.cpp
+inline bool squaresOnSameDiagonalOrAntiDiagonal(int sq1, int sq2) {
+	if (((sq2 / 8) - (sq1 / 8)) == ((sq2 % 8) - (sq1 % 8)) || (((sq2 / 8) - (sq1 / 8)) + ((sq2 % 8) - (sq1 % 8))) == 0) {
+		return true;
+	}
+	return false;
+}
+
 // Used in evaluation.cpp
 inline int countBits(uint64_t x) { // Count amount of turned on bits in a uint64_t number
 	x -= (x >> 1) & m1;
@@ -441,6 +484,13 @@ namespace BoardRep {
 // evaluation.cpp
 namespace eval {
 	int staticEval(const S_BOARD* pos, int depth, int alpha, int beta);
+
+	void kingEval(const S_BOARD* pos, int& mgScore, int& egScore, int& score, int sq);
+	void queenEval(const S_BOARD* pos, int& mgScore, int& egScore, int& score, int sq);
+	void rookEval(const S_BOARD* pos, int& mgScore, int& egScore, int& score, int sq);
+	void bishopEval(const S_BOARD* pos, int& mgScore, int& egScore, int& score, int sq);
+	void knightEval(const S_BOARD* pos, int& mgScore, int& egScore, int& score, int sq);
+	void pawnEval(const S_BOARD* pos, int& mgScore, int& egScore, int& score, int sq);
 
 	int getMaterial(const S_BOARD* pos, bool side);
 
