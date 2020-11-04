@@ -482,8 +482,18 @@ namespace BoardRep {
 };
 
 // evaluation.cpp
+int addPsqtVal(int sq, int pce, bool eg);
 namespace eval {
 	int staticEval(const S_BOARD* pos, int depth, int alpha, int beta);
+
+	int material_mg(const S_BOARD* pos);
+	int material_eg(const S_BOARD* pos);
+	void material_both(const S_BOARD* pos, int& v_mg, int& v_eg);
+
+	int psqt_mg(const S_BOARD* pos);
+	int psqt_eg(const S_BOARD* pos);
+
+	int phase(const S_BOARD* pos);
 
 	void kingEval(const S_BOARD* pos, int& mgScore, int& egScore, int& score, int sq);
 	void queenEval(const S_BOARD* pos, int& mgScore, int& egScore, int& score, int sq);

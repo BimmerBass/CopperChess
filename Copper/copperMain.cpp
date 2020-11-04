@@ -1,6 +1,7 @@
 #include "defs.h"
 
 
+
 int main() {
 	initAll(SetMask, ClearMask);
 

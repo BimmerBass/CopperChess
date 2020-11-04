@@ -6,160 +6,170 @@ INCLUDES THE FUNCTIONS:
 	- staticEval(S_BOARD* board)
 	- getMaterial(const S_BOARD* pos, bool side)
 */
+using namespace psqt;
+
+
+int addPsqtVal(int sq, int pce, bool eg) {
+	if (eg == true) {
+		switch (pce) {
+		case WP: return PawnTableEg[sq];
+		case WN: return KnightTableEg[sq];
+		case WB: return BishopTableEg[sq];
+		case WR: return RookTableEg[sq];
+		case WQ: return QueenTableEg[sq];
+		case WK: return KingTableEg[sq];
+
+		case BP: return -PawnTableEg[Mirror64[sq]];
+		case BN: return -KnightTableEg[Mirror64[sq]];
+		case BB: return -BishopTableEg[Mirror64[sq]];
+		case BR: return -RookTableEg[Mirror64[sq]];
+		case BQ: return -QueenTableEg[Mirror64[sq]];
+		case BK: return -KingTableEg[Mirror64[sq]];
+		}
+	}
+
+	else {
+		switch (pce) {
+		case WP: return PawnTableMg[sq];
+		case WN: return KnightTableMg[sq];
+		case WB: return BishopTableMg[sq];
+		case WR: return RookTableMg[sq];
+		case WQ: return QueenTableMg[sq];
+		case WK: return KingTableMg[sq];
+
+		case BP: return -PawnTableMg[Mirror64[sq]];
+		case BN: return -KnightTableMg[Mirror64[sq]];
+		case BB: return -BishopTableMg[Mirror64[sq]];
+		case BR: return -RookTableMg[Mirror64[sq]];
+		case BQ: return -QueenTableMg[Mirror64[sq]];
+		case BK: return -KingTableMg[Mirror64[sq]];
+		}
+	}
+}
 
 const int passedPawnValue[8] = { 0, 5, 10, 25, 35, 60, 100, 140 };
 
 const int mirrorRankNum[8] = { 7 , 6 , 5 , 4 , 3 , 2 , 1 , 0 };
 
 // Alpha and beta are added because lazy evaluation will be added in the future.
-using namespace psqt;
 int eval::staticEval(const S_BOARD* pos, int depth, int alpha, int beta) {
-	int value = 0;
-	int phase = 0;
+	int v_main = 0;
+	int v_mg = 0;
+	int v_eg = 0;
 
-	int mgScore = 0;
-	int mgWeight = 0;
-
-	int egScore = 0;
-	int egWeight = 0;
-
-	int wPawnCnt = countBits(pos->position[WP]);
-	int bPawnCnt = countBits(pos->position[BP]);
-
-
-	/*
-	We'll first probe the evaluation hash table to see if this position has already been evaluated
-	*/
-	if (pos->evaluationCache->probeCache(pos, value)) {
-		return value;
+	// Check to see if we get a hit from the evaluation cache.
+	if (pos->evaluationCache->probeCache(pos, v_main) == true) {
+		return v_main;
 	}
 
-	for (int sq = 0; sq < 64; sq++) {
-		if (pos->pieceList[sq] == NO_PIECE) {
-			continue;
+	// Calculate the game-phase, the middlegame weight and the endgame weight
+	int p = phase(pos);
+	if (p > 24) { p = 24; }
+	int weight_mg = p;
+	int weight_eg = 24 - p;
+
+	// Add material differences
+	v_mg += material_mg(pos);
+	v_eg += material_eg(pos);
+
+
+	// Add psqt values
+	v_mg += psqt_mg(pos);
+	v_eg += psqt_eg(pos);
+
+	v_main = ((v_mg * weight_mg) + (v_eg * weight_eg)) / 24;
+
+	v_main += (pos->whitesMove == WHITE) ? 18 : -18;
+
+	// Store the evaluation in the evaluation cache
+	pos->evaluationCache->storeEvaluation(pos, v_main);
+
+	return v_main;
+}
+
+int eval::material_mg(const S_BOARD* pos) {
+	int v = 0;
+
+	v += pawnValMg * (countBits(pos->position[WP]) - countBits(pos->position[BP]));
+	v += knightValMg * (countBits(pos->position[WN]) - countBits(pos->position[BN]));
+	v += bishopValMg * (countBits(pos->position[WB]) - countBits(pos->position[BB]));
+	v += rookValMg * (countBits(pos->position[WR]) - countBits(pos->position[BR]));
+	v += queenValMg * (countBits(pos->position[WQ]) - countBits(pos->position[BQ]));
+	v += kingValMg * (countBits(pos->position[WK]) - countBits(pos->position[BK]));
+
+	return v;
+}
+
+int eval::material_eg(const S_BOARD* pos) {
+	int v = 0;
+
+	v += pawnValEg * (countBits(pos->position[WP]) - countBits(pos->position[BP]));
+	v += knightValEg * (countBits(pos->position[WN]) - countBits(pos->position[BN]));
+	v += bishopValEg * (countBits(pos->position[WB]) - countBits(pos->position[BB]));
+	v += rookValEg * (countBits(pos->position[WR]) - countBits(pos->position[BR]));
+	v += queenValEg * (countBits(pos->position[WQ]) - countBits(pos->position[BQ]));
+	v += kingValEg * (countBits(pos->position[WK]) - countBits(pos->position[BK]));
+
+	return v;
+}
+
+void eval::material_both(const S_BOARD* pos, int& v_mg, int& v_eg) {
+	int pawnDiff = countBits(pos->position[WP]) - countBits(pos->position[BP]);
+	int knightDiff = countBits(pos->position[WN]) - countBits(pos->position[BN]);
+	int bishopDiff = countBits(pos->position[WB]) - countBits(pos->position[BB]);
+	int rookDiff = countBits(pos->position[WR]) - countBits(pos->position[BR]);
+	int queenDiff = countBits(pos->position[WQ]) - countBits(pos->position[BQ]);
+	int kingDiff = countBits(pos->position[WK]) - countBits(pos->position[BK]);
+
+	v_eg += pawnValEg * pawnDiff + 
+		knightValEg * knightDiff + 
+		bishopValEg * bishopDiff + 
+		rookValEg * rookDiff + 
+		queenValEg * queenDiff + 
+		kingValEg * kingDiff;
+	v_mg += pawnValMg * pawnDiff +
+		knightValMg * knightDiff +
+		bishopValMg * bishopDiff +
+		rookValMg * rookDiff +
+		queenValMg * queenDiff +
+		kingValMg * kingDiff;
+}
+
+int eval::psqt_mg(const S_BOARD* pos) {
+	int v = 0;
+
+	for (int pce = 0; pce < 12; pce++) {
+		BitBoard pceBoard = pos->position[pce];
+
+		while (pceBoard != 0) {
+			v += addPsqtVal(PopBit(&pceBoard), pce, false);
 		}
-
-		else if (pos->pieceList[sq] == WP){
-			mgScore += pawnValMg + PawnTableMg[sq];
-			egScore += pawnValEg + PawnTableEg[sq];
-
-			continue;
-		}
-
-		else if (pos->pieceList[sq] == WN) {
-			phase += 1;
-
-			mgScore += knightValMg + KnightTableMg[sq];
-			egScore += knightValEg + KnightTableEg[sq];
-
-			continue;
-		}
-		
-		else if (pos->pieceList[sq] == WB) {
-			phase += 1;
-
-			mgScore += bishopValMg + BishopTableMg[sq];
-			egScore += bishopValEg + BishopTableEg[sq];
-
-			continue;
-		}
-		
-		else if (pos->pieceList[sq] == WR) {
-			phase += 2;
-
-			mgScore += rookValMg + RookTableMg[sq];
-			egScore += rookValEg + RookTableEg[sq];
-
-			continue;
-		}
-		
-		else if (pos->pieceList[sq] == WQ) {
-			phase += 4;
-
-			mgScore += queenValMg + QueenTableMg[sq];
-			egScore += queenValEg + QueenTableEg[sq];
-
-			continue;
-		}
-		
-		else if (pos->pieceList[sq] == WK) {
-			mgScore += kingValMg + KingTableMg[sq];
-			egScore += kingValEg + KingTableEg[sq];
-
-			continue;
-		}
-
-
-		else if (pos->pieceList[sq] == BP) {
-			mgScore -= (pawnValMg + PawnTableMg[Mirror64[sq]]);
-			egScore -= (pawnValEg + PawnTableEg[Mirror64[sq]]);
-
-			continue;
-		}
-		
-		else if (pos->pieceList[sq] == BN) {
-			phase += 1;
-
-			mgScore -= (knightValMg + KnightTableMg[Mirror64[sq]]);
-			egScore -= (knightValEg + KnightTableEg[Mirror64[sq]]);
-
-			continue;
-		}
-		
-		else if (pos->pieceList[sq] == BB) {
-			phase += 1;
-
-			mgScore -= (bishopValMg + BishopTableMg[Mirror64[sq]]);
-			egScore -= (bishopValEg + BishopTableEg[Mirror64[sq]]);
-
-			continue;
-		}
-		
-		else if (pos->pieceList[sq] == BR) {
-			phase += 2;
-
-			mgScore -= (rookValMg + RookTableMg[Mirror64[sq]]);
-			egScore -= (rookValEg + RookTableEg[Mirror64[sq]]);
-
-			continue;
-		}
-		
-		else if (pos->pieceList[sq] == BQ) {
-			phase += 4;
-
-			mgScore -= (queenValMg + QueenTableMg[Mirror64[sq]]);
-			egScore -= (queenValEg + QueenTableEg[Mirror64[sq]]);
-
-			continue;
-		}
-		
-		else if (pos->pieceList[sq] == BK) {
-			mgScore -= (kingValMg + KingTableMg[Mirror64[sq]]);
-			egScore -= (kingValEg + KingTableEg[Mirror64[sq]]);
-
-			continue;
-		}
-
 	}
+	return v;
+}
 
-	// The phase increases with material meaning that the mgWeight should increase and the egWeight should decrease as the phase increases.
-	if (phase > 24) { phase = 24; }
-	mgWeight = phase;
-	egWeight = 24 - phase;
+int eval::psqt_eg(const S_BOARD* pos) {
+	int v = 0;
 
-	value = ((mgScore * mgWeight) + (egScore * egWeight)) / 24;
+	for (int pce = 0; pce < 12; pce++) {
+		BitBoard pceBoard = pos->position[pce];
 
-	if (pos->whitesMove == WHITE) {
-		value += 18;
+		while (pceBoard != 0) {
+			v += addPsqtVal(PopBit(&pceBoard), pce, true);
+		}
 	}
-	else {
-		value -= 18;
-	}
+	return v;
+}
 
-	// Add the evaluation to the evaluation has table for future lookup
-	pos->evaluationCache->storeEvaluation(pos, value);
+int eval::phase(const S_BOARD* pos) {
+	int p = 0;
 
-	return value;
+	p += 1 * countBits(pos->position[WN] | pos->position[BN]);
+	p += 1 * countBits(pos->position[WB] | pos->position[BB]);
+	p += 2 * countBits(pos->position[WR] | pos->position[BR]);
+	p += 4 * countBits(pos->position[WQ] | pos->position[BQ]);
+
+	return p;
 }
 
 

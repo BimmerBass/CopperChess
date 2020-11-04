@@ -34,10 +34,10 @@ public:
     }
 
     void Stop() {
-        auto start = std::chrono::time_point_cast<std::chrono::microseconds>(m_Starttime).time_since_epoch().count();
-        auto end = std::chrono::time_point_cast<std::chrono::microseconds>(m_Endtime).time_since_epoch().count();
+        auto start = std::chrono::time_point_cast<std::chrono::nanoseconds>(m_Starttime).time_since_epoch().count();
+        auto end = std::chrono::time_point_cast<std::chrono::nanoseconds>(m_Endtime).time_since_epoch().count();
         double elapsed = end - start;
-        std::cout << "Elapsed: " << elapsed << " [us], (" << elapsed / 1000 << " [ms])" << std::endl;
+        std::cout << "Elapsed: " << elapsed << " [ns], (" << elapsed / 1000 << " [us])" << std::endl;
     }
 
 private:

@@ -400,6 +400,17 @@ int Search::searchRoot(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, i
 		}
 	}
 
+	// Check for the best move at the moment, and score this highest (if there's any)
+	int pvMove = TT::probePvMove(pos);
+	if (pvMove != NOMOVE) {
+		for (int i = 0; i < 64; i++) {
+			if (moves.moves[i].move == pvMove) {
+				moves.moves[i].score = 2000000;
+				break;
+			}
+		}
+	}
+
 
 	for (int i = 0; i < moves.count; i++) {
 		pickNextMove(i, &moves);
@@ -440,8 +451,6 @@ int Search::searchRoot(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, i
 // Aspiration window search.
 int Search::search_widen(S_BOARD* pos, S_SEARCHINFO* info, int depth, int value) {
 	int temp = value, alpha = value - ASPIRATION, beta = value + ASPIRATION;
-	int alphaCount = 2;
-	int betaCount = 2;
 
 	aspiration_widen:
 	temp = searchRoot(pos, info, depth, alpha, beta);
@@ -455,7 +464,6 @@ int Search::search_widen(S_BOARD* pos, S_SEARCHINFO* info, int depth, int value)
 		alpha -= ASPIRATION / 2;
 		goto aspiration_widen;
 	}
-
 	return temp;
 }
 
