@@ -1,5 +1,4 @@
-#include "defs.h"
-#include "psqt.h"
+#include "evaluation.h"
 
 /*
 INCLUDES THE FUNCTIONS:

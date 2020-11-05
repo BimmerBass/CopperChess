@@ -137,25 +137,3 @@ void attacks::negativeDiagAttacks(BitBoard &attackRays, BitBoard OCCUPIED, int d
     }
     attackRays |= attacks;
 }
-
-bool badCapture(const S_BOARD* pos, int move) {
-    // Pawn captures can't lose material, so they cant be bad.
-    if (pos->pieceList[FROMSQ(move)] == WP || pos->pieceList[FROMSQ(move)] == BP) { return false; }
-
-    // If the piece captures is of much higher value than the one moved, it isn't a bad capture either.
-    if (eval::pieceValMg[pos->pieceList[TOSQ(move)]] >= eval::pieceValMg[pos->pieceList[FROMSQ(move)]] - 30) {
-        return false;
-    }
-
-    // If the piece is defended by a pawn, it is a bad capture
-    // Rook takes minor is accepted though.
-    BitBoard defendedSquares = (pos->whitesMove == WHITE) ? (((pos->position[WP] & ~FileMasks8[FILE_H]) << 9) | ((pos->position[WP] & ~FileMasks8[FILE_A]) << 7)) 
-        : (((pos->position[BP] & ~FileMasks8[FILE_H]) >> 7) | ((pos->position[BP] & ~FileMasks8[FILE_A]) >> 9));
-    if ((((uint64_t)1 << TOSQ(move)) & defendedSquares) != 0 &&
-        eval::pieceValMg[pos->pieceList[TOSQ(move)]] + 200 - eval::pieceValMg[pos->pieceList[TOSQ(move)]] < 0) {
-        return true;
-    }
-
-    return 0;
-
-}

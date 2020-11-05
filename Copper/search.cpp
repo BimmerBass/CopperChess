@@ -1,6 +1,9 @@
 #include "defs.h"
+#include "evaluation.h"
 
-#define ASPIRATION 50 // Size of aspiration window on each side of previous score. Taken from https://www.chessprogramming.org/CPW-Engine_search
+
+#define ASPIRATION 20 // Size of initial aspiration windows.
+
 
 #define ENDGAME_MAT 1350 // The lower this value becomes, the more delta-cutoffs we get. It is a fine balance between accuracy and speed in quiescence search.
 #define DELTA 200 // The delta safety margin for quiescence search. Raise this to get a more accurate quiescence evaluation at the cost of lowered speed.
@@ -448,23 +451,36 @@ int Search::searchRoot(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, i
 }
 
 
-// Aspiration window search.
-int Search::search_widen(S_BOARD* pos, S_SEARCHINFO* info, int depth, int value) {
-	int temp = value, alpha = value - ASPIRATION, beta = value + ASPIRATION;
+// Aspiration window search. Inspired by Stockfish's implementation.
+int Search::search_widen(S_BOARD* pos, S_SEARCHINFO* info, int depth, int estimate) {
+	int alpha = -INF;
+	int beta = INF;
+	int delta = alpha;
+	int v = -INF;
 
-	aspiration_widen:
-	temp = searchRoot(pos, info, depth, alpha, beta);
-	
-	// For stability, it is usually best to only widen the bound that failed instead of both.
-	if (temp >= beta) {
-		beta += ASPIRATION / 2;
-		goto aspiration_widen;
+	if (depth >= 5){
+		delta = ASPIRATION;
+		alpha = max(estimate - delta, -INF);
+		beta = min(estimate + delta, INF);
 	}
-	else if (temp <= alpha) {
-		alpha -= ASPIRATION / 2;
-		goto aspiration_widen;
+
+asp_search:
+	v = searchRoot(pos, info, depth, alpha, beta);
+
+	if (v <= alpha) {
+		beta = (alpha + beta) / 2;
+		alpha = max(v - delta, -INF);
+
+		delta += (delta / 4) + 5;
+		goto asp_search;
 	}
-	return temp;
+	else if (v >= beta) {
+		beta = min(v + delta, INF);
+		delta += (delta / 4) + 5;
+		goto asp_search;
+	}
+
+	return v;
 }
 
 

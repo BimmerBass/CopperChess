@@ -147,6 +147,7 @@
   <ItemGroup>
     <ClInclude Include="code_analysis.h" />
     <ClInclude Include="defs.h" />
+    <ClInclude Include="evaluation.h" />
     <ClInclude Include="polykeys.h" />
     <ClInclude Include="psqt.h" />
     <ClInclude Include="resource.h" />

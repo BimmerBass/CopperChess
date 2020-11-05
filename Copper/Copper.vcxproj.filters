@@ -33,6 +33,9 @@
     <ClInclude Include="polykeys.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="evaluation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="init.cpp">
