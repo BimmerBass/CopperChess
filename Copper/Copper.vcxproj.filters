@@ -59,9 +59,6 @@
     <ClCompile Include="copperMain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="evaluation.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="hashkeys.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -90,6 +87,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="utils.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="main_eval.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -159,7 +159,7 @@
     <ClCompile Include="board.cpp" />
     <ClCompile Include="copperMain.cpp" />
     <ClCompile Include="evalcache.cpp" />
-    <ClCompile Include="evaluation.cpp" />
+    <ClCompile Include="main_eval.cpp" />
     <ClCompile Include="hashkeys.cpp" />
     <ClCompile Include="init.cpp" />
     <ClCompile Include="misc.cpp" />
