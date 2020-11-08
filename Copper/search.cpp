@@ -106,7 +106,7 @@ int Search::Quiescence(int alpha, int beta, S_BOARD* pos, S_SEARCHINFO* info) {
 	for (int moveNum = 0; moveNum < list.count; moveNum++) {
 		pickNextMove(moveNum, &list);
 
-		// We'll only search captures and promotions
+		// We'll only search captures (+en-passant) and promotions
 		if (pos->pieceList[TOSQ(list.moves[moveNum].move)] != NO_PIECE || SPECIAL(list.moves[moveNum].move) == 0
 			|| SPECIAL(list.moves[moveNum].move) == 1) {
 			captures++;
@@ -212,7 +212,7 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 	if (bestMove != NOMOVE) {
 		for (int i = 0; i < list.count; i++) {
 			if (list.moves[i].move == bestMove) {
-				list.moves[i].score = 2000000;
+				list.moves[i].score = 4000000;
 				break;
 			}
 		}
@@ -350,34 +350,46 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 
 		if (info->stopped == true) { return 0; }
 
-			if (value > alpha) {
-				bestMove = list.moves[moveNum].move;
-				bestScore = value;
-				if (value >= beta) {
-					if (moveNum == 0) {
-						info->fhf++;
+		if (value > alpha) {
+
+			bestMove = list.moves[moveNum].move;
+
+			if (value >= beta) {
+				if (moveNum == 0) {
+					info->fhf++;
+				}
+				info->fh++;
+
+				// Update killer moves*
+				if (pos->pieceList[TOSQ(list.moves[moveNum].move)] == NO_PIECE) { // Move is not a capture
+					pos->killerMoves[pos->ply][1] = pos->killerMoves[pos->ply][0]; // move first move to the last index
+					pos->killerMoves[pos->ply][0] = list.moves[moveNum].move; // Replace first move with this move.
+
+
+					// Update the history heuristics
+					pos->historyHeuristic[pos->pieceList[FROMSQ(bestMove)]][TOSQ(bestMove)] += depth*depth;
+
+					// If the search is super deep, the history table will overflow, so we'll half all the values if this happens at one of them.
+					if (pos->historyHeuristic[pos->pieceList[FROMSQ(bestMove)]][TOSQ(bestMove)] > 900000) {
+						for (int pce = 0; pce < 12; pce++) {
+							for (int sq = 0; sq < 64; sq++) {
+								pos->historyHeuristic[pce][sq] = pos->historyHeuristic[pce][sq] / 2;
+							}
+						}
 					}
-					info->fh++;
 
-					// Update killer moves*
-					if (pos->pieceList[TOSQ(list.moves[moveNum].move)] == NO_PIECE) { // Move is not a capture
-						pos->killerMoves[pos->ply][1] = pos->killerMoves[pos->ply][0]; // move first move to the last index
-						pos->killerMoves[pos->ply][0] = list.moves[moveNum].move; // Replace first move with this move.
-					}
-
-					TT::storeEntry(pos, bestMove, depth, UPPER, beta);
-
-					return beta;
 				}
 
-				raised_alpha = 1;
-				alpha = value;
+				TT::storeEntry(pos, bestMove, depth, UPPER, beta);
 
-				// Update history heuristics
-				if (pos->pieceList[TOSQ(bestMove)] == NO_PIECE) {
-					pos->historyHeuristic[pos->pieceList[FROMSQ(bestMove)]][TOSQ(bestMove)] += depth;
-				}
+				return beta;
 			}
+
+			raised_alpha = 1;
+			alpha = value;
+			bestScore = value;
+
+		}
 	}
 
 	if (alpha != oldAlpha) {
