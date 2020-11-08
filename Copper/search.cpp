@@ -176,6 +176,7 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 	int oldAlpha = alpha;
 
 	bool f_prune = false;
+	bool flagInCheck = pos->inCheck; // We won't do LMR if we are getting out of check
 
 	if ((info->nodes & 2047) == 0) {
 		CheckUp(info);
@@ -227,7 +228,7 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 		&& abs(beta - 1) > -MATE) {
 		int static_eval = side * eval::staticEval(pos, depth, alpha, beta);
 
-		int eval_margin = 120 * depth;
+		int eval_margin = 120 * depth; // FIXME: Tune this value
 		
 		if (static_eval - eval_margin >= beta) {
 			return (static_eval - eval_margin);
@@ -307,7 +308,8 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 
 		if (new_depth > 3
 			&& moves_tried > 3 
-			&& !pos->inCheck &&
+			&& !pos->inCheck
+			&& !flagInCheck &&
 			pos->killerMoves[pos->ply][0] != list.moves[moveNum].move
 			&& pos->killerMoves[pos->ply][1] != list.moves[moveNum].move
 			&& pos->pieceList[TOSQ(list.moves[moveNum].move)] != NO_PIECE
@@ -319,12 +321,23 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 				reduction_depth += 1;
 			}
 
-			new_depth = (reduction_depth > 0) ? (new_depth - reduction_depth) : new_depth;
+			//new_depth = (reduction_depth > 0) ? (new_depth - reduction_depth) : new_depth;
+			new_depth -= reduction_depth;
 		}
 
 		re_search:
 
+		// Here we introduce PVS search.
 		value = -alphabeta(pos, info, new_depth, -beta, -alpha, true);
+		/*if (!raised_alpha) {
+			value = -alphabeta(pos, info, new_depth, -beta, -alpha, true);
+		}
+		else {
+			// First try to refute a move. If it fails, do a real search
+			if (-alphabeta(pos, info, new_depth, -alpha - 1, -alpha, true) > alpha) {
+				value = -alphabeta(pos, info, new_depth, -beta, -alpha, true);
+			}
+		}*/
 
 		// Sometimes reduced search brings us above alpha. Then we'll have to retry
 		if (reduction_depth && value > alpha) {
@@ -338,8 +351,6 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 		if (info->stopped == true) { return 0; }
 
 			if (value > alpha) {
-				raised_alpha = 1;
-
 				bestMove = list.moves[moveNum].move;
 				bestScore = value;
 				if (value >= beta) {
@@ -358,6 +369,8 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 
 					return beta;
 				}
+
+				raised_alpha = 1;
 				alpha = value;
 
 				// Update history heuristics

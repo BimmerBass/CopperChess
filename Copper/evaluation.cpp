@@ -21,6 +21,33 @@ int eval::eg_evaluate(const S_BOARD* pos) {
 	return v;
 }
 
+int eval::imbalance(const S_BOARD* pos) {
+	int v = 0;
+
+	// Give bonus for bishop pair
+	v += (countBits(pos->position[WB]) >= 2) ? bishop_pair : 0;
+	v -= (countBits(pos->position[BB]) >= 2) ? bishop_pair : 0;
+
+	// Penalty for knight pair
+	v -= (countBits(pos->position[WN]) >= 2) ? p_knight_pair : 0;
+	v += (countBits(pos->position[BN]) >= 2) ? p_knight_pair : 0;
+
+	// Penalty for rook pair
+	v -= (countBits(pos->position[WR]) >= 2) ? p_rook_pair : 0;
+	v += (countBits(pos->position[BR]) >= 2) ? p_rook_pair : 0;
+
+	// Bonus to rooks depending on amount of pawns removed
+	int wPwnCnt = countBits(pos->position[WP]);
+	int bPwnCnt = countBits(pos->position[BP]);
+	v += (pos->position[WR] != 0) ? rook_pawn_bonus * (8 - wPwnCnt) : 0;
+	v -= (pos->position[BR] != 0) ? rook_pawn_bonus * (8 - bPwnCnt) : 0;
+
+	v -= (pos->position[WN] != 0) ? knight_pawn_penalty * (8 - wPwnCnt) : 0;
+	v += (pos->position[BN] != 0) ? knight_pawn_penalty * (8 - bPwnCnt) : 0;
+
+	return v;
+}
+
 // Compute the material difference in the middlegame
 int eval::material_mg(const S_BOARD* pos) {
 	int v = 0;

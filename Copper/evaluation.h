@@ -2,16 +2,11 @@
 #include "defs.h"
 #include "psqt.h"
 
-// Constants
-const int tempo = 18; // The value added to the side to move.
-
-// The below imbalances are taken from GM Larry Kaufman's paper, "The evaluation of piece imbalances"
-const int bishop_pair = eval::pawnValMg / 2;
-const int knight_pawn_penalty = eval::pawnValMg / 8;
-const int rook_pawn_bonus = eval::pawnValMg / 16;
-
-const int passedPawnValue[8] = { 0, 5, 10, 25, 35, 60, 100, 140 };
-const int mirrorRankNum[8] = { 7 , 6 , 5 , 4 , 3 , 2 , 1 , 0 };
+enum PieceType {
+	NO_PIECE_TYPE, PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING,
+	ALL_PIECES = 0,
+	PIECE_TYPE_NB = 8
+};
 
 
 
@@ -20,7 +15,9 @@ int addPsqtVal(int sq, int pce, bool eg);
 namespace eval {
 	int staticEval(const S_BOARD* pos, int depth, int alpha, int beta);
 
-	int imbalance(const S_BOARD* pos);
+	int imbalance(const S_BOARD* pos); // Tord Romstad's second order polynomial imbalance will be implemented at some point. For now, we only give a
+	// bonus for bishop pair and penalty for rook and knight pair. We also raise and lower the rooks and knights value depending on amount of pawns
+	// respectively
 
 	int mg_evaluate(const S_BOARD* pos);
 	int eg_evaluate(const S_BOARD* pos);
@@ -80,3 +77,19 @@ namespace eval {
 	static int pieceValMg[13] = { pawnValMg, knightValMg, bishopValMg, rookValMg, queenValMg, kingValMg,
 	pawnValMg, knightValMg, bishopValMg, rookValMg, queenValMg, kingValMg, 0 };
 }
+
+// Constants
+const int tempo = 18; // The value added to the side to move.
+
+// The below imbalances are taken from GM Larry Kaufman's paper, "The evaluation of piece imbalances"
+// The ratios are taken from the CPW-engine
+const int bishop_pair = eval::pawnValMg / 2;
+const int p_knight_pair = (int)((double)bishop_pair / 3.75);
+const int p_rook_pair = (int)((double)bishop_pair / 1.875);
+
+
+const int knight_pawn_penalty = eval::pawnValMg / 8;
+const int rook_pawn_bonus = eval::pawnValMg / 16;
+
+const int passedPawnValue[8] = { 0, 5, 10, 25, 35, 60, 100, 140 };
+const int mirrorRankNum[8] = { 7 , 6 , 5 , 4 , 3 , 2 , 1 , 0 };

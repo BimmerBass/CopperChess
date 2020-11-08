@@ -29,6 +29,8 @@ int eval::staticEval(const S_BOARD* pos, int depth, int alpha, int beta) {
 
 	v_main = ((v_mg * weight_mg) + (v_eg * weight_eg)) / 24;
 
+	v_main += imbalance(pos);
+
 	v_main += (pos->whitesMove == WHITE) ? tempo : -tempo;
 
 	// Store the evaluation in the evaluation cache
