@@ -1,4 +1,5 @@
 #pragma once
+#include "defs.h"
 
 /*
 Header file containing all the piece-square tables
@@ -8,11 +9,11 @@ TODO: Adjust the endgame piece-square tables.
 
 namespace psqt {
 	// Pawns are incentivized to develop in the center, and to not move in front of a castled king.
-	// The f-pawn is punished for being pushed, as this usually weakens the structure too much.
+	// Pawns in front of the king will be evaluated in the piece-evaluations.
 	const int PawnTableMg[64] = {
 		0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,
 		10	,	10	,	10	,	-15	,	-15	,	0	,	10	,	10	,
-		5	,	0	,	-10	,	-10	,	-10	,	0	,	0	,	5	,
+		5	,	0	,	0	,	-10	,	-10	,	0	,	0	,	5	,
 		-3	,	-5	,	-5	,	15	,	15	,	5	,	0	,	0	,
 		-6	,	-10	,	-5	,	7	,	7	,	0	,	0	,	0	,
 		0	,	-5	,	5	,	2	,	2	,	0	,	0	,	0	,
@@ -20,16 +21,16 @@ namespace psqt {
 		0	,	0	,	0	,	0	,	0	,	0	,	0	,	0
 	};
 
-	// In the endgame, we generally want the pawns to advance. The increase gets bigger as the ranks go up because we dont want the engine to
-	//  think that a pawn on e3 is 0.2 pawns better than one on e2.
+	// In the endgame, we generally want the pawns to advance. The engine is incentivized to push pawns on the sides, but this difference
+	// isn't that big
 	const int PawnTableEg[64]{
 		0   ,   0   ,   0   ,   0   ,   0   ,   0   ,   0   ,   0   ,
-		15  ,   15  ,   15  ,   15  ,   15  ,   15  ,   15  ,   15  ,
-		15  ,   15  ,   15  ,   15  ,   15  ,   15  ,   15  ,   15  ,
-		30  ,   30  ,   30  ,   30  ,   30  ,   30  ,   30  ,   30  ,
-		50  ,   50  ,   50  ,   50  ,   50  ,   50  ,   50  ,   50  ,
-		70  ,   70  ,   70  ,   70  ,   70  ,   70  ,   70  ,   70  ,
-		140 ,   150 ,   155 ,   160 ,   160 ,   155 ,   150 ,   140 ,
+		10  ,   10  ,   10  ,   10  ,   10  ,   10  ,   10  ,   10  ,
+		17  ,   16  ,   15  ,   15  ,   15  ,   15  ,   16  ,   17  ,
+		36  ,   33  ,   30  ,   30  ,   30  ,   30  ,   33  ,   36  ,
+		58  ,   54  ,   50  ,   50  ,   50  ,   50  ,   54  ,   58  ,
+		80  ,   75  ,   70  ,   70  ,   70  ,   70  ,   75  ,   80  ,
+		160 ,   155 ,   145 ,   140 ,   140 ,   145 ,   155 ,   160 ,
 		0   ,   0   ,   0   ,   0   ,   0   ,   0   ,   0   ,   0
 	};
 
@@ -163,5 +164,20 @@ namespace psqt {
 		H2, G2, F2, E2, D2, C2, B2, A2,
 		H1, G1, F1, E1, D1, C1, B1, A1,
 	};
+
+
+	// A pawn-square table for the penalties of blocking a pawn.
+#define S(mg, eg) make_score(mg, eg)
+	const Score blockedPawnTable[64] = {
+		S(0, 0),	S(0, 0),	S(0, 0),	S(0, 0),	S(0, 0),	S(0, 0),	S(0, 0),	S(0, 0),
+		S(0, 0),	S(0, 0),	S(0, 0),	S(0, 0),	S(0, 0),	S(0, 0),	S(0, 0),	S(0, 0),
+		S(0, 0),	S(-2, 0),	S(0, 0),	S(-15, 0),	S(-15, 0),	S(0, 0),	S(-2, 0),	S(0, 0),
+		S(0, 0),	S(0, 0),	S(0, 0),	S(-10, 0),	S(-10, 0),	S(0, 0),	S(0, 0),	S(0, 0),
+		S(0, 0),	S(0, 0),	S(0, 0),	S(0, 0),	S(0, 0),	S(0, 0),	S(0, 0),	S(0, 0),
+		S(0, 0),	S(0, 0),	S(0, 0),	S(0, 0),	S(0, 0),	S(0, 0),	S(0, 0),	S(0, 0),
+		S(0, -5),	S(0, -5),	S(0, -5),	S(0, -5),	S(0, -5),	S(0, -5),	S(0, -5),	S(0, -5),
+		S(0, -10),	S(0, -10),	S(0, -10),	S(0, -10),	S(0, -10),	S(0, -10),	S(0, -10),	S(0, -10)
+	};
+#undef S
 }
 

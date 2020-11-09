@@ -42,6 +42,7 @@ extern BitBoard sideKey;
 extern BitBoard castleKeys[16];
 
 // Bitmasks for isolated and passed pawns
+// The passed pawns masks can actually be used by the other side to see if their pawn is a backwards pawn.
 extern BitBoard whitePassedPawnMasks[64];
 extern BitBoard blackPassedPawnMasks[64];
 extern BitBoard isolatedPawnMasks[8]; // One for each file.
@@ -69,19 +70,19 @@ extern int MvvLva[12][12];
 const int fMargin[4] = { 0, 200, 300, 500 };
 
 
-const uint64_t KING_SIDE = 17361641481138401520;
-const uint64_t QUEEN_SIDE = 1085102592571150095;
-const uint64_t DARK_SQUARES = 12273903644374837845;
+constexpr uint64_t KING_SIDE = 17361641481138401520;
+constexpr uint64_t QUEEN_SIDE = 1085102592571150095;
+constexpr uint64_t DARK_SQUARES = 12273903644374837845;
 
 
-const BitBoard EMPTY = std::stoull("0000000000000000000000000000000000000000000000000000000000000000", nullptr, 2);
-const BitBoard UNIVERSE = std::stoull("1111111111111111111111111111111111111111111111111111111111111111", nullptr, 2);
+const uint64_t EMPTY = std::stoull("0000000000000000000000000000000000000000000000000000000000000000", nullptr, 2);
+const uint64_t UNIVERSE = std::stoull("1111111111111111111111111111111111111111111111111111111111111111", nullptr, 2);
 
-const BitBoard RankMasks8[8] =/*from rank1 to rank8*/
+constexpr uint64_t RankMasks8[8] =/*from rank1 to rank8*/
 {
 	255, 65280, 16711680, 4278190080, 1095216660480, 280375465082880, 71776119061217280, 18374686479671623680
 };
-const BitBoard FileMasks8[8] =/*from fileA to FileH*/
+constexpr uint64_t FileMasks8[8] =/*from fileA to FileH*/
 {
 	0x101010101010101L, 0x202020202020202L, 0x404040404040404L, 0x808080808080808L,
 	0x1010101010101010L, 0x2020202020202020L, 0x4040404040404040L, 0x8080808080808080L
@@ -89,24 +90,24 @@ const BitBoard FileMasks8[8] =/*from fileA to FileH*/
 
 // Indexed by 7 + rank - file
 // The diagonals start at the h1-h1 and end in the a8-a8
-const uint64_t diagonalMasks[15] = { 128, 32832, 8405024, 2151686160, 550831656968, 141012904183812, 36099303471055874,
+constexpr uint64_t diagonalMasks[15] = { 128, 32832, 8405024, 2151686160, 550831656968, 141012904183812, 36099303471055874,
 	9241421688590303745, 4620710844295151872, 2310355422147575808, 1155177711073755136, 577588855528488960,
 	288794425616760832, 144396663052566528, 72057594037927936 };
 
 // Indexed by: rank + file
 // Anti-diagonals go from a1-a1 to h8-h8
-const uint64_t antidiagonalMasks[15] = { 1, 258, 66052, 16909320, 4328785936, 1108169199648, 283691315109952,
+constexpr uint64_t antidiagonalMasks[15] = { 1, 258, 66052, 16909320, 4328785936, 1108169199648, 283691315109952,
 	72624976668147840, 145249953336295424, 290499906672525312, 580999813328273408,
 	1161999622361579520, 2323998145211531264, 4647714815446351872, 9223372036854775808 };
 
 // Constants for countBits function
-const uint64_t m1 = 0x5555555555555555;
-const uint64_t m2 = 0x3333333333333333;
-const uint64_t m4 = 0x0f0f0f0f0f0f0f0f;
-const uint64_t h01 = 0x0101010101010101;
+constexpr uint64_t m1 = 0x5555555555555555;
+constexpr uint64_t m2 = 0x3333333333333333;
+constexpr uint64_t m4 = 0x0f0f0f0f0f0f0f0f;
+constexpr uint64_t h01 = 0x0101010101010101;
 
 // Constants for bitScanForward and bitScanReverse.
-const int index64[64] = {
+constexpr int index64[64] = {
 	0, 47,  1, 56, 48, 27,  2, 60,
    57, 49, 41, 37, 28, 16,  3, 61,
    54, 58, 35, 52, 50, 42, 21, 44,
@@ -118,7 +119,7 @@ const int index64[64] = {
 };
 
 // For the popBit function.
-const int BitTable[64] = {
+constexpr int BitTable[64] = {
   63, 30, 3, 32, 25, 41, 22, 33, 15, 50, 42, 13, 11, 53, 19, 34, 61, 29, 2,
   51, 21, 43, 45, 10, 18, 47, 1, 54, 9, 57, 0, 35, 62, 31, 40, 4, 49, 5, 52,
   26, 60, 6, 23, 44, 46, 27, 56, 16, 7, 39, 48, 24, 59, 14, 12, 55, 38, 28,
@@ -345,6 +346,23 @@ inline int countBits(uint64_t x) { // Count amount of turned on bits in a uint64
 	x = (x & m2) + ((x >> 2) & m2);
 	x = (x + (x >> 4)) & m4;
 	return (x * h01) >> 56;
+}
+
+
+// Taken from stockfish. Used in the evaluation function and psqt.h
+enum Score :int { SCORE_ZERO };
+constexpr Score make_score(int mg, int eg) {
+	return Score((int)((unsigned int)eg << 16) + mg);
+}
+
+inline int eg_value(Score s) {
+	union { uint16_t u; int16_t s; } eg = { uint16_t(unsigned(s + 0x8000) >> 16) };
+	return int(eg.s);
+}
+
+inline int mg_value(Score s) {
+	union { uint16_t u; int16_t s; } mg = { uint16_t(unsigned(s)) };
+	return int(mg.s);
 }
 
 

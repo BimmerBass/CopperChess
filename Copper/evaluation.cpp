@@ -7,6 +7,7 @@ int eval::mg_evaluate(const S_BOARD* pos) {
 
 	v += material_mg(pos);
 	v += psqt_mg(pos);
+	v += pawns_mg(pos);
 	
 	return v;
 }
@@ -17,6 +18,126 @@ int eval::eg_evaluate(const S_BOARD* pos) {
 
 	v += material_eg(pos);
 	v += psqt_eg(pos);
+	v += pawns_eg(pos);
+
+	return v;
+}
+/*
+int pawns_mg(const S_BOARD* pos);
+int pawns_eg(const S_BOARD* pos);*/
+int eval::pawns_mg(const S_BOARD* pos) {
+	int v = 0;
+
+	int index = NO_SQ;
+
+	BitBoard whitePawns = pos->position[WP];
+	BitBoard blackPawns = pos->position[BP];
+
+	// Penalty for doubled pawns
+	v -= doubled_penalty * (doubledCnt(whitePawns) - doubledCnt(blackPawns));
+
+	while (whitePawns != 0) {
+		index = PopBit(&whitePawns);
+
+		// Passed pawn bonus
+		v += ((whitePassedPawnMasks[index] & pos->position[BP]) == 0) ? passedPawnValue[index / 8] : 0;
+
+		// Doubled and isolated
+		bool doubled = (countBits(FileMasks8[index % 8] & pos->position[WP]) >= 2) ? true : false;
+		bool isolated = (((pos->position[WP] ^ ((uint64_t)1 << index)) & isolatedPawnMasks[index % 8]) == 0) ? true : false;
+
+		if (doubled && isolated) { v -= 11; }
+		else if (isolated) { v -= 5; }
+
+		// Penalty if the pawn is blocked by a friendly piece
+		if ((((pos->WHITE_PIECES ^ pos->position[WP]) >> (index + 8)) & 1) == 1) {
+			v += mg_value(psqt::blockedPawnTable[index + 8]);
+		}
+
+		// Bonus for being supported by another pawn
+		int supportPawns = (pos->position[WP] & ((uint64_t)1 << (index - 9))) | (pos->position[WP] & ((uint64_t)1 << (index - 7)));
+		v += 5 * countBits(supportPawns);
+	}
+
+	while (blackPawns != 0) {
+		index = PopBit(&blackPawns);
+
+		v -= ((blackPassedPawnMasks[index] & pos->position[WP]) == 0) ? passedPawnValue[mirrorRankNum[index / 8]] : 0;
+
+		bool doubled = (countBits(FileMasks8[index % 8] & pos->position[BP]) >= 2) ? true : false;
+		bool isolated = (((pos->position[BP] ^ ((uint64_t)1 << index)) & isolatedPawnMasks[index % 8]) == 0) ? true : false;
+
+		if (doubled && isolated) { v += 11; }
+		else if (isolated) { v += 5; }
+
+		// Penalty if the pawn is blocked by a friendly piece
+		if ((((pos->BLACK_PIECES ^ pos->position[BP]) >> (index - 8)) & 1) == 1) {
+			v -= mg_value(psqt::blockedPawnTable[psqt::Mirror64[index - 8]]);
+		}
+
+		// Bonus for being supported
+		int supportPawns = (pos->position[BP] & ((uint64_t)1 << (index + 9))) | (pos->position[BP] & ((uint64_t)1 << (index + 7)));
+		v += 5 * countBits(supportPawns);
+	}
+
+	return v;
+}
+
+
+int eval::pawns_eg(const S_BOARD* pos) {
+	int v = 0;
+
+	int index = NO_SQ;
+
+	BitBoard whitePawns = pos->position[WP];
+	BitBoard blackPawns = pos->position[BP];
+
+	// Penalty for doubled pawns
+	v -= 56 * (doubledCnt(whitePawns) - doubledCnt(blackPawns));
+
+	while (whitePawns != 0) {
+		index = PopBit(&whitePawns);
+
+		// Passed pawn bonus
+		v += ((whitePassedPawnMasks[index] & pos->position[BP]) == 0) ? passedPawnValue[index / 8] : 0;
+
+		// Doubled and isolated
+		bool doubled = (countBits(FileMasks8[index % 8] & pos->position[WP]) >= 2) ? true : false;
+		bool isolated = (((pos->position[WP] ^ ((uint64_t)1 << index)) & isolatedPawnMasks[index % 8]) == 0) ? true : false;
+
+		if (doubled && isolated) { v -= 56; }
+		else if (isolated) { v -= 15; }
+
+		// Penalty if the pawn is blocked by a friendly piece
+		if ((((pos->WHITE_PIECES ^ pos->position[WP]) >> (index + 8)) & 1) == 1) {
+			v += eg_value(psqt::blockedPawnTable[index + 8]);
+		}
+
+		// Bonus for being supported by another pawn
+		int supportPawns = (pos->position[WP] & ((uint64_t)1 << (index - 9))) | (pos->position[WP] & ((uint64_t)1 << (index - 7)));
+		v += 10 * ((index / 8) / 2) * countBits(supportPawns);
+	}
+
+	while (blackPawns != 0) {
+		index = PopBit(&blackPawns);
+
+		v -= ((blackPassedPawnMasks[index] & pos->position[WP]) == 0) ? passedPawnValue[mirrorRankNum[index / 8]] : 0;
+
+		bool doubled = (countBits(FileMasks8[index % 8] & pos->position[BP]) >= 2) ? true : false;
+		bool isolated = (((pos->position[BP] ^ ((uint64_t)1 << index)) & isolatedPawnMasks[index % 8]) == 0) ? true : false;
+
+		if (doubled && isolated) { v += 56; }
+		else if (isolated) { v += 15; }
+
+		// Penalty if the pawn is blocked by a friendly piece
+		if ((((pos->BLACK_PIECES ^ pos->position[BP]) >> (index - 8)) & 1) == 1) {
+			v -= eg_value(psqt::blockedPawnTable[psqt::Mirror64[index - 8]]);
+		}
+
+		// Bonus for being supported
+		int supportPawns = (pos->position[BP] & ((uint64_t)1 << (index + 9))) | (pos->position[BP] & ((uint64_t)1 << (index + 7)));
+		v -= 10 * ((8 - (index / 8)) / 2) * countBits(supportPawns);
+	}
 
 	return v;
 }

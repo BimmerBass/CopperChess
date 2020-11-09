@@ -8,6 +8,13 @@ enum PieceType {
 	PIECE_TYPE_NB = 8
 };
 
+inline int doubledCnt(uint64_t pawnBrd) {
+	int cnt = 0;
+	for (int i = 0; i < 8; i++) { // Iterate over all files
+		cnt += (countBits(pawnBrd & FileMasks8[i]) >= 2) ? 1 : 0;
+	}
+	return cnt;
+}
 
 
 // evaluation.cpp
@@ -30,12 +37,9 @@ namespace eval {
 
 	int phase(const S_BOARD* pos);
 
-	void kingEval(const S_BOARD* pos, int& mgScore, int& egScore, int& score, int sq);
-	void queenEval(const S_BOARD* pos, int& mgScore, int& egScore, int& score, int sq);
-	void rookEval(const S_BOARD* pos, int& mgScore, int& egScore, int& score, int sq);
-	void bishopEval(const S_BOARD* pos, int& mgScore, int& egScore, int& score, int sq);
-	void knightEval(const S_BOARD* pos, int& mgScore, int& egScore, int& score, int sq);
-	void pawnEval(const S_BOARD* pos, int& mgScore, int& egScore, int& score, int sq);
+
+	int pawns_mg(const S_BOARD* pos);
+	int pawns_eg(const S_BOARD* pos);
 
 	int getMaterial(const S_BOARD* pos, bool side);
 
@@ -106,17 +110,20 @@ namespace eval {
 }
 
 // Constants
-const int tempo = 18; // The value added to the side to move.
+constexpr int tempo = 18; // The value added to the side to move.
 
 // The below imbalances are taken from GM Larry Kaufman's paper, "The evaluation of piece imbalances"
 // The ratios are taken from the CPW-engine
-const int bishop_pair = eval::pawnValMg / 2;
-const int p_knight_pair = (int)((double)bishop_pair / 3.75);
-const int p_rook_pair = (int)((double)bishop_pair / 1.875);
+constexpr int bishop_pair = eval::pawnValMg / 2;
+constexpr int p_knight_pair = (int)((double)bishop_pair / 3.75);
+constexpr int p_rook_pair = (int)((double)bishop_pair / 1.875);
 
 
-const int knight_pawn_penalty = eval::pawnValMg / 8;
-const int rook_pawn_bonus = eval::pawnValMg / 16;
+constexpr int knight_pawn_penalty = eval::pawnValMg / 8;
+constexpr int rook_pawn_bonus = eval::pawnValMg / 16;
 
-const int passedPawnValue[8] = { 0, 5, 10, 25, 35, 60, 100, 140 };
-const int mirrorRankNum[8] = { 7 , 6 , 5 , 4 , 3 , 2 , 1 , 0 };
+// Pawn coefficients
+constexpr int passedPawnValue[8] = { 0, 5, 10, 25, 35, 60, 100, 140 };
+constexpr int mirrorRankNum[8] = { 7 , 6 , 5 , 4 , 3 , 2 , 1 , 0 };
+constexpr int doubled_penalty = 11;
+constexpr int blocked_penalty[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
