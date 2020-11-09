@@ -76,6 +76,33 @@ namespace eval {
 
 	static int pieceValMg[13] = { pawnValMg, knightValMg, bishopValMg, rookValMg, queenValMg, kingValMg,
 	pawnValMg, knightValMg, bishopValMg, rookValMg, queenValMg, kingValMg, 0 };
+
+
+	class Tuner{
+	public:
+		Tuner(int &tuningVar, int learningRate, int initialBounds, int gameCnt, int movetime);
+		~Tuner();
+
+	private:
+		/*
+		- We'll copy the variable to tune and only change it after the tuning run
+		- The learning rate is the number we'll increment tunedVar with after each game result
+		- The bounds are the initial padding around the variable:
+			- If the tuned variable is 100, and the bounds are 20. The two competing engines will have
+				the values 80 and 120.
+			- If engine(80) wins, we'll add the learningRate to tunedVar, such if for example
+				learninRate = 2, tunedVar = 102.
+			- This will repeat with the new bounds, engine(82) vs. engine(122) until we have played all the games.
+		*/
+		int tunedVar;
+		int learningRate;
+		int bounds;
+
+		int gameCount;
+		int movetime;
+
+		void RunTuning();
+	};
 }
 
 // Constants

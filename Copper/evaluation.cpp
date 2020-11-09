@@ -170,3 +170,4 @@ int addPsqtVal(int sq, int pce, bool eg) {
 		}
 	}
 }
+
