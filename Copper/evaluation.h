@@ -37,9 +37,11 @@ namespace eval {
 
 	int phase(const S_BOARD* pos);
 
-
 	int pawns_mg(const S_BOARD* pos);
 	int pawns_eg(const S_BOARD* pos);
+
+	int pieces_mg(const S_BOARD* pos);
+	int pieces_eg(const S_BOARD* pos);
 
 	int getMaterial(const S_BOARD* pos, bool side);
 

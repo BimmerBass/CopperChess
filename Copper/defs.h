@@ -308,6 +308,7 @@ struct S_SEARCHINFO{
 INLINE FUNCTIONS
 */
 
+// Not really random, but useful for generation of hashkeys
 #define RAND_64     ((BitBoard)std::rand() | \
 					(BitBoard)std::rand() << 15 | \
 					(BitBoard)std::rand() << 30 | \
@@ -453,6 +454,16 @@ inline std::string to_upper(std::string str) {
 inline long long getTimeMs() {
 	std::chrono::milliseconds ms = std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::system_clock::now().time_since_epoch());
 	return ms.count();
+}
+
+// Used to pick a more random book move by seeding the time.
+inline uint64_t getRand() {
+	std::srand(getTimeMs());
+	return ((BitBoard)std::rand()
+		| (BitBoard)std::rand() << 15
+		| (BitBoard)std::rand() << 30
+		| (BitBoard)std::rand() << 45
+		| ((BitBoard)std::rand() & 0xf) << 60);
 }
 
 /*

@@ -233,7 +233,7 @@ int getBookMove(S_BOARD* pos) {
 	}
 
 	if (count != 0) {
-		int randMove = rand() % count;
+		int randMove = getRand() % count;
 		return bookMoves[randMove];
 	}
 	else {
