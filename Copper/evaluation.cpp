@@ -8,6 +8,7 @@ int eval::mg_evaluate(const S_BOARD* pos) {
 	v += material_mg(pos);
 	v += psqt_mg(pos);
 	v += pawns_mg(pos);
+	//v += pieces_mg(pos);
 	
 	return v;
 }
@@ -50,12 +51,12 @@ int eval::pawns_mg(const S_BOARD* pos) {
 		else if (isolated) { v -= 5; }
 
 		// Penalty if the pawn is blocked by a friendly piece
-		if ((((pos->WHITE_PIECES ^ pos->position[WP]) >> (index + 8)) & 1) == 1) {
+		/*if ((((pos->WHITE_PIECES ^ pos->position[WP]) >> (index + 8)) & 1) == 1) {
 			v += mg_value(psqt::blockedPawnTable[index + 8]);
-		}
+		}*/
 
 		// Bonus for being supported by another pawn
-		int supportPawns = (pos->position[WP] & ((uint64_t)1 << (index - 9))) | (pos->position[WP] & ((uint64_t)1 << (index - 7)));
+		int supportPawns = defending_pawns(pos, index, WHITE);
 		v += 5 * countBits(supportPawns);
 	}
 
@@ -71,13 +72,13 @@ int eval::pawns_mg(const S_BOARD* pos) {
 		else if (isolated) { v += 5; }
 
 		// Penalty if the pawn is blocked by a friendly piece
-		if ((((pos->BLACK_PIECES ^ pos->position[BP]) >> (index - 8)) & 1) == 1) {
+		/*if ((((pos->BLACK_PIECES ^ pos->position[BP]) >> (index - 8)) & 1) == 1) {
 			v -= mg_value(psqt::blockedPawnTable[psqt::Mirror64[index - 8]]);
-		}
+		}*/
 
 		// Bonus for being supported
-		int supportPawns = (pos->position[BP] & ((uint64_t)1 << (index + 9))) | (pos->position[BP] & ((uint64_t)1 << (index + 7)));
-		v += 5 * countBits(supportPawns);
+		int supportPawns = defending_pawns(pos, index, BLACK);
+		v -= 5 * countBits(supportPawns);
 	}
 
 	return v;
@@ -109,13 +110,13 @@ int eval::pawns_eg(const S_BOARD* pos) {
 		else if (isolated) { v -= 15; }
 
 		// Penalty if the pawn is blocked by a friendly piece
-		if ((((pos->WHITE_PIECES ^ pos->position[WP]) >> (index + 8)) & 1) == 1) {
+		/*if ((((pos->WHITE_PIECES ^ pos->position[WP]) >> (index + 8)) & 1) == 1) {
 			v += eg_value(psqt::blockedPawnTable[index + 8]);
-		}
+		}*/
 
 		// Bonus for being supported by another pawn
-		int supportPawns = (pos->position[WP] & ((uint64_t)1 << (index - 9))) | (pos->position[WP] & ((uint64_t)1 << (index - 7)));
-		v += 10 * ((index / 8) / 2) * countBits(supportPawns);
+		int supportPawns = defending_pawns(pos, index, WHITE);
+		v += 10 * countBits(supportPawns);
 	}
 
 	while (blackPawns != 0) {
@@ -130,14 +131,142 @@ int eval::pawns_eg(const S_BOARD* pos) {
 		else if (isolated) { v += 15; }
 
 		// Penalty if the pawn is blocked by a friendly piece
-		if ((((pos->BLACK_PIECES ^ pos->position[BP]) >> (index - 8)) & 1) == 1) {
+		/*if ((((pos->BLACK_PIECES ^ pos->position[BP]) >> (index - 8)) & 1) == 1) {
 			v -= eg_value(psqt::blockedPawnTable[psqt::Mirror64[index - 8]]);
-		}
+		}*/
 
 		// Bonus for being supported
-		int supportPawns = (pos->position[BP] & ((uint64_t)1 << (index + 9))) | (pos->position[BP] & ((uint64_t)1 << (index + 7)));
-		v -= 10 * ((8 - (index / 8)) / 2) * countBits(supportPawns);
+		int supportPawns = defending_pawns(pos, index, BLACK);
+		v -= 10 * countBits(supportPawns);
 	}
+
+	return v;
+}
+
+int eval::outpost(const S_BOARD* pos, int sq, S_SIDE side) {
+	int v = 0;
+	if (side == WHITE) {
+		if (sq >= 56 && sq <= 63) { return 0; } // The 8'th rank is never a good outpost
+
+		if (((SETBIT((uint64_t)0, sq + 9) | SETBIT((uint64_t)0, sq + 7)) & pos->position[BP]) != 0) { // If the square is attacked, it cant be an outpost
+			return 0;
+		}
+		else {
+			v = ((whiteOutpostMasks[sq] & pos->position[BP]) == 0) ? safe_outpost_bonus : outpost_bonus;
+
+			// Return double value if the outpost is a knight, as they're usually more valuable on outposts than bishops.
+			return (pos->pieceList[sq] == WN) ? 2 * v : v;
+		}
+
+	}
+	else {
+		if (sq >= 0 && sq <= 7) { return 0; }
+
+		if (((SETBIT((uint64_t)0, sq - 9) | SETBIT((uint64_t)0, sq - 7)) & pos->position[WP]) != 0) {
+			return 0;
+		}
+		else {
+			v = ((blackOutpostMasks[sq] & pos->position[WP]) == 0) ? safe_outpost_bonus : outpost_bonus;
+
+			// Return double value if the outpost is a knight.
+			return (pos->pieceList[sq] == BN) ? 2 * v : v;
+		}
+	}
+	return 0;
+}
+
+/*
+	int pieces_mg(const S_BOARD* pos);
+	int pieces_eg(const S_BOARD* pos);
+*/
+
+
+int eval::pieces_mg(const S_BOARD* pos) {
+	int v = 0;
+
+	/*
+	WHITE PIECES
+	*/
+
+	BitBoard knightBrd = pos->position[WN];
+	BitBoard bishopBrd = pos->position[WB];
+	BitBoard rookBrd = pos->position[WR];
+	BitBoard queenBrd = pos->position[WQ];
+	int sq = NO_SQ;
+
+	while (knightBrd != 0) {
+		sq = PopBit(&knightBrd);
+
+		// Add value if on an outpost
+		v += outpost(pos, sq, WHITE);
+
+		// Add value if defended by pawns.
+		v += 10 * defending_pawns(pos, sq, WHITE);
+	}
+
+	while (bishopBrd != 0) {
+		sq = PopBit(&bishopBrd);
+
+		// Add value for being on an outpost
+		v += outpost(pos, sq, WHITE);
+
+		// Add value for being defended by pawns. (Smaller than the bonus for knights)
+		v += 5 * defending_pawns(pos, sq, WHITE);
+
+		// Penalty for amount of pawns of our own color on the bishops square-color
+		if ((DARK_SQUARES & SETBIT((uint64_t)0, sq)) == 0) { // Light square bishop
+			v -= 3 * countBits(pos->position[WP] & ~DARK_SQUARES);
+		}
+		else {
+			v -= 3 * countBits(pos->position[WP] & DARK_SQUARES);
+		}
+		
+		// Bonus for being on same diagonal or anti-diagonal as enemy king
+		v += (((diagonalMasks[7 + (sq / 8) - (sq % 8)] | antidiagonalMasks[(sq / 8) + (sq % 8)])
+			& ((uint64_t)1 << pos->kingPos[1])) != 0) ? 46 : 0;
+	}
+
+
+	/*
+	BLACK PIECES
+	*/
+	knightBrd = pos->position[BN];
+	bishopBrd = pos->position[BB];
+	rookBrd = pos->position[BR];
+	queenBrd = pos->position[BQ];
+
+	while (knightBrd != 0) {
+		sq = PopBit(&knightBrd);
+
+		// Add value for being on an outpost
+		v -= outpost(pos, sq, BLACK);
+
+		// Add value depending on amount of defending pawns of the square
+		v -= 10 * defending_pawns(pos, sq, BLACK);
+	}
+
+	while (bishopBrd != 0) {
+		sq = PopBit(&bishopBrd);
+
+		// Outpost bonus
+		v -= outpost(pos, sq, BLACK);
+
+		// Add value for being defended by pawns. (Smaller than the bonus for knights)
+		v -= 5 * defending_pawns(pos, sq, BLACK);
+
+		// Penalty for amount of pawns of our own color on the bishops square-color
+		if ((DARK_SQUARES & SETBIT((uint64_t)0, sq)) == 0) { // Light square bishop
+			v += 3 * countBits(pos->position[BP] & ~DARK_SQUARES);
+		}
+		else {
+			v += 3 * countBits(pos->position[BP] & DARK_SQUARES);
+		}
+
+		// Bonus for being on same diagonal or anti-diagonal as enemy king
+		v -= (((diagonalMasks[7 + (sq / 8) - (sq % 8)] | antidiagonalMasks[(sq / 8) + (sq % 8)])
+			& ((uint64_t)1 << pos->kingPos[0])) != 0) ? 46 : 0;
+	}
+
 
 	return v;
 }
@@ -160,11 +289,12 @@ int eval::imbalance(const S_BOARD* pos) {
 	// Bonus to rooks depending on amount of pawns removed
 	int wPwnCnt = countBits(pos->position[WP]);
 	int bPwnCnt = countBits(pos->position[BP]);
-	v += (pos->position[WR] != 0) ? rook_pawn_bonus * (8 - wPwnCnt) : 0;
-	v -= (pos->position[BR] != 0) ? rook_pawn_bonus * (8 - bPwnCnt) : 0;
 
-	v -= (pos->position[WN] != 0) ? knight_pawn_penalty * (8 - wPwnCnt) : 0;
-	v += (pos->position[BN] != 0) ? knight_pawn_penalty * (8 - bPwnCnt) : 0;
+	v += countBits(pos->position[WR]) * rook_pawn_bonus * (8 - wPwnCnt);
+	v -= countBits(pos->position[BR]) * rook_pawn_bonus * (8 - bPwnCnt);
+
+	v -= countBits(pos->position[WN]) * knight_pawn_penalty * (8 - wPwnCnt);
+	v += countBits(pos->position[BN]) * knight_pawn_penalty * (8 - bPwnCnt);
 
 	return v;
 }
@@ -220,7 +350,8 @@ int eval::psqt_mg(const S_BOARD* pos) {
 		BitBoard pceBoard = pos->position[pce];
 
 		while (pceBoard != 0) {
-			v += addPsqtVal(PopBit(&pceBoard), pce, false);
+			int sq = PopBit(&pceBoard);
+			v += addPsqtVal(sq, pce, false);
 		}
 	}
 	return v;
@@ -292,3 +423,28 @@ int addPsqtVal(int sq, int pce, bool eg) {
 	}
 }
 
+int defending_pawns(const S_BOARD* pos, int sq, S_SIDE side) {
+	int cnt = 0;
+	if (side == WHITE) {
+		if (!(sq >= 0 && sq <= 7)) {
+			if ((SETBIT((uint64_t)0, sq) & FileMasks8[FILE_A]) == 0) { // Not on a-file
+				cnt += ((pos->position[WP] & SETBIT((uint64_t)0, sq - 9)) != 0) ? 1 : 0;
+			}
+			if ((SETBIT((uint64_t)0, sq) & FileMasks8[FILE_H]) == 0) {
+				cnt += ((pos->position[WP] & SETBIT((uint64_t)0, sq - 7)) != 0) ? 1 : 0;
+			}
+		}
+	}
+	else {
+		if (!(sq >= 56 && sq <= 63)) {
+			if ((SETBIT((uint64_t)0, sq) & FileMasks8[FILE_A]) == 0) {
+				cnt += ((pos->position[BP] & SETBIT((uint64_t)0, sq + 7)) != 0) ? 1 : 0;
+			}
+
+			if ((SETBIT((uint64_t)0, sq) & FileMasks8[FILE_H]) == 0) {
+				cnt += ((pos->position[BP] & SETBIT((uint64_t)0, sq + 9)) != 0) ? 1 : 0;
+			}
+		}
+	}
+	return cnt;
+}

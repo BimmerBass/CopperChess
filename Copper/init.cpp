@@ -30,6 +30,7 @@ void initAll(BitBoard(&set)[64], BitBoard(&clear)[64]) {
 	initHashKeys();
 	initRookSupportMasks();
 	initManhattanDistances();
+	initOutpostMasks();
 
 	initPolyBook();
 }
@@ -283,4 +284,58 @@ void initManhattanDistances() {
 
 	}
 
+}
+
+
+// Outpost masks
+BitBoard whiteOutpostMasks[64] = {};
+BitBoard blackOutpostMasks[64] = {};
+
+
+void initOutpostMasks() {
+	BitBoard mask_w = 0;
+	BitBoard mask_b = 0;
+	int tsq_w;
+	int tsq_b;
+
+	for (int sq = 0; sq < 64; sq++) {
+		mask_w = 0;
+		mask_b = 0;
+
+		// WHITE MASKS
+		if ((((uint64_t)1 << sq) & FileMasks8[FILE_A]) == 0) { // sq is not on the a-file
+			tsq_w = sq + 7;
+			tsq_b = sq - 9;
+
+			while (tsq_w < 64){
+				mask_w |= (uint64_t)1 << tsq_w;
+				tsq_w += 8;
+			}
+
+			while (tsq_b >= 0) {
+				mask_b |= (uint64_t)1 << tsq_b;
+				tsq_b -= 8;
+			}
+		}
+
+		if ((((uint64_t)1 << sq) & FileMasks8[FILE_H]) == 0) { // sq is not on h-file
+			tsq_w = sq + 9;
+			tsq_b = sq - 7;
+
+			while (tsq_w < 64) {
+				mask_w |= (uint64_t)1 << tsq_w;
+				tsq_w += 8;
+			}
+
+			while (tsq_b >= 0) {
+				mask_b |= (uint64_t)1 << tsq_b;
+				tsq_b -= 8;
+			}
+		}
+
+		whiteOutpostMasks[sq] = mask_w;
+		blackOutpostMasks[sq] = mask_b;
+		
+
+	}
 }

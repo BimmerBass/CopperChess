@@ -19,6 +19,7 @@ inline int doubledCnt(uint64_t pawnBrd) {
 
 // evaluation.cpp
 int addPsqtVal(int sq, int pce, bool eg);
+int defending_pawns(const S_BOARD* pos, int sq, S_SIDE side);
 namespace eval {
 	int staticEval(const S_BOARD* pos, int depth, int alpha, int beta);
 
@@ -42,6 +43,8 @@ namespace eval {
 
 	int pieces_mg(const S_BOARD* pos);
 	int pieces_eg(const S_BOARD* pos);
+
+	int outpost(const S_BOARD* pos, int sq, S_SIDE side);
 
 	int getMaterial(const S_BOARD* pos, bool side);
 
@@ -129,3 +132,8 @@ constexpr int passedPawnValue[8] = { 0, 5, 10, 25, 35, 60, 100, 140 };
 constexpr int mirrorRankNum[8] = { 7 , 6 , 5 , 4 , 3 , 2 , 1 , 0 };
 constexpr int doubled_penalty = 11;
 constexpr int blocked_penalty[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+
+
+// Piece coefficients
+constexpr int outpost_bonus = 30;
+constexpr int safe_outpost_bonus = 55;

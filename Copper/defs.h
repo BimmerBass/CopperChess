@@ -51,6 +51,10 @@ extern BitBoard isolatedPawnMasks[8]; // One for each file.
 extern BitBoard whiteRookSupport[64];
 extern BitBoard blackRookSupport[64];
 
+// Bitmasks for white and black outposts
+extern BitBoard whiteOutpostMasks[64];
+extern BitBoard blackOutpostMasks[64];
+
 // Bitmasks for setting and clearing bits.
 extern BitBoard SetMask[64];
 extern BitBoard ClearMask[64];
@@ -525,6 +529,7 @@ void initPawnMasks();
 void initAll(BitBoard(&set)[64], BitBoard(&clear)[64]);
 void initRookSupportMasks();
 void initManhattanDistances();
+void initOutpostMasks();
 
 
 // makemove.cpp, movegen.cpp and utils.cpp
