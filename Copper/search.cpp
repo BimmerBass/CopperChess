@@ -328,8 +328,8 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 		re_search:
 
 		// Here we introduce PVS search.
-		value = -alphabeta(pos, info, new_depth, -beta, -alpha, true);
-		/*if (!raised_alpha) {
+		//value = -alphabeta(pos, info, new_depth, -beta, -alpha, true);
+		if (!raised_alpha) {
 			value = -alphabeta(pos, info, new_depth, -beta, -alpha, true);
 		}
 		else {
@@ -337,7 +337,7 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 			if (-alphabeta(pos, info, new_depth, -alpha - 1, -alpha, true) > alpha) {
 				value = -alphabeta(pos, info, new_depth, -beta, -alpha, true);
 			}
-		}*/
+		}
 
 		// Sometimes reduced search brings us above alpha. Then we'll have to retry
 		if (reduction_depth && value > alpha) {
