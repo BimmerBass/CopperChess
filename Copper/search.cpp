@@ -33,6 +33,13 @@ bool isRepetition(const S_BOARD* pos) {
 }
 
 
+
+int Search::reduction(bool improving, int depth, int moveCount) {
+	int r = Reductions[depth] * Reductions[moveCount];
+	return ((r + 512) / 1024 + (!improving && r > 1024)) * 1;
+}
+
+
 void Search::pickNextMove(int index, S_MOVELIST* legalMoves){
 	S_MOVE temp;
 	S_MOVE bestMove;
@@ -186,6 +193,7 @@ int Search::Quiescence(int alpha, int beta, S_BOARD* pos, S_SEARCHINFO* info) {
 }
 
 int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, int beta, bool doNull, bool extend) {
+	bool improving = true;
 	int side = (pos->whitesMove == WHITE) ? 1 : -1;
 	int kingSq = (pos->whitesMove == WHITE) ? pos->kingPos[0] : pos->kingPos[1];
 
@@ -199,7 +207,7 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 	END OF MATE DISTANCE PRUNING
 	*/
 
-	if (pos->inCheck) { depth++; extend = true; }
+	if (pos->inCheck) { depth++; extend = true; improving = false; }
 	if (depth == 0) {
 		return Quiescence(alpha, beta, pos, info);
 		
@@ -348,7 +356,6 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 		pickNextMove(moveNum, &list);
 
 		MoveGeneration::makeMove(*pos, list.moves[moveNum].move);
-		moves_tried++;
 
 		// FUTILITY PRUNING
 		if (f_prune && pos->pieceList[TOSQ(list.moves[moveNum].move)] == NO_PIECE && SPECIAL(list.moves[moveNum].move) != 0
@@ -356,6 +363,8 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 			MoveGeneration::undoMove(*pos);
 			continue;
 		}
+
+		moves_tried++;
 
 		// LATE MOVE REDUCTION
 		reduction_depth = 0;
@@ -370,7 +379,7 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 			&& pos->pieceList[TOSQ(list.moves[moveNum].move)] != NO_PIECE
 			&& !(SPECIAL(list.moves[moveNum].move) == 0 || SPECIAL(list.moves[moveNum].move) == 1)) {
 
-			reduction_depth = 1;
+			reduction_depth = reduction(improving, new_depth, moves_tried);
 
 			if (moves_tried > 8) {
 				reduction_depth += 1;

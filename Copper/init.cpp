@@ -31,6 +31,7 @@ void initAll(BitBoard(&set)[64], BitBoard(&clear)[64]) {
 	initRookSupportMasks();
 	initManhattanDistances();
 	initOutpostMasks();
+	initReductions();
 
 	initPolyBook();
 }
@@ -337,5 +338,15 @@ void initOutpostMasks() {
 		blackOutpostMasks[sq] = mask_b;
 		
 
+	}
+}
+
+
+
+int Reductions[MAXPOSITIONMOVES] = {};
+
+void initReductions() {
+	for (int i = 1; i < MAXPOSITIONMOVES; i++) {
+		Reductions[i] = int(22.9 * std::log(i));
 	}
 }

@@ -69,6 +69,8 @@ extern int ManhattanDistance[64][64];
 // Array of values given to captures depending on the pieces in question (MVV-LVA)
 extern int MvvLva[12][12];
 
+// Array containing reductions depending on amount of moves tried in position. Initialized using Stockfish's implementation
+extern int Reductions[MAXPOSITIONMOVES];
 
 // Futility pruning margin
 const int fMargin[4] = { 0, 200, 300, 500 };
@@ -530,6 +532,7 @@ void initAll(BitBoard(&set)[64], BitBoard(&clear)[64]);
 void initRookSupportMasks();
 void initManhattanDistances();
 void initOutpostMasks();
+void initReductions();
 
 
 // makemove.cpp, movegen.cpp and utils.cpp
@@ -588,6 +591,8 @@ int Quiescence(int alpha, int beta, S_BOARD* pos, S_SEARCHINFO* info);
 void CheckUp(S_SEARCHINFO* info);
 
 int search_widen(S_BOARD* pos, S_SEARCHINFO* info, int depth, int estimate); // Taken from https://www.chessprogramming.org/CPW-Engine_search
+
+int reduction(bool improving, int depth, int moveCount);
 
 int MTDF(S_BOARD* pos, S_SEARCHINFO* info, int estimate, int depth);
 }
