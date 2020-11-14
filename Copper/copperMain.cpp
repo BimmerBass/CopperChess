@@ -11,10 +11,6 @@
 int main() {
 	initAll(SetMask, ClearMask);
 
-	for (int i = 0; i < MAXPOSITIONMOVES; i++) {
-		std::cout << Reductions[i] << std::endl;
-	}
-
 	Uci_Loop();
 
 	cleanPolyBook();
