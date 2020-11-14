@@ -7,6 +7,7 @@
 
 #define ENDGAME_MAT 1350 // The lower this value becomes, the more delta-cutoffs we get. It is a fine balance between accuracy and speed in quiescence search.
 #define DELTA 200 // The delta safety margin for quiescence search. Raise this to get a more accurate quiescence evaluation at the cost of lowered speed.
+#define RAZOR_MARGIN 600 // The security margin for razoring. The value is taken from Stockfish's implementation.
 
 /*
 INCLUDES THE FUNCTIONS:
@@ -60,6 +61,34 @@ void Search::pickNextMove(int index, S_MOVELIST* legalMoves){
 
 	// Insert old move into the index where the best move was found.
 	legalMoves->moves[bestNum] = temp;
+}
+
+const int pieceValsMg[12] = { eval::pawnValMg, eval::knightValMg, eval::bishopValMg, eval::rookValMg, eval::queenValMg, eval::kingValMg,
+							eval::pawnValMg, eval::knightValMg, eval::bishopValMg, eval::rookValMg, eval::queenValMg, eval::kingValMg };
+bool badCapture(const S_BOARD* pos, int move) {
+	int piece_moved = pos->pieceList[FROMSQ(move)];
+	int piece_captured = pos->pieceList[TOSQ(move)];
+	if (piece_captured == NO_PIECE) { return false; }
+
+	// Pawn captures can't loose material
+	if (piece_moved == WP || piece_moved == BP) {
+		return false;
+	}
+
+	
+	// Capture lower takes higher is better, as well as bishop takes knight
+	if (pieceValsMg[piece_captured] >= pieceValsMg[piece_moved]) {
+		return false;
+	}
+
+	S_SIDE Them = (pos->whitesMove == WHITE) ? BLACK : WHITE;
+	if (defending_pawns(pos, TOSQ(move), Them) > 0
+		&& pieceValsMg[piece_captured] + 200 - pieceValsMg[piece_moved] < 0) {
+		return true;
+	}
+
+	// If this isn't a capture, it cannot be considered bad.
+	return false;
 }
 
 int Search::Quiescence(int alpha, int beta, S_BOARD* pos, S_SEARCHINFO* info) {
@@ -125,6 +154,12 @@ int Search::Quiescence(int alpha, int beta, S_BOARD* pos, S_SEARCHINFO* info) {
 			END OF DELTA PRUNING
 			*/
 
+			// If the capture looses material immediately, we will not search it, as it probably also looses in the long run.
+			if (badCapture(pos, list.moves[moveNum].move)
+				&& SPECIAL(list.moves[moveNum].move != 0)) {
+				continue;
+			}
+
 			MoveGeneration::makeMove(*pos, list.moves[moveNum].move);
 
 			score = -Quiescence(-beta, -alpha, pos, info);
@@ -150,7 +185,7 @@ int Search::Quiescence(int alpha, int beta, S_BOARD* pos, S_SEARCHINFO* info) {
 	return alpha;
 }
 
-int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, int beta, bool doNull) {
+int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, int beta, bool doNull, bool extend) {
 	int side = (pos->whitesMove == WHITE) ? 1 : -1;
 	int kingSq = (pos->whitesMove == WHITE) ? pos->kingPos[0] : pos->kingPos[1];
 
@@ -164,7 +199,7 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 	END OF MATE DISTANCE PRUNING
 	*/
 
-	if (pos->inCheck) { depth++; }
+	if (pos->inCheck) { depth++; extend = true; }
 	if (depth == 0) {
 		return Quiescence(alpha, beta, pos, info);
 		
@@ -251,6 +286,8 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 		&& doNull
 		&& (side * eval::staticEval(pos, depth, alpha, beta)) >= beta
 		&& !pos->inCheck) {
+
+		// FIXME: This boolean endgame-determination value probably needs to be changed.
 		bool endgame = ((pos->position[WQ] | pos->position[BQ]) == 0 || (pos->position[WN] | pos->position[WB] | pos->position[WR]
 			| pos->position[BN] | pos->position[BB] | pos->position[BR]) == 0) ? true : false;
 		if (!endgame) {
@@ -261,12 +298,22 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 			int R = 2;
 			if (depth > 6) { R = 3; }
 
-			value = -alphabeta(pos, info, depth - R - 1, -beta, -beta + 1, false);
+			value = -alphabeta(pos, info, depth - R - 1, -beta, -beta + 1, false, extend);
 
 			undoNullMove(pos, oldEp);
 
 			if (info->stopped == true) { return 0; }
 			if (value >= beta) { return beta; }
+			
+			/*if (value >= beta) { // NULL MOVE REDUCTIONS. We'll have to test this further before implementing it
+				depth -= 3;
+
+				if (depth <= 0) {
+					return Quiescence(alpha, beta, pos, info);
+				}
+
+			}*/
+
 		}
 
 	}
@@ -278,9 +325,16 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 	*/
 
 
-	// Determine if futility pruning is applicable
+	// Futility pruning and razoring
 	if (depth <= 3 && !pos->inCheck && abs(alpha) < 9000) {
-		if (side*(eval::staticEval(pos, depth, alpha, beta) + fMargin[depth]) <= alpha) {
+		int eval = side * eval::staticEval(pos, depth, alpha, beta);
+
+		// We'll only do razoring if depth = 2, the eval is below alpha by some margin, we arent extending and there isn't a PV-move
+		if (depth < 2 && eval < (alpha - side * RAZOR_MARGIN) && !extend && bestMove == NOMOVE) {
+			return Quiescence(alpha, beta, pos, info);
+		}
+
+		if (eval + (side * fMargin[depth]) <= alpha) {
 			f_prune = true;
 		}
 	}
@@ -296,6 +350,7 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 		MoveGeneration::makeMove(*pos, list.moves[moveNum].move);
 		moves_tried++;
 
+		// FUTILITY PRUNING
 		if (f_prune && pos->pieceList[TOSQ(list.moves[moveNum].move)] == NO_PIECE && SPECIAL(list.moves[moveNum].move) != 0
 			&& !pos->inCheck) {
 			MoveGeneration::undoMove(*pos);
@@ -306,7 +361,7 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 		reduction_depth = 0;
 		new_depth = depth - 1;
 
-		if (new_depth > 3
+		if (new_depth >= 3
 			&& moves_tried > 3 
 			&& !pos->inCheck
 			&& !flagInCheck &&
@@ -330,12 +385,12 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 		// Here we introduce PVS search.
 		//value = -alphabeta(pos, info, new_depth, -beta, -alpha, true);
 		if (!raised_alpha) {
-			value = -alphabeta(pos, info, new_depth, -beta, -alpha, true);
+			value = -alphabeta(pos, info, new_depth, -beta, -alpha, true, extend);
 		}
 		else {
 			// First try to refute a move. If it fails, do a real search
-			if (-alphabeta(pos, info, new_depth, -alpha - 1, -alpha, true) > alpha) {
-				value = -alphabeta(pos, info, new_depth, -beta, -alpha, true);
+			if (-alphabeta(pos, info, new_depth, -alpha - 1, -alpha, true, extend) > alpha) {
+				value = -alphabeta(pos, info, new_depth, -beta, -alpha, true, extend);
 			}
 		}
 
@@ -409,7 +464,8 @@ inline void info_currmove(int move, int depth, int moveNum) {
 
 
 int Search::searchRoot(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, int beta) {
-	if (pos->inCheck) { depth++; }
+	bool extend = false;
+	if (pos->inCheck) { depth++; extend = true; }
 
 	S_MOVELIST moves;
 	MoveGeneration::validMoves(pos, moves);
@@ -446,8 +502,8 @@ int Search::searchRoot(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, i
 		MoveGeneration::makeMove(*pos, moves.moves[i].move);
 		info_currmove(moves.moves[i].move, depth, i);
 		// Introduces PVS at root
-		if (i == 0 || -alphabeta(pos, info, depth - 1, -alpha - 1, -alpha, true) > alpha) {
-			value = -alphabeta(pos, info, depth - 1, -beta, -alpha, true);
+		if (i == 0 || -alphabeta(pos, info, depth - 1, -alpha - 1, -alpha, true, extend) > alpha) {
+			value = -alphabeta(pos, info, depth - 1, -beta, -alpha, true, extend);
 		}
 
 		MoveGeneration::undoMove(*pos);

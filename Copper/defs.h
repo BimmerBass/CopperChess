@@ -575,7 +575,7 @@ bool isRepetition(const S_BOARD* pos);
 namespace Search{
 void pickNextMove(int index, S_MOVELIST* legalMoves);
 
-int alphabeta(S_BOARD* pos, S_SEARCHINFO *info, int depth, int alpha, int beta, bool doNull);
+int alphabeta(S_BOARD* pos, S_SEARCHINFO *info, int depth, int alpha, int beta, bool doNull, bool extend);
 
 int searchRoot(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, int beta);
 
