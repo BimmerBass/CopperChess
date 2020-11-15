@@ -8,6 +8,7 @@
 // IT GIVES AWAY THE QUEEN IN THIS POSITION WITH 5 SECONDS MOVETIME
 #define WEIRD "2b2rk1/p3qppp/5n2/4p1B1/7Q/2N3P1/Pr2PP1P/R3K2R w KQ - 0 16"
 
+
 int main() {
 	initAll(SetMask, ClearMask);
 

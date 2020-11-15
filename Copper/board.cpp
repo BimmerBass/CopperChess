@@ -156,6 +156,13 @@ void BoardRep::parseFen(const char* fen, S_BOARD& pos){
 	}
 	pos.EMPTY_SQUARES = ~(pos.BLACK_PIECES | pos.WHITE_PIECES);
 	pos.posKey = generatePosKey(&pos);
+
+	if (pos.whitesMove == WHITE) {
+		pos.inCheck = sqAttacked(pos.kingPos[0], BLACK, &pos);
+	}
+	else {
+		pos.inCheck = sqAttacked(pos.kingPos[1], WHITE, &pos);
+	}
 }
 
 void BoardRep::clearBoard(S_BOARD* pos) {

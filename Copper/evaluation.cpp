@@ -8,7 +8,7 @@ int eval::mg_evaluate(const S_BOARD* pos) {
 	v += material_mg(pos);
 	v += psqt_mg(pos);
 	v += pawns_mg(pos);
-	v += pieces_mg(pos);
+	//v += pieces_mg(pos);
 	
 	return v;
 }

@@ -47,11 +47,9 @@ void Search::pickNextMove(int index, S_MOVELIST* legalMoves){
 	
 	int score = 0;
 	
-	for (int i = 0; i < legalMoves->count; i++){
+	for (int i = bestNum; i < legalMoves->count; i++){
 		// If the current move is more promising than a previous one.
 		if (legalMoves->moves[i].score > score){
-			// Get the move
-			bestMove = legalMoves->moves[i];
 			// Get the index of the move.
 			bestNum = i;
 			
@@ -63,8 +61,7 @@ void Search::pickNextMove(int index, S_MOVELIST* legalMoves){
 	temp = legalMoves->moves[index];
 	
 	// Replace index value with the most promising move.
-	legalMoves->moves[index] = bestMove;
-	legalMoves->moves[index].score = -1000000;
+	legalMoves->moves[index] = legalMoves->moves[bestNum];
 
 	// Insert old move into the index where the best move was found.
 	legalMoves->moves[bestNum] = temp;
@@ -262,13 +259,41 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 	}
 
 
+	if (depth < 3) {
+		int staticEval = side * eval::staticEval(pos, depth, alpha, beta);
+
+
+		/*
+		EVAL PRUNING
+		*/
+		if (!pos->inCheck && abs(beta) - 1 < -MATE + 100) {
+
+			int eval_margin = 120 * depth;
+
+			if (staticEval - eval_margin >= beta) {
+				return (staticEval - eval_margin);
+			}
+		}
+
+		/*
+		STATIC NULL MOVE PRUNING
+		*/
+		if (!doNull && beta <= MATE) {
+			if (depth == 1 && staticEval - 300 > beta) return beta;
+			if (depth == 2 && staticEval - 525 > beta) return beta;
+			if (depth == 3 && staticEval - 900 > beta) depth--;
+		}
+
+	}
+
+
 	/*
 	STATIC NULL MOVE PRUNING / EVAL PRUNING
 	*/
 
-	if (depth < 3
+	/*if (depth < 3
 		&& !pos->inCheck
-		&& abs(beta - 1) > -MATE) {
+		&& abs(beta - 1) > MATE) {
 		int static_eval = side * eval::staticEval(pos, depth, alpha, beta);
 
 		int eval_margin = 120 * depth; // FIXME: Tune this value
@@ -277,7 +302,7 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 			return (static_eval - eval_margin);
 		}
 
-	}
+	}*/
 
 	/*
 	END OF EVAL PRUNING
@@ -469,6 +494,7 @@ int Search::searchRoot(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, i
 
 	S_MOVELIST moves;
 	MoveGeneration::validMoves(pos, moves);
+
 	int bestMove = NOMOVE;
 	int bestScore = -INF;
 	int value = -INF;
@@ -489,7 +515,7 @@ int Search::searchRoot(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, i
 	if (pvMove != NOMOVE) {
 		for (int i = 0; i < 64; i++) {
 			if (moves.moves[i].move == pvMove) {
-				moves.moves[i].score = 2000000;
+				moves.moves[i].score = 4000000;
 				break;
 			}
 		}
@@ -500,17 +526,16 @@ int Search::searchRoot(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, i
 		pickNextMove(i, &moves);
 
 		MoveGeneration::makeMove(*pos, moves.moves[i].move);
+
 		info_currmove(moves.moves[i].move, depth, i);
-		// Introduces PVS at root
-		if (i == 0 || -alphabeta(pos, info, depth - 1, -alpha - 1, -alpha, true, extend) > alpha) {
-			value = -alphabeta(pos, info, depth - 1, -beta, -alpha, true, extend);
-		}
+
+		value = -alphabeta(pos, info, depth - 1, -beta, -alpha, true, extend);
 
 		MoveGeneration::undoMove(*pos);
 
 		if (value > alpha) {
 			bestMove = moves.moves[i].move;
-			bestScore = alpha;
+			bestScore = value;
 			if (value >= beta) {
 				if (i == 0) {
 					info->fhf++;
@@ -581,7 +606,7 @@ void Search::searchPosition(S_BOARD* pos, S_SEARCHINFO* info) {
 	int mateDist = 0;
 
 	// Iterative deepening.
-	if (bestMove == NOMOVE) { // Go into iterative deepening of we didn't find a book move.
+	if (bestMove == NOMOVE) { // Go into iterative deepening if we didn't find a book move.
 		for (int currDepth = 1; currDepth <= info->depth; currDepth++) {
 			mateDist = 0;
 
@@ -611,7 +636,7 @@ void Search::searchPosition(S_BOARD* pos, S_SEARCHINFO* info) {
 			pvMoves = TT::getPvLine(pos, currDepth);
 			bestMove = pos->pvArray[0];
 
-			if (mateDist != 0) { // If there's been found a mate, print score in mate distance instead of centipawns
+			if (mateDist != 0) { // If there has been found a mate, print score in mate distance instead of centipawns
 				std::cout << "info score mate " << mateDist << " depth " << currDepth
 					<< " nodes " << info->nodes << " time " << getTimeMs() - info->starttime << " nps " << nps;
 
