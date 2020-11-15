@@ -175,11 +175,6 @@ int eval::outpost(const S_BOARD* pos, int sq, S_SIDE side) {
 	return 0;
 }
 
-/*
-	int pieces_mg(const S_BOARD* pos);
-	int pieces_eg(const S_BOARD* pos);
-*/
-
 
 int eval::pieces_mg(const S_BOARD* pos) {
 	int v = 0;
@@ -200,8 +195,10 @@ int eval::pieces_mg(const S_BOARD* pos) {
 	while (knightBrd != 0) {
 		sq = PopBit(&knightBrd);
 
-		// Add value if on an outpost
-		v += outpost(pos, sq, WHITE);
+		// Add value if on an outpost. Only if the square is on the fifth rank or above.
+		if (sq / 8 >= RANK_5) {
+			v += outpost(pos, sq, WHITE);
+		}
 
 		// Add value if defended by pawns.
 		v += 10 * defending_pawns(pos, sq, WHITE);
@@ -210,8 +207,10 @@ int eval::pieces_mg(const S_BOARD* pos) {
 	while (bishopBrd != 0) {
 		sq = PopBit(&bishopBrd);
 
-		// Add value for being on an outpost
-		v += outpost(pos, sq, WHITE);
+		// Add value for being on an outpost. Only for rank 5 or above.
+		if (sq / 8 >= RANK_5) {
+			v += outpost(pos, sq, WHITE);
+		}
 
 		// Add value for being defended by pawns. (Smaller than the bonus for knights)
 		v += 5 * defending_pawns(pos, sq, WHITE);
@@ -272,9 +271,10 @@ int eval::pieces_mg(const S_BOARD* pos) {
 	while (knightBrd != 0) {
 		sq = PopBit(&knightBrd);
 
-		// Add value for being on an outpost
-		v -= outpost(pos, sq, BLACK);
-
+		// Add value for being on an outpost. Only on fourth rank and below.
+		if (sq / 8 <= RANK_4) {
+			v -= outpost(pos, sq, BLACK);
+		}
 		// Add value depending on amount of defending pawns of the square
 		v -= 10 * defending_pawns(pos, sq, BLACK);
 	}
@@ -282,8 +282,10 @@ int eval::pieces_mg(const S_BOARD* pos) {
 	while (bishopBrd != 0) {
 		sq = PopBit(&bishopBrd);
 
-		// Outpost bonus
-		v -= outpost(pos, sq, BLACK);
+		// Outpost bonus. Only if on rank four or below.
+		if (sq / 8 <= RANK_4) {
+			v -= outpost(pos, sq, BLACK);
+		}
 
 		// Add value for being defended by pawns. (Smaller than the bonus for knights)
 		v -= 5 * defending_pawns(pos, sq, BLACK);
@@ -326,7 +328,7 @@ int eval::pieces_mg(const S_BOARD* pos) {
 		v -= fileBonus;
 
 		// Bonus for being on the enemy king ring.
-		v += (((FileMasks8[sq % 8] | RankMasks8[sq / 8]) & w_kingRing) != 0) ? 15 : 0;
+		v -= (((FileMasks8[sq % 8] | RankMasks8[sq / 8]) & w_kingRing) != 0) ? 15 : 0;
 	}
 
 
@@ -373,6 +375,7 @@ int eval::imbalance(const S_BOARD* pos) {
 	v += countBits(pos->position[WR]) * rook_pawn_bonus * (8 - wPwnCnt);
 	v -= countBits(pos->position[BR]) * rook_pawn_bonus * (8 - bPwnCnt);
 
+	// Penalty to knights depending on amount of pawns removed
 	v -= countBits(pos->position[WN]) * knight_pawn_penalty * (8 - wPwnCnt);
 	v += countBits(pos->position[BN]) * knight_pawn_penalty * (8 - bPwnCnt);
 
