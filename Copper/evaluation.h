@@ -16,6 +16,33 @@ inline int doubledCnt(uint64_t pawnBrd) {
 	return cnt;
 }
 
+inline uint64_t kingRing(const S_BOARD* pos, S_SIDE s) {
+	BitBoard K = 0;
+	if (s == WHITE) {
+		K = pos->position[WK];
+	}
+	else {
+		K = pos->position[BK];
+	}
+
+	BitBoard OCCUPIED = ~pos->EMPTY_SQUARES;
+
+	// Horizontal and vertical
+	BitBoard kingMoves = 0;
+	kingMoves = kingMoves | (K & (OCCUPIED ^ FileMasks8[7])) << 1;
+	kingMoves = kingMoves | (K & (OCCUPIED ^ FileMasks8[0])) >> 1;
+	kingMoves = kingMoves | (K & (OCCUPIED ^ RankMasks8[0])) >> 8;
+	kingMoves = kingMoves | (K & (OCCUPIED ^ RankMasks8[7])) << 8;
+
+	// Diagonal
+	kingMoves = kingMoves | (K & (OCCUPIED ^ (RankMasks8[7] | FileMasks8[7]))) << 9;
+	kingMoves = kingMoves | (K & (OCCUPIED ^ (RankMasks8[0] | FileMasks8[7]))) >> 7;
+	kingMoves = kingMoves | (K & (OCCUPIED ^ (RankMasks8[0] | FileMasks8[0]))) >> 9;
+	kingMoves = kingMoves | (K & (OCCUPIED ^ (RankMasks8[7] | FileMasks8[0]))) << 7;
+
+	return kingMoves;
+}
+
 
 // evaluation.cpp
 int addPsqtVal(int sq, int pce, bool eg);

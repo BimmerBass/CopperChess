@@ -8,7 +8,7 @@ int eval::mg_evaluate(const S_BOARD* pos) {
 	v += material_mg(pos);
 	v += psqt_mg(pos);
 	v += pawns_mg(pos);
-	//v += pieces_mg(pos);
+	v += pieces_mg(pos);
 	
 	return v;
 }
@@ -184,6 +184,9 @@ int eval::outpost(const S_BOARD* pos, int sq, S_SIDE side) {
 int eval::pieces_mg(const S_BOARD* pos) {
 	int v = 0;
 
+	BitBoard w_kingRing = kingRing(pos, WHITE);
+	BitBoard b_kingRing = kingRing(pos, BLACK);
+
 	/*
 	WHITE PIECES
 	*/
@@ -221,9 +224,40 @@ int eval::pieces_mg(const S_BOARD* pos) {
 			v -= 3 * countBits(pos->position[WP] & DARK_SQUARES);
 		}
 		
-		// Bonus for being on same diagonal or anti-diagonal as enemy king
+		// Bonus for being on same diagonal or anti-diagonal as enemy king ring
 		v += (((diagonalMasks[7 + (sq / 8) - (sq % 8)] | antidiagonalMasks[(sq / 8) + (sq % 8)])
-			& ((uint64_t)1 << pos->kingPos[1])) != 0) ? 46 : 0;
+			& b_kingRing) != 0) ? 25 : 0;
+	}
+
+	// Bonus for having doubled rooks
+	for (int f = 0; f < 8; f++) {
+		if (countBits(rookBrd & FileMasks8[f]) >= 2) {
+			v += 30;
+		}
+	}
+
+	while (rookBrd != 0) {
+		sq = PopBit(&rookBrd);
+
+		// Bonus for being on the same file as the enemy queen.
+		v += ((FileMasks8[sq % 8] & pos->position[BQ]) != 0) ? 5 : 0;
+
+		// Bonus for open or semi-open file
+		int fileBonus = 0;
+		if (((pos->position[WP] | pos->position[BP]) & FileMasks8[sq % 8]) == 0) { // Fully open file. No pawns
+			fileBonus = 45;
+		}
+		else if ((pos->position[WP] & FileMasks8[sq % 8]) == 0 && (pos->position[BP] & FileMasks8[sq % 8]) != 0) { // Only half-open file. No white pawns only
+			fileBonus = 20;
+		}
+		else {
+			fileBonus = 0;
+		}
+		v += fileBonus;
+
+		// Bonus for being on the enemy king ring.
+		v += (((FileMasks8[sq % 8] | RankMasks8[sq / 8]) & b_kingRing) != 0) ? 15 : 0;
+
 	}
 
 
@@ -262,14 +296,60 @@ int eval::pieces_mg(const S_BOARD* pos) {
 			v += 3 * countBits(pos->position[BP] & DARK_SQUARES);
 		}
 
-		// Bonus for being on same diagonal or anti-diagonal as enemy king
+		// Bonus for being on same diagonal or anti-diagonal as enemy king ring
 		v -= (((diagonalMasks[7 + (sq / 8) - (sq % 8)] | antidiagonalMasks[(sq / 8) + (sq % 8)])
-			& ((uint64_t)1 << pos->kingPos[0])) != 0) ? 46 : 0;
+			& w_kingRing) != 0) ? 25 : 0;
+	}
+
+	// Bonus for being doubled
+	for (int f = 0; f < 8; f++) {
+		if (countBits(rookBrd & FileMasks8[f]) >= 2) {
+			v -= 30;
+		}
+	}
+
+	while (rookBrd != 0) {
+		sq = PopBit(&rookBrd);
+
+		// Bonus for same file as enemy queen.
+		v -= ((FileMasks8[sq % 8] & pos->position[WQ]) != 0) ? 5 : 0;
+
+		// Bonus for open or semi-open file
+		int fileBonus = 0;
+		if (((pos->position[WP] | pos->position[BP]) & FileMasks8[sq % 8]) == 0) { // No pawns => fully open file.
+			fileBonus = 45;
+		}
+		if ((pos->position[BP] & FileMasks8[sq % 8]) == 0 && (pos->position[WP] & FileMasks8[sq % 8]) != 0) { // There are only white pawns => semi-open
+			fileBonus = 20;
+		}
+
+		v -= fileBonus;
+
+		// Bonus for being on the enemy king ring.
+		v += (((FileMasks8[sq % 8] | RankMasks8[sq / 8]) & w_kingRing) != 0) ? 15 : 0;
 	}
 
 
 	return v;
 }
+
+
+int eval::pieces_eg(const S_BOARD* pos) {
+	int v = 0;
+
+	/*
+	WHITE PIECES
+	*/
+
+
+	BitBoard knightBrd = pos->position[WN];
+	BitBoard bishopBrd = pos->position[WB];
+	BitBoard rookBrd = pos->position[WR];
+	BitBoard queenBrd = pos->position[WQ];
+
+	return v;
+}
+
 
 int eval::imbalance(const S_BOARD* pos) {
 	int v = 0;
