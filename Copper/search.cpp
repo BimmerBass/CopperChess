@@ -204,7 +204,16 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 	END OF MATE DISTANCE PRUNING
 	*/
 
+	/*
+	IN CHECK EXTENSION
+		- If we are in check, we want to search the entire sequence as it is very forcing. Therefore we increase the search depth by 1.
+	*/
 	if (pos->inCheck) { depth++; extend = true; improving = false; }
+
+	/*
+	QUIESCENCE SEARCH
+		- If we are in a leaf node, we will search all captures, promotions and checks such that we only evaluate a quiet position.
+	*/
 	if (depth == 0) {
 		return Quiescence(alpha, beta, pos, info);
 		
@@ -215,15 +224,19 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 	int value = -INF;
 	int oldAlpha = alpha;
 
+	// By default futility pruning should not be allowed.
 	bool f_prune = false;
-	bool flagInCheck = pos->inCheck; // We won't do LMR if we are getting out of check
+	bool flagInCheck = pos->inCheck; // We won't do LMR if we are getting out of check. Will be used after making a move.
 
+	// If we have searched a certain number of nodes, we need to check if the GUI has sent a "stop" or "quit" command.
 	if ((info->nodes & 2047) == 0) {
 		CheckUp(info);
 	}
 
 	info->nodes++;
 
+	// If this position has been reached before, we need not explore it further as it can be a draw.
+	// Later on we will implement a contempt factor to make Copper either play for a draw or a win.
 	if ((isRepetition(pos) || pos->fiftyMove >= 100) && pos->ply > 0) {
 		return 0;
 	}
@@ -232,16 +245,19 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 		return side*eval::staticEval(pos, depth, alpha, beta);
 	}
 
+	// We will probe the transposition table, and if it has a value for the position, we dont need to search it.
 	if (TT::probePos(pos, depth, alpha, beta, &bestMove, &value) == true) {
 		return value;
 	}
 
 	S_MOVELIST list;
-	MoveGeneration::validMoves(pos, list);
+	MoveGeneration::validMoves(pos, list); // Generate all legal moves for the position. Later on, this will be all pseudo-legal moves
+												// and we'll then determine a move's legality by trying to make it and see if we're in check.
 	
+	// If there are no legal moves, it is either a checkmate or stalemate.
 	if (list.count == 0) {
 		if (sqAttacked(kingSq, !pos->whitesMove, pos)) {
-			return -INF + pos->ply; // Checkmate at this depth
+			return -INF + pos->ply; // Checkmate at this ply-depth
 		}
 		else {
 			return 0; // stalemate
@@ -265,8 +281,10 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 
 		/*
 		EVAL PRUNING
+			- If we are not in check and beta is not close to a checkmate score, we can return the static evaluation.
+				with a safety margin of 120cp multiplied by the depth, but only if their difference exceeds beta.
 		*/
-		if (!pos->inCheck && abs(beta) - 1 < -MATE + 100) {
+		if (!pos->inCheck && abs(beta - 1) > -INF + 100) {
 
 			int eval_margin = 120 * depth;
 
@@ -285,28 +303,6 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 		}
 
 	}
-
-
-	/*
-	STATIC NULL MOVE PRUNING / EVAL PRUNING
-	*/
-
-	/*if (depth < 3
-		&& !pos->inCheck
-		&& abs(beta - 1) > MATE) {
-		int static_eval = side * eval::staticEval(pos, depth, alpha, beta);
-
-		int eval_margin = 120 * depth; // FIXME: Tune this value
-		
-		if (static_eval - eval_margin >= beta) {
-			return (static_eval - eval_margin);
-		}
-
-	}*/
-
-	/*
-	END OF EVAL PRUNING
-	*/
 
 
 	/*
@@ -336,7 +332,7 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 			undoNullMove(pos, oldEp);
 
 			if (info->stopped == true) { return 0; }
-			if (value >= beta) { return beta; }
+			if (value >= beta && abs(value) < MATE) { return beta; }
 			
 			/*if (value >= beta) { // NULL MOVE REDUCTIONS. We'll have to test this further before implementing it
 				depth -= 3;
@@ -359,15 +355,15 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 
 
 	// Futility pruning and razoring
-	if (depth <= 3 && !pos->inCheck && abs(alpha) < 9000) {
+	if (depth <= 3 && !pos->inCheck) {
 		int eval = side * eval::staticEval(pos, depth, alpha, beta);
 
 		// We'll only do razoring if depth = 2, the eval is below alpha by some margin, we arent extending and there isn't a PV-move
-		if (depth < 2 && eval < (alpha - side * RAZOR_MARGIN) && !extend && bestMove == NOMOVE) {
+		if (depth < 2 && eval <= (alpha - RAZOR_MARGIN) && !extend && bestMove == NOMOVE) {
 			return Quiescence(alpha, beta, pos, info);
 		}
 
-		if (eval + (side * fMargin[depth]) <= alpha) {
+		if (eval + fMargin[depth] <= alpha && abs(alpha) < 9000) {
 			f_prune = true;
 		}
 	}
@@ -375,6 +371,7 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 	int reduction_depth = 0;
 	int new_depth = 0;
 	int raised_alpha = 0;
+	value = -INF;
 
 	int moves_tried = 0;
 	for (int moveNum = 0; moveNum < list.count; moveNum++) {
@@ -431,7 +428,6 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 		if (info->stopped == true) { return 0; }
 
 		if (value > alpha) {
-
 			bestMove = list.moves[moveNum].move;
 
 			if (value >= beta) {
@@ -447,7 +443,7 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 
 
 					// Update the history heuristics
-					pos->historyHeuristic[pos->pieceList[FROMSQ(bestMove)]][TOSQ(bestMove)] += depth*depth;
+					pos->historyHeuristic[pos->pieceList[FROMSQ(bestMove)]][TOSQ(bestMove)] += depth * depth;
 
 					// If the search is super deep, the history table will overflow, so we'll half all the values if this happens at one of them.
 					if (pos->historyHeuristic[pos->pieceList[FROMSQ(bestMove)]][TOSQ(bestMove)] > 900000) {
@@ -468,7 +464,6 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 			raised_alpha = 1;
 			alpha = value;
 			bestScore = value;
-
 		}
 	}
 
@@ -535,7 +530,7 @@ int Search::searchRoot(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, i
 
 		if (value > alpha) {
 			bestMove = moves.moves[i].move;
-			bestScore = value;
+			//bestScore = value;
 			if (value >= beta) {
 				if (i == 0) {
 					info->fhf++;
@@ -549,6 +544,7 @@ int Search::searchRoot(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, i
 
 			TT::storeEntry(pos, bestMove, depth, LOWER, value);
 			alpha = value;
+			bestScore = alpha;
 		}
 	}
 
