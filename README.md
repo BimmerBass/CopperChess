@@ -85,7 +85,7 @@ The engine still has bugs[4][5][6] (described below) and weaknesses, and have th
     - Killer moves
     - Quiescence search
         - Delta pruning
-    - 1GB Transposition table. (Will be reduced when a function that measures the percentage of space used in the transposition table is implemented)
+    - 200MB Transposition table. (Will be reduced when a function that measures the percentage of space used in the transposition table is implemented)
     - MvvLva (Most-valuable-victim Least-valuable-attacker.)
     - Late move reductions
     - Futility pruning
@@ -93,7 +93,7 @@ The engine still has bugs[4][5][6] (described below) and weaknesses, and have th
     - Eval-/Static null move pruning.
     - Mate distance pruning. If we have found a forced checkmate, we don't want to examine longer mate sequences than that one.
     - Principal variation search in the root node.
-    - A 500MB evaluation cache that stores previously calculated static evaluations.
+    - A 50MB evaluation cache that stores previously calculated static evaluations.
 
 Copper achieves an overall move ordering of around 89-90%.
 

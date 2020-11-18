@@ -271,9 +271,9 @@ struct S_BOARD {
 	BitBoard BLACK_PIECES = 0;
 	int fiftyMove = 0;
 	
-	// Create a transposition table with default size of 2GB.
-	S_TABLE *transpositionTable = new S_TABLE(1, true);
-	S_EVALCACHE* evaluationCache = new S_EVALCACHE(500); // Allocate 500MB for static evaluations.
+	// Create a transposition table with default size of 200MB.
+	S_TABLE *transpositionTable = new S_TABLE(200);
+	S_EVALCACHE* evaluationCache = new S_EVALCACHE(50); // Allocate 50MB for static evaluations.
 
 	bool is_checkmate = false;
 	bool is_stalemate = false;

@@ -97,7 +97,6 @@ bool badCapture(const S_BOARD* pos, int move) {
 
 int Search::Quiescence(int alpha, int beta, S_BOARD* pos, S_SEARCHINFO* info) {
 	int kingSq = (pos->whitesMove == WHITE) ? pos->kingPos[0] : pos->kingPos[1];
-	int side = (pos->whitesMove == WHITE) ? 1 : -1;
 	if ((info->nodes & 2047) == 0) {
 		CheckUp(info);
 	}
@@ -109,10 +108,10 @@ int Search::Quiescence(int alpha, int beta, S_BOARD* pos, S_SEARCHINFO* info) {
 	}
 
 	if (pos->ply > MAXDEPTH - 1) {
-		return side*eval::staticEval(pos, 0, alpha, beta);
+		return eval::staticEval(pos, 0, alpha, beta);
 	}
 
-	int stand_pat = side*eval::staticEval(pos, 0, alpha, beta);
+	int stand_pat = eval::staticEval(pos, 0, alpha, beta);
 
 	if (stand_pat >= beta) {
 		return stand_pat;
@@ -191,7 +190,6 @@ int Search::Quiescence(int alpha, int beta, S_BOARD* pos, S_SEARCHINFO* info) {
 
 int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, int beta, bool doNull, bool extend) {
 	bool improving = true;
-	int side = (pos->whitesMove == WHITE) ? 1 : -1;
 	int kingSq = (pos->whitesMove == WHITE) ? pos->kingPos[0] : pos->kingPos[1];
 
 	/*
@@ -242,7 +240,7 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 	}
 
 	if (pos->ply > MAXDEPTH - 1) {
-		return side*eval::staticEval(pos, depth, alpha, beta);
+		return eval::staticEval(pos, depth, alpha, beta);
 	}
 
 	// We will probe the transposition table, and if it has a value for the position, we dont need to search it.
@@ -276,7 +274,7 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 
 
 	if (depth < 3) {
-		int staticEval = side * eval::staticEval(pos, depth, alpha, beta);
+		int staticEval = eval::staticEval(pos, depth, alpha, beta);
 
 
 		/*
@@ -313,7 +311,7 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 	
 	if ((depth > 2)
 		&& doNull
-		&& (side * eval::staticEval(pos, depth, alpha, beta)) >= beta
+		&& (eval::staticEval(pos, depth, alpha, beta)) >= beta
 		&& !pos->inCheck) {
 
 		// FIXME: This boolean endgame-determination value probably needs to be changed.
@@ -356,12 +354,23 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 
 	// Futility pruning and razoring
 	if (depth <= 3 && !pos->inCheck) {
-		int eval = side * eval::staticEval(pos, depth, alpha, beta);
+		int eval = eval::staticEval(pos, depth, alpha, beta);
 
 		// We'll only do razoring if depth = 2, the eval is below alpha by some margin, we arent extending and there isn't a PV-move
-		if (depth < 2 && eval <= (alpha - RAZOR_MARGIN) && !extend && bestMove == NOMOVE) {
-			return Quiescence(alpha, beta, pos, info);
+		if (eval + RAZOR_MARGIN < beta) { // Likely a fail-low node
+			int new_val = Quiescence(alpha, beta, pos, info);
+			if (new_val < beta) { return new_val; }
 		}
+		/*if (depth < 2 && eval <= (alpha - RAZOR_MARGIN) && !extend && bestMove == NOMOVE) {
+			int new_val = Quiescence(alpha, beta, pos, info);
+			if (new_val < beta) { return new_val; }
+		}*/
+		/*if (eval + RAZOR_MARGIN <= alpha && depth == 3) {
+			if ((pos->whitesMove == WHITE && countBits(pos->BLACK_PIECES ^ (pos->position[BP] | pos->position[BK])) > 3)
+				|| (pos->whitesMove == BLACK && countBits(pos->WHITE_PIECES ^ (pos->position[WP] | pos->position[WK])) > 3)) {
+				depth -= 1;
+			}
+		}*/
 
 		if (eval + fMargin[depth] <= alpha && abs(alpha) < 9000) {
 			f_prune = true;

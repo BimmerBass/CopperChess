@@ -33,6 +33,9 @@ int eval::staticEval(const S_BOARD* pos, int depth, int alpha, int beta) {
 
 	v_main += (pos->whitesMove == WHITE) ? tempo : -tempo;
 
+	// Make v_main relative to the side to move.
+	v_main *= (pos->whitesMove == WHITE) ? 1 : -1;
+
 	// Store the evaluation in the evaluation cache
 	pos->evaluationCache->storeEvaluation(pos, v_main);
 
