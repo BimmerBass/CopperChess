@@ -497,10 +497,10 @@ FUNCTIONS AND CLASSES
 bool sqAttacked(int sq, bool side, const S_BOARD* pos);
 
 namespace attacks {
-	void positiveLineAttacks(BitBoard& attackRays, BitBoard OCCUPIED, int direction, int sq);
-	void negativeLineAttacks(BitBoard& attackRays, BitBoard OCCUPIED, int direction, int sq);
-	void positiveDiagAttacks(BitBoard& attackRays, BitBoard OCCUPIED, int direction, int sq);
-	void negativeDiagAttacks(BitBoard& attackRays, BitBoard OCCUPIED, int direction, int sq);
+	inline void positiveLineAttacks(BitBoard& attackRays, BitBoard OCCUPIED, int direction, int sq);
+	inline void negativeLineAttacks(BitBoard& attackRays, BitBoard OCCUPIED, int direction, int sq);
+	inline void positiveDiagAttacks(BitBoard& attackRays, BitBoard OCCUPIED, int direction, int sq);
+	inline void negativeDiagAttacks(BitBoard& attackRays, BitBoard OCCUPIED, int direction, int sq);
 }
 
 
