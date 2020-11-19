@@ -177,14 +177,13 @@ int Search::Quiescence(int alpha, int beta, S_BOARD* pos, S_SEARCHINFO* info) {
 						info->fhf++;
 					}
 					info->fh++;
-
 					return beta;
 				}
-
 				alpha = score;
 			}
 		}
 	}
+
 	return alpha;
 }
 

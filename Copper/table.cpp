@@ -69,7 +69,7 @@ int TT::probePos(const S_BOARD* pos, int depth, int alpha, int beta, int* move, 
 			case UPPER:
 				if (*score >= beta) {
 					*score = beta;
-					return 1;
+					return true;
 				}
 				break;
 			case EXACT:
