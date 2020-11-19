@@ -9,7 +9,7 @@ At the moment Copper is a command-line engine only, and can only be used graphic
 Due to issues with the UCI-protocol, Copper unfortunately only runs on windows at the moment.
 
 #### Strength
-The engine still has bugs[4][5][6] (described below) and weaknesses, and have therefore not been tested thoroughly yet. Despite of this, it easily beats Stockfish rated 2000 on lichess.org.
+The engine still has bugs and weaknesses, and have therefore not been tested thoroughly yet. Despite of this, it easily beats Stockfish rated 2000 on lichess.org.
 
 
 #### Special thanks to
@@ -22,7 +22,7 @@ The engine still has bugs[4][5][6] (described below) and weaknesses, and have th
     - Ray-lookup tables for sliding pieces.
     - Legal-move generation function[2].
     - **Perft @ depth 5 speed is around: 1 second.** (from starting position)
-- Static evaluation function
+- Static evaluation function.
     - It is being re-written at the moment.
     - Has the following piece-values in centipawns:
         - Pawn: 100
@@ -32,7 +32,7 @@ The engine still has bugs[4][5][6] (described below) and weaknesses, and have th
         - Queen: 1050
         - King: 20000
         - These values can be tweaked to adjust how bold the engine's playstyle is.
-        - I am currently working on giving different piece-values in the endgame as pwns for example become more valuable.
+        - I am currently working on giving different piece-values in the endgame as pawns for example become more valuable.
     - Piece-square tables. I am working on adjusting the endgame-specific tables (at the moment, many are the same as middlegame psqt's)
     - King evaluation:
         - Bonus for castling
@@ -47,7 +47,7 @@ The engine still has bugs[4][5][6] (described below) and weaknesses, and have th
         - Bonus for being doubled.
         - Bonus for being on the seventh rank.
         - Bonus for having to rooks on the seventh rank (also known as pigs on the seventh).
-        - Bonus for being on an open or semi open file. Could be done for white like this: rookVal += 40 - 13.3 * pawnCnt(file)
+        - Bonus for being on an open or semi open file.
         - Bonus for being on the E and D file in the middlegame.
         - Inversely proportional bonus to the amount of own pawns on the board.
         - Bonus for defending one of our own passed pawns.
@@ -56,7 +56,6 @@ The engine still has bugs[4][5][6] (described below) and weaknesses, and have th
         - Bonus if we have the bishop pair.
         - Bonus inversely proportional to amount of pawns on the diagonals occupied.
         - Bonus if there are pawns on both sides (queenside and kingside) of the board in the endgame.
-        - Bonus for being on the other side of the enemy king (for example, a bishop on B2 is better than one on G2 if black has castled kingside).
         - Bonus for being on the same square color as the enemy king.
         - Bonus for early development.
         - Penalty for being developed such that it blocks either the E2 or D2 pawn.
@@ -78,6 +77,7 @@ The engine still has bugs[4][5][6] (described below) and weaknesses, and have th
         - Bonus for being advanced on the edge in the endgame.
     - Small bonus for tempo (being the side to move).
     - A tapered evaluation will be used to transition into a more endgame-specific evaluation as pieces dissapear from the board.
+- **Automated tuning**: To increase playing strength, we will implement an algorithm to tune the evaluation - and perhaps also search - parameters by decreasing an error function obtained by self-play games with ultra-short time controls (e.g. 1 + 0.08s).
 - **Search function**: The search includes the following methods and tables
     - Iterative deepening with Alpha-Beta Pruning.
     - Aspiration windows for narrowed search.
@@ -85,15 +85,17 @@ The engine still has bugs[4][5][6] (described below) and weaknesses, and have th
     - Killer moves
     - Quiescence search
         - Delta pruning
-    - 200MB Transposition table. (Will be reduced when a function that measures the percentage of space used in the transposition table is implemented)
+        - Bad capture pruning.
+    - 200MB Transposition table, with a (soon to be) depth-based replacement strategy. (Will be reduced when a function that measures the percentage of space used in the transposition table is implemented)
     - MvvLva (Most-valuable-victim Least-valuable-attacker.)
     - Late move reductions
     - Futility pruning
+    - Razoring.
     - Null move pruning
     - Eval-/Static null move pruning.
     - Mate distance pruning. If we have found a forced checkmate, we don't want to examine longer mate sequences than that one.
     - Principal variation search in the root node.
-    - A 50MB evaluation cache that stores previously calculated static evaluations.
+    - A 50MB evaluation cache that stores previously calculated static evaluations. At the moment, the replacement strategy is replace-all, but i think an age-strategy would be better in the future.
 
 Copper achieves an overall move ordering of around 89-90%.
 
@@ -109,5 +111,3 @@ Copper achieves an overall move ordering of around 89-90%.
 1. The engine is only semi-UCI compliant since the protocol hasn't been completely implemented. It works fine for playing games, but some info to the GUI is missing.
 2. Although it is inefficient to check all pseudo-legal moves generated, i have decided to keep this implementation as it is more intuitive and the algorithm for doing this is still quite efficient. It works by first seeing if the side to move is in check. If this is true, it tries all moves and see if they still leave the side in check. If it isn't, it creates a bitmask for the king square that has all the squares a queen would be able to move to, and then it checks the moves for pieces that start on these squares. For king moves it checks to see if the destination square is attacked, and for en-passant it just makes the move and sees if the side to move is in check.
 3. Self-play training will be accomplished by creating around 15.000 positions from self-play (first six moves will be randomized so the network won't overfit). Then, a batch of around 2.000 positions will be selected randomly, their evaluations will be compared to the actual outcomes from the games, and the error function will be computed by taking the squared sum of there differences. Backpropagation will be used to adjust the network.
-4. It usually plays better as one side (white or black) compared to the other. It might be a bug in the search, but since its weak side changes depending on the opposing engine, i'm not sure about this. Perhaps also a problem in eval.
-5. **This is most likely fixed now, but I will need to perform more tests to be 100% sure.** If the game is really long (usually over 100 plies), Copper doesn't receive the entire UCI-command causing it to evaluate another position and therefore loose by making illegal moves. This will probably be fixed by increasing the input buffer size. **It also had problems with parsing promotion moves sent from the GUI. Since promotions often happen in the endgame, i think this was the cause for the illegal moves.**

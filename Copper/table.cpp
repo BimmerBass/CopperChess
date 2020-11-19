@@ -37,7 +37,7 @@ void TT::clearTable(S_TABLE* table){
 
 void TT::storeEntry(S_BOARD* pos, int move, int depth, TT_FLAG flg, int score){
 	int index = pos->posKey % pos->transpositionTable->numEntries;
-	
+
 	pos->transpositionTable->tableEntry[index].posKey = pos->posKey;
 	pos->transpositionTable->tableEntry[index].move = move;
 	pos->transpositionTable->tableEntry[index].score = score;
