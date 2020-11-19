@@ -361,16 +361,6 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 			int new_val = Quiescence(alpha, beta, pos, info);
 			if (new_val < beta) { return new_val; }
 		}
-		/*if (depth < 2 && eval <= (alpha - RAZOR_MARGIN) && !extend && bestMove == NOMOVE) {
-			int new_val = Quiescence(alpha, beta, pos, info);
-			if (new_val < beta) { return new_val; }
-		}*/
-		/*if (eval + RAZOR_MARGIN <= alpha && depth == 3) {
-			if ((pos->whitesMove == WHITE && countBits(pos->BLACK_PIECES ^ (pos->position[BP] | pos->position[BK])) > 3)
-				|| (pos->whitesMove == BLACK && countBits(pos->WHITE_PIECES ^ (pos->position[WP] | pos->position[WK])) > 3)) {
-				depth -= 1;
-			}
-		}*/
 
 		if (eval + fMargin[depth] <= alpha && abs(alpha) < 9000) {
 			f_prune = true;

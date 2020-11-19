@@ -67,8 +67,11 @@ void MoveGeneration::validMoves(S_BOARD* board, S_MOVELIST &legalMoves){
 				makeMove(*board, pseudoLegal.moves[moveNum].move);
 				if (!sqAttacked(kingSq, board->whitesMove, board)){ // Not in check
 					undoMove(*board);
+					
 					legalMoves.moves[legalMoves.count] = pseudoLegal.moves[moveNum];
+					
 					scoreQuiets(board, &legalMoves);
+					
 					legalMoves.count++;
 				}
 				else{
@@ -89,8 +92,11 @@ void MoveGeneration::validMoves(S_BOARD* board, S_MOVELIST &legalMoves){
 				piece this_king = (board->whitesMove == WHITE) ? WK : BK;
 				board->position[this_king] = 0;
 				if (!sqAttacked((pseudoLegal.moves[moveNum].move >> 10), !board->whitesMove, board)){
+					
 					legalMoves.moves[legalMoves.count] = pseudoLegal.moves[moveNum];
+					
 					scoreQuiets(board, &legalMoves);
+					
 					legalMoves.count++;
 				}
 				board->position[this_king] = SETBIT(board->position[this_king], kingSq);
@@ -100,8 +106,11 @@ void MoveGeneration::validMoves(S_BOARD* board, S_MOVELIST &legalMoves){
 				makeMove(*board, pseudoLegal.moves[moveNum].move);
 				if (!sqAttacked(kingSq, board->whitesMove, board)){
 					undoMove(*board);
+					
 					legalMoves.moves[legalMoves.count] = pseudoLegal.moves[moveNum];
+					
 					scoreQuiets(board, &legalMoves);
+					
 					legalMoves.count++;
 				}
 				else{
@@ -114,9 +123,13 @@ void MoveGeneration::validMoves(S_BOARD* board, S_MOVELIST &legalMoves){
 				makeMove(*board, pseudoLegal.moves[moveNum].move);
 
 				if (!sqAttacked(kingSq, board->whitesMove, board)){
+					
 					undoMove(*board);
+					
 					legalMoves.moves[legalMoves.count] = pseudoLegal.moves[moveNum];
+					
 					scoreQuiets(board, &legalMoves);
+					
 					legalMoves.count++;
 				}
 				else{
@@ -129,6 +142,9 @@ void MoveGeneration::validMoves(S_BOARD* board, S_MOVELIST &legalMoves){
 			
 			else {
 				legalMoves.moves[legalMoves.count] = pseudoLegal.moves[moveNum];
+
+				scoreQuiets(board, &legalMoves);
+
 				legalMoves.count++;
 			}
 			
