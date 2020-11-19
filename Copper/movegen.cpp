@@ -15,15 +15,22 @@ INCLUDES THE FUNCTIONS:
 */
 
 inline void scoreQuiets(const S_BOARD* board, S_MOVELIST* legalMoves) {
-	// Check if it is a killer move, and score accordingly
+
 	if (board->pieceList[TOSQ(legalMoves->moves[legalMoves->count].move)] == NO_PIECE) { // Not a capture move
+		
 		if (board->killerMoves[board->ply][0] == legalMoves->moves[legalMoves->count].move) {
 			legalMoves->moves[legalMoves->count].score = 900000; // We'll make the latest killer move found, the first to get searched
 		}
+
 		else if (board->killerMoves[board->ply][1] == legalMoves->moves[legalMoves->count].move) {
 			legalMoves->moves[legalMoves->count].score = 800000;
 		}
-		else {
+
+		else if (SPECIAL(legalMoves->moves[legalMoves->count].move) == 0) { // If the move is a promotion.
+			legalMoves->moves[legalMoves->count].score = 510;
+		}
+
+		else { // Here, we'll add the score from the history heuristic.
 			legalMoves->moves[legalMoves->count].score = board->historyHeuristic[board->pieceList[FROMSQ(legalMoves->moves[legalMoves->count].move)]]
 				[TOSQ(legalMoves->moves[legalMoves->count].move)];
 		}
