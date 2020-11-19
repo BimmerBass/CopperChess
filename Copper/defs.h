@@ -231,7 +231,7 @@ private:
 // Undo-move structure. Contains information that can't be implied directly from a current position.
 struct S_UNDO {
 	BitBoard bitboards[12] = { 0 };
-	int pieces[64] = { 0 };
+	//int pieces[64] = { 0 };
 	S_SIDE side = WHITE;
 	bool inCheck = false;
 	
