@@ -8,15 +8,9 @@ INCLUDES THE FUNCTIONS:
 
 inline bool InCheck(const S_BOARD* pos) {
 	if (pos->whitesMove == WHITE) {
-		/*if (sqAttacked(pos->kingPos[0], BLACK, pos)) {
-			return true;
-		}*/
 		return sqAttacked(pos->kingPos[0], BLACK, pos);
 	}
 	else {
-		/*if (sqAttacked(pos->kingPos[1], WHITE, pos)) {
-			return true;
-		}*/
 		return sqAttacked(pos->kingPos[1], WHITE, pos);
 	}
 	return false;
@@ -28,7 +22,7 @@ void MoveGeneration::undoMove(S_BOARD &board){
 		S_UNDO previousPos = board.history.history[board.history.moveCount - 1];
 		
 		std::copy(previousPos.bitboards, previousPos.bitboards + 12, board.position);
-		//std::copy(previousPos.pieces, previousPos.pieces + 64, board.pieceList);
+
 		std::fill(board.pieceList, board.pieceList + 64, NO_PIECE);
 
 		BitBoard pceBrd = 0;
@@ -77,9 +71,7 @@ void MoveGeneration::makeMove(S_BOARD &board, int move){
 	for (int i = 0; i < 12; i++){
 		positionDescriptors.bitboards[i] = board.position[i];
 	}
-	/*for (int i = 0; i < 64; i++){
-		positionDescriptors.pieces[i] = board.pieceList[i];
-	}*/
+
 	positionDescriptors.side = board.whitesMove;
 	
 	positionDescriptors.castlingPerms = board.castlePerms;

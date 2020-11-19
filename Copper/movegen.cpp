@@ -204,7 +204,8 @@ void MoveGeneration::kingMoves(S_BOARD* board, S_MOVELIST& s_moves) {
 	}
 	int destination;
 	while (LegalKingMoves != 0) {
-		destination = bitScanForward(LegalKingMoves);
+		destination = PopBit(&LegalKingMoves);
+
 		s_moves.moves[s_moves.count].move = newMove(destination, index, 0, 3);
 		
 		// Set MMV-LVA scores
@@ -213,7 +214,6 @@ void MoveGeneration::kingMoves(S_BOARD* board, S_MOVELIST& s_moves) {
 		}
 		
 		s_moves.count += 1;
-		LegalKingMoves ^= (uint64_t)1 << destination;
 	}
 
 	// Castling moves
@@ -269,7 +269,9 @@ void MoveGeneration::bishopMoves(S_BOARD* board, S_MOVELIST& s_moves, bool queen
 	BitBoard destinationSquares;
 	int index;
 	while (Bishop != 0) {
-		index = bitScanForward(Bishop);
+		index = PopBit(&Bishop);
+
+
 		destinationSquares = 0;
 		
 		attacks::positiveDiagAttacks(destinationSquares, (~board->EMPTY_SQUARES), 0, index); // North east
@@ -282,7 +284,7 @@ void MoveGeneration::bishopMoves(S_BOARD* board, S_MOVELIST& s_moves, bool queen
 
 		int validIndex;
 		while (validDests != 0) {
-			validIndex = bitScanForward(validDests);
+			validIndex = PopBit(&validDests);
 			s_moves.moves[s_moves.count].move = newMove(validIndex, index, 0, 3);
 			
 			// Set MVV-LVA scores
@@ -291,9 +293,7 @@ void MoveGeneration::bishopMoves(S_BOARD* board, S_MOVELIST& s_moves, bool queen
 			}
 			
 			s_moves.count += 1;
-			validDests ^= (uint64_t)1 << validIndex;
 		}
-		Bishop ^= (uint64_t)1 << index;
 	}
 }
 
@@ -320,7 +320,7 @@ void MoveGeneration::rookMoves(S_BOARD* board, S_MOVELIST& s_moves, bool queen) 
 	BitBoard destinationSquares = 0;
 
 	while (R != 0) {
-		index = bitScanForward(R);
+		index = PopBit(&R);
 
 		destinationSquares = 0;
 		attacks::positiveLineAttacks(destinationSquares, ~board->EMPTY_SQUARES, 0, index); // North
@@ -337,7 +337,7 @@ void MoveGeneration::rookMoves(S_BOARD* board, S_MOVELIST& s_moves, bool queen) 
 		}
 		int validIndex;
 		while (validDests != 0) {
-			validIndex = bitScanForward(validDests);
+			validIndex = PopBit(&validDests);
 			s_moves.moves[s_moves.count].move = newMove(validIndex, index, 0, 3);
 			
 			// Set MVV-LVA scores
@@ -346,9 +346,7 @@ void MoveGeneration::rookMoves(S_BOARD* board, S_MOVELIST& s_moves, bool queen) 
 			}
 			
 			s_moves.count += 1;
-			validDests ^= (uint64_t)1 << validIndex;
 		}
-		R ^= (uint64_t)1 << index;
 	}
 }
 
@@ -359,8 +357,8 @@ void MoveGeneration::knightMoves(S_BOARD* board, S_MOVELIST& s_moves) {
 	BitBoard destinationSquares;
 	int index;
 
-	while (N != 0) {// theres a knight at index i
-		index = bitScanForward(N);
+	while (N != 0) {
+		index = PopBit(&N);
 		destinationSquares = 0;
 		destinationSquares = destinationSquares | ((((uint64_t)1 << index) & (FileMasks8[7] ^ UNIVERSE)) << 17);
 		destinationSquares = destinationSquares | ((((uint64_t)1 << index) & (FileMasks8[0] ^ UNIVERSE)) << 15);
@@ -380,7 +378,7 @@ void MoveGeneration::knightMoves(S_BOARD* board, S_MOVELIST& s_moves) {
 		}
 		int validIndex;
 		while (validDestinations != 0) {
-			validIndex = bitScanForward(validDestinations);
+			validIndex = PopBit(&validDestinations);
 			s_moves.moves[s_moves.count].move = newMove(validIndex, index, 0, 3);
 			
 			// Set MVV-LVA scores
@@ -389,9 +387,7 @@ void MoveGeneration::knightMoves(S_BOARD* board, S_MOVELIST& s_moves) {
 			}
 			
 			s_moves.count += 1;
-			validDestinations ^= (uint64_t)1 << validIndex;
 		}
-		N ^= (uint64_t)1 << index;
 	}
 }
 
@@ -403,7 +399,7 @@ void MoveGeneration::pawnMoves(S_BOARD* board, S_MOVELIST& s_moves) { // Needs e
 		//One square forward
 		BitBoard oneSq = (WP << 8) & board->EMPTY_SQUARES;
 		while (oneSq != 0) {
-			index = bitScanForward(oneSq);
+			index = PopBit(&oneSq);
 			if (index >= 56) {
 				for (int i = 0; i <= 3; i++) {
 					s_moves.moves[s_moves.count].move = newMove(index, index - 8, i, 0);
@@ -414,23 +410,21 @@ void MoveGeneration::pawnMoves(S_BOARD* board, S_MOVELIST& s_moves) { // Needs e
 				s_moves.moves[s_moves.count].move = newMove(index, index - 8, 0, 3);
 				s_moves.count += 1;
 			}
-			oneSq ^= (uint64_t)1 << index;
 		}
 
 		//Two squares forward
 		BitBoard twoSqForward = ((((WP & RankMasks8[1]) << 8) & board->EMPTY_SQUARES) << 8) & board->EMPTY_SQUARES;
 
 		while (twoSqForward != 0) {
-			index = bitScanForward(twoSqForward);
+			index = PopBit(&twoSqForward);
 			s_moves.moves[s_moves.count].move = newMove(index, index - 16, 0, 3);
 			s_moves.count += 1;
-			twoSqForward ^= (uint64_t)1 << index;
 		}
 
 		// Attacks to the right
 		BitBoard rightAttacks = ((WP & ~FileMasks8[7]) << 9) & board->BLACK_PIECES;
 		while (rightAttacks != 0) {
-			index = bitScanForward(rightAttacks);
+			index = PopBit(&rightAttacks);
 			if (index >= 56) {
 				for (int i = 0; i <= 3; i++) {
 					s_moves.moves[s_moves.count].move = newMove(index, index - 9, i, 0);
@@ -443,13 +437,12 @@ void MoveGeneration::pawnMoves(S_BOARD* board, S_MOVELIST& s_moves) { // Needs e
 				s_moves.moves[s_moves.count].score = MvvLva[board->pieceList[index]][0] + 1000000;
 				s_moves.count += 1;
 			}
-			rightAttacks ^= (uint64_t)1 << index;
 		}
 
 		// Attacks to the left
 		BitBoard leftAttacks = ((WP & ~FileMasks8[0]) << 7) & board->BLACK_PIECES;
 		while (leftAttacks != 0) {
-			index = bitScanForward(leftAttacks);
+			index = PopBit(&leftAttacks);
 			if (index >= 56) {
 				for (int i = 0; i <= 3; i++) {
 					s_moves.moves[s_moves.count].move = newMove(index, index - 7, i, 0);
@@ -462,29 +455,26 @@ void MoveGeneration::pawnMoves(S_BOARD* board, S_MOVELIST& s_moves) { // Needs e
 				s_moves.moves[s_moves.count].score = MvvLva[board->pieceList[index]][0] + 1000000;
 				s_moves.count += 1;
 			}
-			leftAttacks = CLRBIT(leftAttacks, index);
 		}
 
 		// En-passant
 		rightAttacks = (WP & ~FileMasks8[7]) << 9;
 		leftAttacks = (WP & ~FileMasks8[0]) << 7;
 		while (rightAttacks != 0) {
-			index = bitScanForward(rightAttacks);
+			index = PopBit(&rightAttacks);
 			if (index == board->enPassantSquare) {
 				s_moves.moves[s_moves.count].move = newMove(index, index - 9, 0, 1);
 				s_moves.moves[s_moves.count].score = MvvLva[board->pieceList[index - 8]][0] + 1000000;
 				s_moves.count += 1;
 			}
-			rightAttacks = CLRBIT(rightAttacks, index);
 		}
 		while (leftAttacks != 0) {
-			index = bitScanForward(leftAttacks);
+			index = PopBit(&leftAttacks);
 			if (index == board->enPassantSquare) {
 				s_moves.moves[s_moves.count].move = newMove(index, index - 7, 0, 1);
 				s_moves.moves[s_moves.count].score = MvvLva[board->pieceList[index - 8]][0] + 1000000;
 				s_moves.count += 1;
 			}
-			leftAttacks = CLRBIT(leftAttacks, index);
 		}
 	}
 
@@ -495,7 +485,7 @@ void MoveGeneration::pawnMoves(S_BOARD* board, S_MOVELIST& s_moves) { // Needs e
 		// One square moves
 		BitBoard oneSquare = (BP >> 8) & board->EMPTY_SQUARES;
 		while (oneSquare != 0) {
-			index = bitScanForward(oneSquare);
+			index = PopBit(&oneSquare);
 			if (index <= 7) { // rank 1
 				for (int piece = 0; piece <= 3; piece++) {
 					s_moves.moves[s_moves.count].move = newMove(index, index + 8, piece, 0);
@@ -506,22 +496,20 @@ void MoveGeneration::pawnMoves(S_BOARD* board, S_MOVELIST& s_moves) { // Needs e
 				s_moves.moves[s_moves.count].move = newMove(index, index + 8, 0, 3);
 				s_moves.count += 1;
 			}
-			oneSquare ^= (uint64_t)1 << index;
 		}
 
 		// Two squares initial moves
 		BitBoard twoSquare = ((((BP & RankMasks8[6]) >> 8) & board->EMPTY_SQUARES) >> 8) & board->EMPTY_SQUARES;
 		while (twoSquare != 0) {
-			index = bitScanForward(twoSquare);
+			index = PopBit(&twoSquare);
 			s_moves.moves[s_moves.count].move = newMove(index, index + 16, 0, 3);
 			s_moves.count += 1;
-			twoSquare ^= (uint64_t)1 << index;
 		}
 
 		// Attacks to the right
 		BitBoard rightAttacks = ((BP & ~FileMasks8[7]) >> 7) & board->WHITE_PIECES;
 		while (rightAttacks != 0) {
-			index = bitScanForward(rightAttacks);
+			index = PopBit(&rightAttacks);
 			if (index <= 7) {
 				for (int piece = 0; piece <= 3; piece++) {
 					s_moves.moves[s_moves.count].move = newMove(index, index + 7, piece, 0);
@@ -534,14 +522,13 @@ void MoveGeneration::pawnMoves(S_BOARD* board, S_MOVELIST& s_moves) { // Needs e
 				s_moves.moves[s_moves.count].score = MvvLva[board->pieceList[index]][6] + 1000000;
 				s_moves.count += 1;
 			}
-			rightAttacks ^= (uint64_t)1 << index;
 		}
 
 
 		// Attacks to the left
 		BitBoard leftAttacks = ((BP & ~FileMasks8[0]) >> 9) & board->WHITE_PIECES;
 		while (leftAttacks != 0) {
-			index = bitScanForward(leftAttacks);
+			index = PopBit(&leftAttacks);
 			if (index <= 7) {
 				for (int piece = 0; piece <= 3; piece++) {
 					s_moves.moves[s_moves.count].move = newMove(index, index + 9, piece, 0);
@@ -554,29 +541,26 @@ void MoveGeneration::pawnMoves(S_BOARD* board, S_MOVELIST& s_moves) { // Needs e
 				s_moves.moves[s_moves.count].score = MvvLva[board->pieceList[index]][6] + 1000000;
 				s_moves.count += 1;
 			}
-			leftAttacks ^= (uint64_t)1 << index;
 		}
 
 		// En-passant
 		rightAttacks = (BP & ~FileMasks8[7]) >> 7;
 		leftAttacks = (BP & ~FileMasks8[0]) >> 9;
 		while (rightAttacks != 0) {
-			index = bitScanForward(rightAttacks);
+			index = PopBit(&rightAttacks);
 			if (index == board->enPassantSquare) {
 				s_moves.moves[s_moves.count].move = newMove(index, index + 7, 0, 1);
 				s_moves.moves[s_moves.count].score = MvvLva[board->pieceList[index + 8]][6] + 1000000;
 				s_moves.count += 1;
 			}
-			rightAttacks = CLRBIT(rightAttacks, index);
 		}
 		while (leftAttacks != 0) {
-			index = bitScanForward(leftAttacks);
+			index = PopBit(&leftAttacks);
 			if (index == board->enPassantSquare) {
 				s_moves.moves[s_moves.count].move = newMove(index, index + 9, 0, 1);
 				s_moves.moves[s_moves.count].score = MvvLva[board->pieceList[index + 8]][6] + 1000000;
 				s_moves.count += 1;
 			}
-			leftAttacks = CLRBIT(leftAttacks, index);
 		}
 	}
 }
