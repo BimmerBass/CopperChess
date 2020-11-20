@@ -366,6 +366,7 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 		}
 	}
 
+
 	int reduction_depth = 0;
 	int new_depth = 0;
 	int raised_alpha = 0;

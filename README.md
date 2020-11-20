@@ -100,12 +100,19 @@ The engine still has bugs and weaknesses, and have therefore not been tested tho
 Copper achieves an overall move ordering of around 89-90%.
 
 #### TO-DO's
-1. MTD(f) will be tried instead of aspiration windows, and if it has better performance, it'll be implemented.
-2. The array-lookup generation of sliding piece attacks will be replaced with magic bitboards for performance gains.
-3. Further pruning techniques will be added (especially to quiescence search) to get an average search depth of 15 plies in the middlegame.
-4. The evaluation function will be improved and optimized for speed.
-5. Chess960 support.
-6. Some day, I would like to create a convolutional neural network, and train it with self-play[3] to get a better evaluation function.
+1. Copper doesn't recognize material draws at the moment, which makes it trade down from a winning position to a draw. Therefore, a function to determine this is needed.
+2. A contempt factor will be implemented to make Copper play for a win in good positions and a draw in bad ones. I have thought about using the equation from ![Pawn advantage, Win percentage and Elo](https://www.chessprogramming.org/Pawn_Advantage,_Win_Percentage,_and_Elo): ![Eq1](https://www.chessprogramming.org/images/b/bf/PawnWinELOFormula1.jpg) 
+
+
+Where W is the probability of white winning and P is the pawn advantage (the search score). We will then get the contempt factor as for example: c = - 10 * W.
+
+
+3. MTD(f) will be tried instead of aspiration windows, and if it has better performance, it'll be implemented.
+4. The array-lookup generation of sliding piece attacks will be replaced with magic bitboards for performance gains.
+5. Further pruning techniques will be added (especially to quiescence search) to get an average search depth of 15 plies in the middlegame.
+6. The evaluation function will be improved and optimized for speed.
+7. Chess960 support.
+8. Some day, I would like to create a convolutional neural network, and train it with self-play[3] to get a better evaluation function.
 
 ##### Notes and bugs
 1. The engine is only semi-UCI compliant since the protocol hasn't been completely implemented. It works fine for playing games, but some info to the GUI is missing.
