@@ -594,6 +594,8 @@ int search_widen(S_BOARD* pos, S_SEARCHINFO* info, int depth, int estimate); // 
 
 int reduction(bool improving, int depth, int moveCount);
 
+int contempt_factor(const S_BOARD* pos);
+
 int MTDF(S_BOARD* pos, S_SEARCHINFO* info, int estimate, int depth);
 }
 

@@ -8,6 +8,8 @@
 #define ENDGAME_MAT 1350 // The lower this value becomes, the more delta-cutoffs we get. It is a fine balance between accuracy and speed in quiescence search.
 #define DELTA 200 // The delta safety margin for quiescence search. Raise this to get a more accurate quiescence evaluation at the cost of lowered speed.
 #define RAZOR_MARGIN 600 // The security margin for razoring. The value is taken from Stockfish's implementation.
+#define CONTEMPT 10 // The fctor by which we'll multiply the winning probability of the position.
+#define CONTEMPT_SCALING_CONSTANT 2.5 // This is a scaling constant that makes the function for winnning propability more or less sensitive.
 
 /*
 INCLUDES THE FUNCTIONS:
@@ -37,6 +39,16 @@ bool isRepetition(const S_BOARD* pos) {
 int Search::reduction(bool improving, int depth, int moveCount) {
 	int r = Reductions[depth] * Reductions[moveCount];
 	return ((r + 512) / 1024 + (!improving && r > 1024)) * 1;
+}
+
+int Search::contempt_factor(const S_BOARD* pos) {
+	// We will get a static evaluation and convert it from centipawns to pawns.
+	int static_eval = eval::staticEval(pos, 0, 0, 0) / 100;
+
+	// The win probability is taken from https://www.chessprogramming.org/Pawn_Advantage,_Win_Percentage,_and_Elo
+	double win_prob = 1 / (1 + pow(10, - (static_eval / CONTEMPT_SCALING_CONSTANT)));
+
+	return (int)(- CONTEMPT * win_prob);
 }
 
 
@@ -104,7 +116,7 @@ int Search::Quiescence(int alpha, int beta, S_BOARD* pos, S_SEARCHINFO* info) {
 	info->nodes++;
 
 	if ((isRepetition(pos) || pos->fiftyMove >= 100) && pos->ply > 0) {
-		return 0;
+		return contempt_factor(pos);
 	}
 
 	if (pos->ply > MAXDEPTH - 1) {
@@ -235,7 +247,7 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 	// If this position has been reached before, we need not explore it further as it can be a draw.
 	// Later on we will implement a contempt factor to make Copper either play for a draw or a win.
 	if ((isRepetition(pos) || pos->fiftyMove >= 100) && pos->ply > 0) {
-		return 0;
+		return contempt_factor(pos);
 	}
 
 	if (pos->ply > MAXDEPTH - 1) {
