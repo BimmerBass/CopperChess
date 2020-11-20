@@ -101,7 +101,7 @@ Copper achieves an overall move ordering of around 89-90%.
 
 #### TO-DO's
 1. Copper doesn't recognize material draws at the moment, which makes it trade down from a winning position to a draw. Therefore, a function to determine this is needed.
-2. A contempt factor will be implemented to make Copper play for a win in good positions and a draw in bad ones. I have thought about using the equation from ![Pawn advantage, Win percentage and Elo](https://www.chessprogramming.org/Pawn_Advantage,_Win_Percentage,_and_Elo): ![Eq1](https://www.chessprogramming.org/images/b/bf/PawnWinELOFormula1.jpg) 
+2. A contempt factor will be implemented to make Copper play for a win in good positions and a draw in bad ones. I have thought about using the equation from [Pawn advantage, Win percentage and Elo](https://www.chessprogramming.org/Pawn_Advantage,_Win_Percentage,_and_Elo): ![Eq1](https://www.chessprogramming.org/images/b/bf/PawnWinELOFormula1.jpg) 
 
 
 Where W is the probability of white winning and P is the pawn advantage (the search score). We will then get the contempt factor as for example: c = - 10 * W.
