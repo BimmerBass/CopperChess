@@ -8,7 +8,7 @@ int eval::mg_evaluate(const S_BOARD* pos) {
 	v += material_mg(pos);
 	v += psqt_mg(pos);
 	v += pawns_mg(pos);
-	//v += pieces_mg(pos);
+	v += pieces_mg(pos);
 	
 	return v;
 }
@@ -24,6 +24,7 @@ int eval::eg_evaluate(const S_BOARD* pos) {
 	v += material_eg(pos);
 	v += psqt_eg(pos);
 	v += pawns_eg(pos);
+	v += pieces_eg(pos);
 
 	return v;
 }
@@ -343,6 +344,12 @@ int eval::pieces_mg(const S_BOARD* pos) {
 int eval::pieces_eg(const S_BOARD* pos) {
 	int v = 0;
 
+	BitBoard passedPawns = 0;
+	int psq = NO_SQ;
+
+	BitBoard w_kingRing = kingRing(pos, WHITE);
+	BitBoard b_kingRing = kingRing(pos, BLACK);
+
 	/*
 	WHITE PIECES
 	*/
@@ -352,6 +359,178 @@ int eval::pieces_eg(const S_BOARD* pos) {
 	BitBoard bishopBrd = pos->position[WB];
 	BitBoard rookBrd = pos->position[WR];
 	BitBoard queenBrd = pos->position[WQ];
+
+	int sq = NO_SQ;
+
+	while (knightBrd != 0) {
+		sq = PopBit(&knightBrd);
+		
+		// Add value for being on an outpost. This is smaller than in the middlegame.
+		if (sq / 8 >= RANK_5) {
+			v += outpost(pos, sq, WHITE) / 2;
+		}
+	}
+
+	while (bishopBrd != 0) {
+		sq = PopBit(&bishopBrd);
+
+		// Give bonus if there are pawns on both sides of the board
+		v += (((FileMasks8[FILE_A] | FileMasks8[FILE_B] | FileMasks8[FILE_C]) & (pos->position[WP] | pos->position[BP])) != 0 &&
+			((FileMasks8[FILE_F] | FileMasks8[FILE_G] | FileMasks8[FILE_H]) & (pos->position[WP] | pos->position[BP])) != 0) ? 40 : 0;
+
+		// Give penalty proportional to the amount of pawns on this bishops colour
+		if ((DARK_SQUARES & SETBIT((uint64_t)0, sq)) != 0) {
+			v -= 7 * countBits(DARK_SQUARES & pos->position[WP]);
+		}
+		else {
+			v -= 7 * countBits(~DARK_SQUARES & pos->position[WP]);
+		}
+
+		// Give bonus proportional to amount of enemy pawns on the bishops diagonals.
+		v += 5 * countBits((diagonalMasks[7 + (sq / 8) - (sq % 8)] | antidiagonalMasks[(sq / 8) + (sq % 8)]) & pos->position[BP]);
+	}
+
+	for (int f = 0; f < 8; f++) {
+		if (countBits(pos->position[WP] & FileMasks8[f]) == 1) { // If there is 1 pawn on this file.
+			psq = bitScanForward(pos->position[WP] & FileMasks8[f]);
+			if ((whitePassedPawnMasks[psq] & pos->position[BP]) == 0 && (whiteRookSupport[psq] & pos->BLACK_PIECES) == 0) {
+				// It is a passed pawn, and there are no enemy pieces behind it.
+				passedPawns |= (uint64_t)1 << psq;
+				continue;
+			}
+		}
+	}
+
+	while (rookBrd != 0) {
+		sq = PopBit(&rookBrd);
+
+		// Give bonus if we are defending a passed pawn.
+		if ((FileMasks8[sq % 8] & passedPawns) != 0) {
+			v += 50;
+		}
+
+		// Give bonus for eyeing the black king-ring
+		v += (((FileMasks8[sq % 8] | RankMasks8[sq / 8]) & b_kingRing) != 0) ? 7 : 0;
+
+		// Bonus for being on the same file as the black queen
+		v += ((FileMasks8[sq % 8] & pos->position[BQ]) != 0) ? 11 : 0;
+
+
+		// Bonus for open or semi-open file
+		int fileBonus = 0;
+		if (((pos->position[WP] | pos->position[BP]) & FileMasks8[sq % 8]) == 0) { // Fully open file. No pawns
+			fileBonus = 29;
+		}
+		else if ((pos->position[WP] & FileMasks8[sq % 8]) == 0 && (pos->position[BP] & FileMasks8[sq % 8]) != 0) { // Only half-open file. No white pawns only
+			fileBonus = 7;
+		}
+		else {
+			fileBonus = 0;
+		}
+		v += fileBonus;
+	}
+
+	while (queenBrd != 0) {
+		sq = PopBit(&queenBrd);
+
+		// Bonus for being behind passed pawns.
+		if ((FileMasks8[sq % 8] & passedPawns) != 0) {
+			v += 20;
+		}
+
+		// Give bonus inversely proportional to the manhattan distance to the black king
+		v += 2 * ManhattanDistance[sq][pos->kingPos[1]];
+	}
+
+
+	/*
+	BLACK PIECES
+	*/
+	knightBrd = pos->position[BN];
+	bishopBrd = pos->position[BB];
+	rookBrd = pos->position[BR];
+	queenBrd = pos->position[BQ];
+
+	while (knightBrd != 0) {
+		sq = PopBit(&knightBrd);
+
+		// Bonus for being on an outpost.
+		if (sq / 8 <= RANK_4) {
+			v -= outpost(pos, sq, BLACK) / 2;
+		}
+	}
+
+	while (bishopBrd != 0) {
+		sq = PopBit(&bishopBrd);
+
+		// Give bonus if there are pawns on both sides of the board
+		v -= (((FileMasks8[FILE_A] | FileMasks8[FILE_B] | FileMasks8[FILE_C]) & (pos->position[WP] | pos->position[BP])) != 0 &&
+			((FileMasks8[FILE_F] | FileMasks8[FILE_G] | FileMasks8[FILE_H]) & (pos->position[WP] | pos->position[BP])) != 0) ? 40 : 0;
+
+		// Give penalty proportional to the amount of pawns on this bishops colour
+		if ((DARK_SQUARES & SETBIT((uint64_t)0, sq)) != 0) {
+			v += 7 * countBits(DARK_SQUARES & pos->position[BP]);
+		}
+		else {
+			v += 7 * countBits(~DARK_SQUARES & pos->position[BP]);
+		}
+
+		// Give bonus proportional to amount of enemy pawns on the bishops diagonals.
+		v -= 5 * countBits((diagonalMasks[7 + (sq / 8) - (sq % 8)] | antidiagonalMasks[(sq / 8) + (sq % 8)]) & pos->position[WP]);
+	}
+
+	passedPawns = 0;
+	for (int f = 0; f < 8; f++) {
+		if (countBits(pos->position[BP] & FileMasks8[f]) == 1) {
+			psq = bitScanForward(pos->position[BP] & FileMasks8[f]);
+			if ((blackPassedPawnMasks[psq] & pos->position[WP]) == 0 && (blackRookSupport[psq] & pos->WHITE_PIECES) == 0){
+				passedPawns |= (uint64_t)1 << psq;
+				continue;
+			}
+		}
+	}
+
+	while (rookBrd != 0) {
+		sq = PopBit(&rookBrd);
+
+		// Give bonus if we are defending a passed pawn.
+		if ((FileMasks8[sq % 8] & passedPawns) != 0) {
+			v -= 50;
+		}
+
+		// Give bonus for eyeing the white king-ring
+		v -= (((FileMasks8[sq % 8] | RankMasks8[sq / 8]) & w_kingRing) != 0) ? 7 : 0;
+
+		// Bonus for being on the same file as the white queen
+		v -= ((FileMasks8[sq % 8] & pos->position[WQ]) != 0) ? 11 : 0;
+
+
+		// Bonus for open or semi-open file
+		int fileBonus = 0;
+		if (((pos->position[WP] | pos->position[BP]) & FileMasks8[sq % 8]) == 0) { // Fully open file. No pawns
+			fileBonus = 29;
+		}
+		else if ((pos->position[WP] & FileMasks8[sq % 8]) != 0 && (pos->position[BP] & FileMasks8[sq % 8]) == 0) { // Only half-open file. No white pawns only
+			fileBonus = 7;
+		}
+		else {
+			fileBonus = 0;
+		}
+		v -= fileBonus;
+	}
+
+	while (queenBrd != 0) {
+		sq = PopBit(&queenBrd);
+
+		if ((FileMasks8[sq % 8] & passedPawns) != 0) {
+			v -= 20;
+		}
+
+		// Give bonus inversely proportional to the manhattan distance to the black king
+		v -= 2 * ManhattanDistance[sq][pos->kingPos[0]];
+	}
+
+
 
 	return v;
 }

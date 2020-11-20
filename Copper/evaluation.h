@@ -71,6 +71,9 @@ namespace eval {
 	int pieces_mg(const S_BOARD* pos);
 	int pieces_eg(const S_BOARD* pos);
 
+	int king_mg(const S_BOARD* pos);
+	int king_eg(const S_BOARD* pos);
+
 	int outpost(const S_BOARD* pos, int sq, S_SIDE side);
 
 	bool material_draw(const S_BOARD* pos);
