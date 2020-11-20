@@ -2,11 +2,22 @@
 
 
 // This is the middlegame evaluation
-int eval::mg_evaluate(const S_BOARD* pos) {
+int eval::mg_evaluate(const S_BOARD* pos, int alpha, int beta) {
 	int v = 0;
 
 	v += material_mg(pos);
 	v += psqt_mg(pos);
+
+	/*
+	LAZY EVALUATION:
+		- If our score after counting up material and psqt is already higher than beta by a certain margin or lower than alpha by the same
+		  margin (a knight in the middlegame and a rook in the endgame), we are probably already doing good enough to just return the evaluation.
+	*/
+
+	if (LAZY_EVAL && (v - LAZYNESS_MG > beta || v + LAZYNESS_MG < alpha)){
+		return v;
+	}
+
 	v += pawns_mg(pos);
 	v += pieces_mg(pos);
 	
@@ -14,7 +25,7 @@ int eval::mg_evaluate(const S_BOARD* pos) {
 }
 
 // This is the endgame evaluation
-int eval::eg_evaluate(const S_BOARD* pos) {
+int eval::eg_evaluate(const S_BOARD* pos, int alpha, int beta) {
 	int v = 0;
 
 	if (material_draw(pos) == true) {
@@ -23,14 +34,38 @@ int eval::eg_evaluate(const S_BOARD* pos) {
 
 	v += material_eg(pos);
 	v += psqt_eg(pos);
+
+	/*
+	LAZY EVALUATION:
+		- If our score after counting up material and psqt is already higher than beta by a certain margin or lower than alpha by the same
+		  margin (a knight in the middlegame and a rook in the endgame), we are probably already doing good enough to just return the evaluation.
+	*/
+
+	if (LAZY_EVAL && (v - LAZYNESS_EG > beta || v + LAZYNESS_EG < alpha)) {
+		return v;
+	}
+
 	v += pawns_eg(pos);
 	v += pieces_eg(pos);
 
+	// Scale down the endgame evaluation if there are bishops of opposite square-colors.
+	if (countBits(pos->position[WB]) == 1 && countBits(pos->position[BB]) == 1) {
+		if ((pos->position[WB] & DARK_SQUARES) != 0) { // The white bishop is dark-squared
+			if ((pos->position[BB] & DARK_SQUARES) == 0) { // The black bishop is light-squared.
+				v /= 5;
+			}
+		}
+		else { // The white bishop is light-squared
+			if ((pos->position[BB] & DARK_SQUARES) != 0) { // The black bishop is dark-squared
+				v /= 5;
+			}
+		}
+	}
+
 	return v;
 }
-/*
-int pawns_mg(const S_BOARD* pos);
-int pawns_eg(const S_BOARD* pos);*/
+
+
 int eval::pawns_mg(const S_BOARD* pos) {
 	int v = 0;
 
@@ -41,6 +76,18 @@ int eval::pawns_mg(const S_BOARD* pos) {
 
 	// Penalty for doubled pawns
 	v -= doubled_penalty * (doubledCnt(whitePawns) - doubledCnt(blackPawns));
+
+
+	// Give penalty for pieces blocking the E- and D- pawns
+	if ((pos->position[WP] & ((FileMasks8[FILE_E] | FileMasks8[FILE_D]) & RankMasks8[RANK_2])) != 0) { // If there are pawns on e2 or d2
+		v -= 7 * countBits((pos->WHITE_PIECES ^ pos->position[WP])
+			& ((FileMasks8[FILE_E] | FileMasks8[FILE_D]) & (RankMasks8[RANK_3] | RankMasks8[RANK_4])));
+	}
+
+	if ((pos->position[BP] & ((FileMasks8[FILE_E] | FileMasks8[FILE_D]) & RankMasks8[RANK_7])) != 0) { // If there are pawns on e7 or d7
+		v += 7 * countBits((pos->BLACK_PIECES ^ pos->position[BP])
+			& ((FileMasks8[FILE_E] | FileMasks8[FILE_D]) & (RankMasks8[RANK_6] | RankMasks8[RANK_5])));
+	}
 
 	while (whitePawns != 0) {
 		index = PopBit(&whitePawns);
@@ -54,11 +101,6 @@ int eval::pawns_mg(const S_BOARD* pos) {
 
 		if (doubled && isolated) { v -= 11; }
 		else if (isolated) { v -= 5; }
-
-		// Penalty if the pawn is blocked by a friendly piece
-		/*if ((((pos->WHITE_PIECES ^ pos->position[WP]) >> (index + 8)) & 1) == 1) {
-			v += mg_value(psqt::blockedPawnTable[index + 8]);
-		}*/
 
 		// Bonus for being supported by another pawn
 		int supportPawns = defending_pawns(pos, index, WHITE);
@@ -75,11 +117,6 @@ int eval::pawns_mg(const S_BOARD* pos) {
 
 		if (doubled && isolated) { v += 11; }
 		else if (isolated) { v += 5; }
-
-		// Penalty if the pawn is blocked by a friendly piece
-		/*if ((((pos->BLACK_PIECES ^ pos->position[BP]) >> (index - 8)) & 1) == 1) {
-			v -= mg_value(psqt::blockedPawnTable[psqt::Mirror64[index - 8]]);
-		}*/
 
 		// Bonus for being supported
 		int supportPawns = defending_pawns(pos, index, BLACK);
@@ -114,11 +151,6 @@ int eval::pawns_eg(const S_BOARD* pos) {
 		if (doubled && isolated) { v -= 56; }
 		else if (isolated) { v -= 15; }
 
-		// Penalty if the pawn is blocked by a friendly piece
-		/*if ((((pos->WHITE_PIECES ^ pos->position[WP]) >> (index + 8)) & 1) == 1) {
-			v += eg_value(psqt::blockedPawnTable[index + 8]);
-		}*/
-
 		// Bonus for being supported by another pawn
 		int supportPawns = defending_pawns(pos, index, WHITE);
 		v += 10 * countBits(supportPawns);
@@ -134,11 +166,6 @@ int eval::pawns_eg(const S_BOARD* pos) {
 
 		if (doubled && isolated) { v += 56; }
 		else if (isolated) { v += 15; }
-
-		// Penalty if the pawn is blocked by a friendly piece
-		/*if ((((pos->BLACK_PIECES ^ pos->position[BP]) >> (index - 8)) & 1) == 1) {
-			v -= eg_value(psqt::blockedPawnTable[psqt::Mirror64[index - 8]]);
-		}*/
 
 		// Bonus for being supported
 		int supportPawns = defending_pawns(pos, index, BLACK);

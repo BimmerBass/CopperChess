@@ -43,7 +43,7 @@ int Search::reduction(bool improving, int depth, int moveCount) {
 
 int Search::contempt_factor(const S_BOARD* pos) {
 	// We will get a static evaluation and convert it from centipawns to pawns.
-	int static_eval = eval::staticEval(pos, 0, 0, 0) / 100;
+	int static_eval = eval::staticEval(pos, -INF, INF) / 100;
 
 	// The win probability is taken from https://www.chessprogramming.org/Pawn_Advantage,_Win_Percentage,_and_Elo
 	double win_prob = 1 / (1 + pow(10, - (static_eval / CONTEMPT_SCALING_CONSTANT)));
@@ -120,10 +120,10 @@ int Search::Quiescence(int alpha, int beta, S_BOARD* pos, S_SEARCHINFO* info) {
 	}
 
 	if (pos->ply > MAXDEPTH - 1) {
-		return eval::staticEval(pos, 0, alpha, beta);
+		return eval::staticEval(pos, alpha, beta);
 	}
 
-	int stand_pat = eval::staticEval(pos, 0, alpha, beta);
+	int stand_pat = eval::staticEval(pos, alpha, beta);
 
 	if (stand_pat >= beta) {
 		return stand_pat;
@@ -251,7 +251,7 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 	}
 
 	if (pos->ply > MAXDEPTH - 1) {
-		return eval::staticEval(pos, depth, alpha, beta);
+		return eval::staticEval(pos, alpha, beta);
 	}
 
 	// We will probe the transposition table, and if it has a value for the position, we dont need to search it.
@@ -285,7 +285,7 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 
 
 	if (depth < 3) {
-		int staticEval = eval::staticEval(pos, depth, alpha, beta);
+		int staticEval = eval::staticEval(pos, alpha, beta);
 
 
 		/*
@@ -322,7 +322,7 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 	
 	if ((depth > 2)
 		&& doNull
-		&& (eval::staticEval(pos, depth, alpha, beta)) >= beta
+		&& (eval::staticEval(pos, alpha, beta)) >= beta
 		&& !pos->inCheck) {
 
 		// FIXME: This boolean endgame-determination value probably needs to be changed.
@@ -365,7 +365,7 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 
 	// Futility pruning and razoring
 	if (depth <= 3 && !pos->inCheck) {
-		int eval = eval::staticEval(pos, depth, alpha, beta);
+		int eval = eval::staticEval(pos, alpha, beta);
 
 		// We'll only do razoring if depth = 2, the eval is below alpha by some margin, we arent extending and there isn't a PV-move
 		if (eval + RAZOR_MARGIN < beta) { // Likely a fail-low node

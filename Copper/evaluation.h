@@ -2,6 +2,8 @@
 #include "defs.h"
 #include "psqt.h"
 
+
+
 enum PieceType {
 	NO_PIECE_TYPE, PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING,
 	ALL_PIECES = 0,
@@ -48,14 +50,14 @@ inline uint64_t kingRing(const S_BOARD* pos, S_SIDE s) {
 int addPsqtVal(int sq, int pce, bool eg);
 int defending_pawns(const S_BOARD* pos, int sq, S_SIDE side);
 namespace eval {
-	int staticEval(const S_BOARD* pos, int depth, int alpha, int beta);
+	int staticEval(const S_BOARD* pos, int alpha, int beta);
 
 	int imbalance(const S_BOARD* pos); // Tord Romstad's second order polynomial imbalance will be implemented at some point. For now, we only give a
 	// bonus for bishop pair and penalty for rook and knight pair. We also raise and lower the rooks and knights value depending on amount of pawns
 	// respectively
 
-	int mg_evaluate(const S_BOARD* pos);
-	int eg_evaluate(const S_BOARD* pos);
+	int mg_evaluate(const S_BOARD* pos, int alpha, int beta);
+	int eg_evaluate(const S_BOARD* pos, int alpha, int beta);
 
 	int material_mg(const S_BOARD* pos);
 	int material_eg(const S_BOARD* pos);
@@ -147,6 +149,10 @@ namespace eval {
 }
 
 // Constants
+
+constexpr int LAZYNESS_MG = eval::knightValMg; // The safety margin for lazy evaluation
+constexpr int LAZYNESS_EG = eval::rookValEg;
+
 constexpr int tempo = 18; // The value added to the side to move.
 
 // The below imbalances are taken from GM Larry Kaufman's paper, "The evaluation of piece imbalances"

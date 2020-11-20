@@ -7,7 +7,7 @@ INCLUDES THE FUNCTIONS:
 */
 
 // Alpha and beta are added because lazy evaluation will be added in the future.
-int eval::staticEval(const S_BOARD* pos, int depth, int alpha, int beta) {
+int eval::staticEval(const S_BOARD* pos, int alpha, int beta) {
 	int v_main = 0;
 	int v_mg = 0;
 	int v_eg = 0;
@@ -24,8 +24,8 @@ int eval::staticEval(const S_BOARD* pos, int depth, int alpha, int beta) {
 	int weight_eg = 24 - p;
 
 	// Get the middle- and endgame evaluations.
-	v_mg += mg_evaluate(pos);
-	v_eg += eg_evaluate(pos);
+	v_mg += mg_evaluate(pos, alpha, beta);
+	v_eg += eg_evaluate(pos, alpha, beta);
 
 	v_main = ((v_mg * weight_mg) + (v_eg * weight_eg)) / 24;
 
