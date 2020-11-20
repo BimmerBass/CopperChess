@@ -1,5 +1,4 @@
 #include "defs.h"
-#include "evaluation.h"
 
 
 // IT SEVERELY BLUNDERS IN THIS POSITION WITH 2 SECONDS MOVETIME

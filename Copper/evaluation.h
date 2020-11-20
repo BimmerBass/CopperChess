@@ -25,22 +25,22 @@ inline uint64_t kingRing(const S_BOARD* pos, S_SIDE s) {
 		K = pos->position[BK];
 	}
 
-	BitBoard OCCUPIED = ~pos->EMPTY_SQUARES;
+
+	BitBoard kingMoves = 0;
 
 	// Horizontal and vertical
-	BitBoard kingMoves = 0;
-	kingMoves = kingMoves | (K & (OCCUPIED ^ FileMasks8[7])) << 1;
-	kingMoves = kingMoves | (K & (OCCUPIED ^ FileMasks8[0])) >> 1;
-	kingMoves = kingMoves | (K & (OCCUPIED ^ RankMasks8[0])) >> 8;
-	kingMoves = kingMoves | (K & (OCCUPIED ^ RankMasks8[7])) << 8;
+	kingMoves |= (K & ~RankMasks8[RANK_8]) << 8;
+	kingMoves |= (K & ~RankMasks8[RANK_1]) >> 8;
+	kingMoves |= (K & ~FileMasks8[FILE_A]) >> 1;
+	kingMoves |= (K & ~FileMasks8[FILE_H]) << 1;
 
 	// Diagonal
-	kingMoves = kingMoves | (K & (OCCUPIED ^ (RankMasks8[7] | FileMasks8[7]))) << 9;
-	kingMoves = kingMoves | (K & (OCCUPIED ^ (RankMasks8[0] | FileMasks8[7]))) >> 7;
-	kingMoves = kingMoves | (K & (OCCUPIED ^ (RankMasks8[0] | FileMasks8[0]))) >> 9;
-	kingMoves = kingMoves | (K & (OCCUPIED ^ (RankMasks8[7] | FileMasks8[0]))) << 7;
+	kingMoves |= (K & ~(FileMasks8[FILE_A] | RankMasks8[RANK_8])) << 7;
+	kingMoves |= (K & ~(FileMasks8[FILE_H] | RankMasks8[RANK_8])) << 9;
+	kingMoves |= (K & ~(FileMasks8[FILE_A] | RankMasks8[RANK_1])) >> 9;
+	kingMoves |= (K & ~(FileMasks8[FILE_H] | RankMasks8[RANK_1])) >> 7;
 
-	return kingMoves;
+	return (kingMoves | K);
 }
 
 

@@ -307,7 +307,7 @@ int eval::pieces_mg(const S_BOARD* pos) {
 			& w_kingRing) != 0) ? 25 : 0;
 	}
 
-	// Bonus for being doubled
+	// Bonus for having doubled rooks
 	for (int f = 0; f < 8; f++) {
 		if (countBits(rookBrd & FileMasks8[f]) >= 2) {
 			v -= 30;
