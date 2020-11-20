@@ -17,6 +17,10 @@ int eval::mg_evaluate(const S_BOARD* pos) {
 int eval::eg_evaluate(const S_BOARD* pos) {
 	int v = 0;
 
+	if (material_draw(pos) == true) {
+		return 0;
+	}
+
 	v += material_eg(pos);
 	v += psqt_eg(pos);
 	v += pawns_eg(pos);
@@ -530,4 +534,42 @@ int defending_pawns(const S_BOARD* pos, int sq, S_SIDE side) {
 		}
 	}
 	return cnt;
+}
+
+// Will return true for positions where a checkmate cannot be forced in any way.
+bool eval::material_draw(const S_BOARD* pos) {
+	if (pos->position[WR] == 0 && pos->position[BR] == 0 && pos->position[WQ] == 0 && pos->position[BQ] == 0) {
+		if (pos->position[BB] == 0 && pos->position[WB] == 0) {
+			if (countBits(pos->position[WN]) < 3 && countBits(pos->position[BN]) < 3) { return true; }
+		}
+
+		else if (pos->position[WN] == 0 && pos->position[BN] == 0) {
+			if (abs(countBits(pos->position[WB]) - countBits(pos->position[BB])) < 2) { return true; }
+		}
+
+		else if ((countBits(pos->position[WN]) < 3 && pos->position[WB] == 0) || (countBits(pos->position[WB]) == 1 && pos->position[WN] == 0)) {
+			if ((countBits(pos->position[BN]) < 3 && pos->position[BB] == 0) || (countBits(pos->position[BB]) == 1 && pos->position[BN] == 0)) { 
+				return true; 
+			}
+		}
+	}
+
+	else if (pos->position[WQ] == 0 && pos->position[BQ] == 0) {
+		if (countBits(pos->position[WR]) == 1 && countBits(pos->position[BR]) == 1) {
+			if (countBits(pos->position[WN] | pos->position[WB]) < 2 && countBits(pos->position[BN] | pos->position[BB]) < 2) { return true; }
+		}
+		else if (countBits(pos->position[WR]) == 1 && pos->position[BR] == 0) {
+			if ((pos->position[WN] | pos->position[WB]) == 0 && 
+				(countBits(pos->position[BN] | pos->position[BB]) == 1 || countBits(pos->position[BN] | pos->position[BB]) == 2)) {
+				return true;
+			}
+		}
+		else if (countBits(pos->position[BR]) == 1 && pos->position[WR] == 0) {
+			if ((pos->position[BN] | pos->position[BB]) == 0 &&
+				(countBits(pos->position[WN] | pos->position[WB]) == 1 || countBits(pos->position[WN] | pos->position[WB]) == 2)) {
+				return true;
+			}
+		}
+	}
+	return false;
 }

@@ -73,6 +73,8 @@ namespace eval {
 
 	int outpost(const S_BOARD* pos, int sq, S_SIDE side);
 
+	bool material_draw(const S_BOARD* pos);
+
 	int getMaterial(const S_BOARD* pos, bool side);
 
 	/*
