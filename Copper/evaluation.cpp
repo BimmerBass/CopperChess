@@ -48,21 +48,72 @@ int eval::eg_evaluate(const S_BOARD* pos, int alpha, int beta) {
 	v += pawns_eg(pos);
 	v += pieces_eg(pos);
 
-	// Scale down the endgame evaluation if there are bishops of opposite square-colors.
-	if (countBits(pos->position[WB]) == 1 && countBits(pos->position[BB]) == 1) {
-		if ((pos->position[WB] & DARK_SQUARES) != 0) { // The white bishop is dark-squared
-			if ((pos->position[BB] & DARK_SQUARES) == 0) { // The black bishop is light-squared.
-				v /= 5;
-			}
+	return v * (scale_factor(pos, v) / 64);
+}
+
+inline bool opposite_bishops(const S_BOARD* pos, int* bc_w = nullptr, int* bc_b = nullptr) {
+	if (bc_w == nullptr || bc_b == nullptr) {
+		bc_w = new int(countBits(pos->position[WB]));
+		bc_b = new int(countBits(pos->position[BB]));
+	}
+
+	if (*bc_w != 1) { return false; }
+	if (*bc_b != 1) { return false; }
+
+	if ((pos->position[WB] & DARK_SQUARES) != 0) { // If the white bishop is dark-squared
+		if ((pos->position[BB] & DARK_SQUARES) == 0) { // The black bishop is light-squared
+			return true;
 		}
-		else { // The white bishop is light-squared
-			if ((pos->position[BB] & DARK_SQUARES) != 0) { // The black bishop is dark-squared
-				v /= 5;
-			}
+	}
+	else { // The white bishop is light-squared
+		if ((pos->position[BB] & DARK_SQUARES) != 0) { // The black bishop is dark_squared
+			return true;
 		}
 	}
 
-	return v;
+	return false;
+}
+
+int eval::scale_factor(const S_BOARD* pos, int eg_eval) {
+	int sf = 64;
+
+	S_SIDE stronger = (eg_eval > 0) ? WHITE : BLACK;
+
+	int bc_w = countBits(pos->position[WB]);
+	int bc_b = countBits(pos->position[BB]);
+	
+	int passedPawnsCnt = 0;
+	int psq = NO_SQ;
+
+	int npm = knightValMg * countBits(pos->position[WN]) + bishopValMg * bc_w +
+		rookValMg * countBits(pos->position[WR]) + queenValMg * countBits(pos->position[WQ])
+		+ knightValMg * countBits(pos->position[BN]) + bishopValMg * bc_b +
+		rookValMg * countBits(pos->position[BR]) + queenValMg * countBits(pos->position[BQ]);
+
+	if (opposite_bishops(pos, &bc_w, &bc_b) && npm == 2 * bishopValMg) {
+
+		for (int f = 0; f < 8; f++) {
+			if (countBits(pos->position[WP] & FileMasks8[f]) == 1) {
+				psq = bitScanForward(pos->position[WP] & FileMasks8[f]);
+				if ((whitePassedPawnMasks[psq] & pos->position[BP]) == 0) {
+					passedPawnsCnt++;
+				}
+			}
+			if (countBits(pos->position[BP] & FileMasks8[f]) == 1) {
+				psq = bitScanForward(pos->position[BP] & FileMasks8[f]);
+				if ((blackPassedPawnMasks[psq] & pos->position[WP]) == 0) {
+					passedPawnsCnt++;
+				}
+			}
+		}
+
+		sf = 16 + 4 * passedPawnsCnt;
+	}
+	else {
+		sf = std::min(40 + ((opposite_bishops(pos, &bc_w, &bc_b)) ? 2 : 7) * ((stronger == WHITE) ? countBits(pos->position[WP]) : countBits(pos->position[BP])), sf);
+	}
+
+	return sf;
 }
 
 

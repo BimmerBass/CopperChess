@@ -24,7 +24,7 @@
 #define NOMOVE 0
 #define MAXDEPTH 64
 
-#define LAZY_EVAL true // Lazy evaluation, used in evaluation.h and evaluation.cpp
+#define LAZY_EVAL false // Lazy evaluation, used in evaluation.h and evaluation.cpp
 
 #define INF 30000
 #define MATE (INF - MAXDEPTH)
