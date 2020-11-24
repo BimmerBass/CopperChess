@@ -241,6 +241,8 @@ struct S_UNDO {
 	int enPassantSq = NO_SQ;
 	int fiftyMove = 0;
 
+	bool has_castled[2] = {};
+
 	uint64_t key = 0;
 	uint64_t pawnHash = 0;
 };
@@ -264,6 +266,8 @@ struct S_BOARD {
 
 	// Special moves
 	int castlePerms = 0;
+	bool has_castled[2] = {}; // First index is for white, second for black.
+
 	int enPassantSquare = NO_SQ;
 
 	// Misc

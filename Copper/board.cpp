@@ -177,6 +177,10 @@ void BoardRep::clearBoard(S_BOARD* pos) {
 	pos->posKey = 0;
 
 	pos->castlePerms = 0;
+
+	pos->has_castled[0] = false;
+	pos->has_castled[1] = false;
+
 	pos->enPassantSquare = NO_SQ;
 
 	pos->kingPos[0] = NO_SQ;

@@ -36,6 +36,9 @@ int eval::staticEval(const S_BOARD* pos, int alpha, int beta) {
 	// Make v_main relative to the side to move.
 	v_main *= (pos->whitesMove == WHITE) ? 1 : -1;
 
+	// Scale down v_main as we approach the fifty-move rule
+	//v_main = v_main * ((100 - pos->fiftyMove) / 100);
+
 	// Store the evaluation in the evaluation cache
 	pos->evaluationCache->storeEvaluation(pos, v_main);
 

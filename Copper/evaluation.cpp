@@ -51,6 +51,24 @@ int eval::eg_evaluate(const S_BOARD* pos, int alpha, int beta) {
 	return v * (scale_factor(pos, v) / 64);
 }
 
+
+int eval::king_mg(const S_BOARD* pos) {
+	int v = 0;
+
+	v += (pos->has_castled[0]) ? castling_bonus : 0;
+	v -= (pos->has_castled[1]) ? castling_bonus : 0;
+
+
+
+	return v;
+}
+
+int eval::king_eg(const S_BOARD* pos) {
+	int v = 0;
+
+	return v;
+}
+
 inline bool opposite_bishops(const S_BOARD* pos, int* bc_w = nullptr, int* bc_b = nullptr) {
 	if (bc_w == nullptr || bc_b == nullptr) {
 		bc_w = new int(countBits(pos->position[WB]));

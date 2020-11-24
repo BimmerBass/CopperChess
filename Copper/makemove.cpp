@@ -42,6 +42,10 @@ void MoveGeneration::undoMove(S_BOARD &board){
 		board.inCheck = previousPos.inCheck;
 
 		board.castlePerms = previousPos.castlingPerms;
+
+		board.has_castled[0] = previousPos.has_castled[0];
+		board.has_castled[1] = previousPos.has_castled[1];
+
 		board.enPassantSquare = previousPos.enPassantSq;
 		board.fiftyMove = previousPos.fiftyMove;
 		
@@ -81,6 +85,8 @@ void MoveGeneration::makeMove(S_BOARD &board, int move){
 	positionDescriptors.key = board.posKey;
 	positionDescriptors.inCheck = board.inCheck;
 
+	positionDescriptors.has_castled[0] = board.has_castled[0];
+	positionDescriptors.has_castled[1] = board.has_castled[1];
 
 	int destination = move >> 10;
 	int origin = (move >> 4) & 63;
@@ -156,6 +162,13 @@ void MoveGeneration::makeMove(S_BOARD &board, int move){
 			// Place king on destination
 			board.position[pieceMoved] = CLRBIT(SETBIT(board.position[pieceMoved], destination), origin);
 			board.pieceList[destination] = pieceMoved;
+
+			if (pieceMoved == WK) {
+				board.has_castled[0] = true;
+			}
+			else {
+				board.has_castled[1] = true;
+			}
 
 			if (destination == origin + 2) { // King side
 

@@ -177,3 +177,7 @@ constexpr int blocked_penalty[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 // Piece coefficients
 constexpr int outpost_bonus = 30;
 constexpr int safe_outpost_bonus = 55;
+
+
+// King bonuses and penalties
+constexpr int castling_bonus = 25;
