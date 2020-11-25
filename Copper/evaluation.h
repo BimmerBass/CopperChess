@@ -46,6 +46,7 @@ inline uint64_t kingRing(const S_BOARD* pos, S_SIDE s) {
 }
 
 
+
 // evaluation.cpp
 int addPsqtVal(int sq, int pce, bool eg);
 int defending_pawns(const S_BOARD* pos, int sq, S_SIDE side);
@@ -150,8 +151,9 @@ namespace eval {
 	};
 }
 
-// Constants
 
+
+// Constants
 constexpr int LAZYNESS_MG = eval::knightValMg; // The safety margin for lazy evaluation
 constexpr int LAZYNESS_EG = eval::rookValEg;
 

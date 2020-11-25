@@ -59,6 +59,7 @@ void MoveGeneration::undoMove(S_BOARD &board){
 		board.EMPTY_SQUARES = ~(board.WHITE_PIECES | board.BLACK_PIECES);
 		
 		board.posKey = previousPos.key;
+		board.pawnKey = previousPos.pawnHash;
 
 		board.ply -= 1;
 		board.history.moveCount -= 1;
@@ -83,6 +84,8 @@ void MoveGeneration::makeMove(S_BOARD &board, int move){
 	positionDescriptors.fiftyMove = board.fiftyMove;
 
 	positionDescriptors.key = board.posKey;
+	positionDescriptors.pawnHash = board.pawnKey;
+
 	positionDescriptors.inCheck = board.inCheck;
 
 	positionDescriptors.has_castled[0] = board.has_castled[0];
@@ -272,6 +275,11 @@ void MoveGeneration::makeMove(S_BOARD &board, int move){
 	}
 	
 	board.posKey = generatePosKey(&board);
+
+	// Only update the pawn hashkey if a pawn has been moved, or a pawn has been captured
+	if (pieceMoved == WP || pieceMoved == BP || pieceCaptured == WP || pieceCaptured == BP) {
+		board.pawnKey = generatePawnHash(&board);
+	}
 
 	if (pieceMoved == WP || pieceMoved == BP || pieceCaptured != NO_PIECE) {
 		board.fiftyMove = 0;

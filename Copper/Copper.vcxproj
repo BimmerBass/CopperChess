@@ -148,6 +148,7 @@
     <ClInclude Include="code_analysis.h" />
     <ClInclude Include="defs.h" />
     <ClInclude Include="evaluation.h" />
+    <ClInclude Include="pawns.h" />
     <ClInclude Include="polykeys.h" />
     <ClInclude Include="psqt.h" />
     <ClInclude Include="resource.h" />
@@ -166,6 +167,7 @@
     <ClCompile Include="misc.cpp" />
     <ClCompile Include="movegen.cpp" />
     <ClCompile Include="makemove.cpp" />
+    <ClCompile Include="pawns.cpp" />
     <ClCompile Include="utils.cpp" />
     <ClCompile Include="polybook.cpp" />
     <ClCompile Include="polykeys.cpp" />

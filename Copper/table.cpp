@@ -48,7 +48,6 @@ void TT::storeEntry(S_BOARD* pos, int move, int depth, TT_FLAG flg, int score){
 
 int TT::probePos(const S_BOARD* pos, int depth, int alpha, int beta, int* move, int* score) {
 	int index = pos->posKey % pos->transpositionTable->numEntries;
-	S_TTENTRY entry;
 
 	if (pos->transpositionTable->tableEntry[index].posKey == pos->posKey) {
 		*move = pos->transpositionTable->tableEntry[index].move;

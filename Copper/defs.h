@@ -263,6 +263,7 @@ struct S_BOARD {
 	bool inCheck = false;
 
 	uint64_t posKey = 0;
+	uint64_t pawnKey = 0; // Used for indexing the pawn hash table.
 
 	// Special moves
 	int castlePerms = 0;
