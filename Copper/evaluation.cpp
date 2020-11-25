@@ -1,15 +1,4 @@
 #include "evaluation.h"
-#include "pawns.h"
-
-
-/*
-PAWN HASH TABLES:
-	- Since we have two seperate functions for pawn evaluation in the endgame and middlegame, we need two different pawn hash tables.
-Both tables have the size of 8MB each
-*/
-PawnHashTable* pawn_table_mg = new PawnHashTable(8);
-PawnHashTable* pawn_table_eg = new PawnHashTable(8);
-
 
 
 // This is the middlegame evaluation
@@ -150,7 +139,7 @@ int eval::pawns_mg(const S_BOARD* pos) {
 	int v = 0;
 
 	// Probe the middlegame pawn-hash table.
-	if (pawn_table_mg->probe_pawn_hash(pos, &v) == true) {
+	if (pos->pawn_table_mg->probe_pawn_hash(pos, &v) == true) {
 		return v;
 	}
 
@@ -209,7 +198,7 @@ int eval::pawns_mg(const S_BOARD* pos) {
 	}
 
 	// Store the pawn structure evaluation in the pawn hash table
-	pawn_table_mg->store_pawn_eval(pos, &v);
+	pos->pawn_table_mg->store_pawn_eval(pos, &v);
 
 	return v;
 }
@@ -219,7 +208,7 @@ int eval::pawns_eg(const S_BOARD* pos) {
 	int v = 0;
 
 	// Probe the endgame pawn hash table
-	if (pawn_table_eg->probe_pawn_hash(pos, &v) == true) {
+	if (pos->pawn_table_eg->probe_pawn_hash(pos, &v) == true) {
 		return v;
 	}
 
@@ -266,7 +255,7 @@ int eval::pawns_eg(const S_BOARD* pos) {
 	}
 
 	// Store the pawn-evaluation in the endgame pawn-hash-table
-	pawn_table_eg->store_pawn_eval(pos, &v);
+	pos->pawn_table_eg->store_pawn_eval(pos, &v);
 
 	return v;
 }

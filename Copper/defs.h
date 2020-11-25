@@ -18,7 +18,6 @@
 #define MB(x) (x << 20)
 #define GB(x) (x << 30)
 
-
 #define MAXPOSITIONMOVES 256  // Maximum amount of expected moves for a position (more than enough)
 #define MAXGAMEMOVES 512 // Wayy more than enough, but just to be on the safe side...
 #define NOMOVE 0
@@ -230,6 +229,32 @@ private:
 };
 
 
+// Entry to the pawn hash table.
+struct PawnHashEntry {
+	uint64_t pawnKey;
+	int eval;
+};
+
+// The pawn hash table.
+class PawnHashTable {
+public:
+	PawnHashTable(uint64_t size);
+
+	~PawnHashTable();
+
+	bool probe_pawn_hash(const S_BOARD* pos, int* ev);
+
+	void store_pawn_eval(const S_BOARD* pos, int* ev);
+
+	void clear_hash();
+
+private:
+	PawnHashEntry* entries = nullptr;
+
+	int numEntries = 0;
+};
+
+
 // Undo-move structure. Contains information that can't be implied directly from a current position.
 struct S_UNDO {
 	BitBoard bitboards[12] = { 0 };
@@ -281,6 +306,14 @@ struct S_BOARD {
 	// Create a transposition table with default size of 200MB.
 	S_TABLE *transpositionTable = new S_TABLE(200);
 	S_EVALCACHE* evaluationCache = new S_EVALCACHE(50); // Allocate 50MB for static evaluations.
+
+	/*
+	PAWN HASH TABLES
+		- Since we have separate evaluations for pawn structures in endgame and middlegame, we need two different pawn hash tables.
+		They will have a size of 2MB each.
+	*/
+	PawnHashTable* pawn_table_mg = new PawnHashTable(1);
+	PawnHashTable* pawn_table_eg = new PawnHashTable(1);
 
 	bool is_checkmate = false;
 	bool is_stalemate = false;

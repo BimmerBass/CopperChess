@@ -1,4 +1,4 @@
-#include "pawns.h"
+#include "defs.h"
 
 
 PawnHashTable::PawnHashTable(uint64_t size) {
@@ -9,7 +9,7 @@ PawnHashTable::PawnHashTable(uint64_t size) {
 
 	clear_hash();
 
-	std::cout << "Initialized pawn hash table (" << size << "KB) with " << numEntries << " entries." << std::endl;
+	std::cout << "Initialized pawn hash table (" << size << "MB) with " << numEntries << " entries." << std::endl;
 }
 
 PawnHashTable::~PawnHashTable() {

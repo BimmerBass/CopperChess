@@ -36,9 +36,6 @@
     <ClInclude Include="evaluation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="pawns.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="init.cpp">

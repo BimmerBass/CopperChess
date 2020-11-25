@@ -617,6 +617,7 @@ void Search::searchPosition(S_BOARD* pos, S_SEARCHINFO* info) {
 	// Iterative deepening.
 	if (bestMove == NOMOVE) { // Go into iterative deepening if we didn't find a book move.
 		for (int currDepth = 1; currDepth <= info->depth; currDepth++) {
+
 			mateDist = 0;
 
 			score = search_widen(pos, info, currDepth, score);
