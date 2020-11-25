@@ -10,17 +10,13 @@ uint64_t generatePawnHash(const S_BOARD* pos) {
     uint64_t finalKey = 0;
 
     BitBoard pawnBoard = pos->position[WP];
-    if (pawnBoard != 0) {
-        while (pawnBoard != 0) {
-            finalKey ^= pieceKeys[WP][PopBit(&pawnBoard)];
-        }
+    while (pawnBoard != 0) {
+        finalKey ^= pieceKeys[WP][PopBit(&pawnBoard)];
     }
 
     pawnBoard = pos->position[BP];
-    if (pawnBoard != 0) {
-        while (pawnBoard != 0) {
-            finalKey ^= pieceKeys[BP][PopBit(&pawnBoard)];
-        }
+    while (pawnBoard != 0) {
+        finalKey ^= pieceKeys[BP][PopBit(&pawnBoard)];
     }
 
     return finalKey;
