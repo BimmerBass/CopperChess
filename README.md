@@ -35,44 +35,43 @@ The engine still has bugs and weaknesses, and have therefore not been tested tho
         - I am currently working on giving different piece-values in the endgame as pawns for example become more valuable.
     - Piece-square tables. I am working on adjusting the endgame-specific tables (at the moment, many are the same as middlegame psqt's)
     - King evaluation:
-        - Bonus for castling
+        - Bonus for castling in the middlegame
         - Penalty for being on other ranks than the back rank in middlegame.
+        - Penalty for having advanced pawns in front of castled king in the middlegame.
+        - Penalty for being on pawnless flanks. Applicable in middlegame as well as endgame.
         - Bonus for centralization in endgame. Either using Manhattan center distance or just having a hardcoded piece-square table.
+        - Bonus to the side that is leading for reducing the distance between the two kings in the endgame.
+        - Bonus for having the opposition in the endgame.
     - Queen evaluation:
-        - Penalty for early development (only applicable in middlegame). Will perhaps be determined based on amount of pieces on the back rank.
-        - Bonus for decreased manhattan distance to opponent king. This bonus will be increased in the endgame.
+        - Bonus for decreased manhattan distance to opponent king in the endgame.
         - Bonus for being on the same file, rank or diagonal as the enemy king.
+        - Small bonus for defending passed pawns in the endgame. This is small because we would rather have the rooks do it than the queen.
     - Rook evaluation:
         - Small bonus for being on the same file (perhaps also rank) as the enemy queen, and bigger bonus for being on the same file as enemy king.
         - Bonus for being doubled.
         - Bonus for being on the seventh rank.
-        - Bonus for having to rooks on the seventh rank (also known as pigs on the seventh).
         - Bonus for being on an open or semi open file.
         - Bonus for being on the E and D file in the middlegame.
         - Inversely proportional bonus to the amount of own pawns on the board.
         - Bonus for defending one of our own passed pawns.
-        - Extra bonus for being behind an enemy passed pawn.
     - Bishop evaluation:
         - Bonus if we have the bishop pair.
-        - Bonus inversely proportional to amount of pawns on the diagonals occupied.
+        - Bonus for being on an outpost. This is smaller than the outpost bonus for knights.
+        - A bishop's value is reduced if there are many same-colored pawns on it's square-color.
         - Bonus if there are pawns on both sides (queenside and kingside) of the board in the endgame.
-        - Bonus for being on the same square color as the enemy king.
         - Bonus for early development.
         - Penalty for being developed such that it blocks either the E2 or D2 pawn.
         - Bonus for being on the same diagonal as the enemy king.
     - Knight evaluation:
         - Bonus for centralization.
         - Penalty each time a pawn of the same color gets removed from the board.
-        - Penalty in the endgame if there are pawns on both sides of the board.
-        - Bonus for being on an outpost (we can determine this using the passed pawn bitmasks, we just need to remove the middle file). Extra bonus if defended by a pawn.
+        - Bonus for being on an outpost. Extra bonus if defended by a pawn.
     - Pawn evaluation (pawn structure evaluation):
         - I will be implementing a pawn hash table as pawn structure evaluation is quite slow, but i have not found an efficient way to do so yet.
         - Bonus if defended by another pawn.
         - Bonus if it is a passed pawn.
-        - Penalty for being advanced if it is in front of the castled king.
         - Penalty for being doubled.
-        - Penalty if isolated. This should be smaller than the bonus for being passed as it would otherwise deincentivize having passed pawns.
-        - Extra bonus for connected passed pawns.
+        - Penalty if isolated.
         - Bonus for central advancement in the middlegame.
         - Bonus for being advanced on the edge in the endgame.
     - Small bonus for tempo (being the side to move).
@@ -81,13 +80,10 @@ The engine still has bugs and weaknesses, and have therefore not been tested tho
 - **Search function**: The search includes the following methods and tables
     - Iterative deepening with Alpha-Beta Pruning.
     - Aspiration windows for narrowed search.
-    - History heuristics
-    - Killer moves
     - Quiescence search
         - Delta pruning
         - Bad capture pruning.
     - 200MB Transposition table, with a (soon to be) depth-based replacement strategy. (Will be reduced when a function that measures the percentage of space used in the transposition table is implemented)
-    - MvvLva (Most-valuable-victim Least-valuable-attacker.)
     - Late move reductions
     - Futility pruning
     - Razoring.
@@ -96,25 +92,23 @@ The engine still has bugs and weaknesses, and have therefore not been tested tho
     - Mate distance pruning. If we have found a forced checkmate, we don't want to examine longer mate sequences than that one.
     - Principal variation search in the root node.
     - A 50MB evaluation cache that stores previously calculated static evaluations. At the moment, the replacement strategy is replace-all, but i think an age-strategy would be better in the future.
+    - A contempt factor based on the equation from [Pawn advantage, Win percentage and Elo](https://www.chessprogramming.org/Pawn_Advantage,_Win_Percentage,_and_Elo) (The one that gives the win probability). This is done such that a draw will be much worse if we are winning than if we are losing.
+    - Move Ordering:
+        - Mvv-Lva (Most Valuable Victim - Least Valuable Attacker). Will be replaced by the static exchange evaluation.
+        - Killer moves.
+        - History heuristic. There will be experimented with the relative history heuristic as a potential replacement.
 
-Copper achieves an overall move ordering of around 89-90%.
+Copper achieves an overall move ordering of around 85-90%. This percentage is the ratio between the amount of moves that failed high as the first one searched, and the overall amount of moves that failed high.
 
 #### TO-DO's
-1. Copper doesn't recognize material draws at the moment, which makes it trade down from a winning position to a draw. Therefore, a function to determine this is needed.
-2. A contempt factor will be implemented to make Copper play for a win in good positions and a draw in bad ones. I have thought about using the equation from [Pawn advantage, Win percentage and Elo](https://www.chessprogramming.org/Pawn_Advantage,_Win_Percentage,_and_Elo): ![Eq1](https://www.chessprogramming.org/images/b/bf/PawnWinELOFormula1.jpg) 
-
-
-Where W is the probability of white winning and P is the pawn advantage (the search score). We will then get the contempt factor as for example: c = - 10 * W.
-
-
-3. MTD(f) will be tried instead of aspiration windows, and if it has better performance, it'll be implemented.
-4. The array-lookup generation of sliding piece attacks will be replaced with magic bitboards for performance gains.
-5. Further pruning techniques will be added (especially to quiescence search) to get an average search depth of 15 plies in the middlegame.
-6. The evaluation function will be improved and optimized for speed.
-7. Chess960 support.
-8. Some day, I would like to create a convolutional neural network, and train it with self-play[3] to get a better evaluation function.
+1. MTD(f) will be tried instead of aspiration windows, and if it has better performance, it'll be implemented.
+2. The array-lookup generation of sliding piece attacks will be replaced with magic bitboards for performance gains.
+3. Further pruning techniques will be added (especially to quiescence search) to get an average search depth of 15 plies in the middlegame.
+4. The evaluation function will be improved and optimized for speed.
+5. Chess960 support.
+6. Some day, I would like to create a convolutional neural network, and train it with self-play[3] to get a better evaluation function.
 
 ##### Notes and bugs
-1. The engine is only semi-UCI compliant since the protocol hasn't been completely implemented. It works fine for playing games, but some info to the GUI is missing.
+1. The engine is only semi-UCI compliant since the protocol hasn't been completely implemented. It works fine for playing games, but some info and some options to the GUI is missing.
 2. Although it is inefficient to check all pseudo-legal moves generated, i have decided to keep this implementation as it is more intuitive and the algorithm for doing this is still quite efficient. It works by first seeing if the side to move is in check. If this is true, it tries all moves and see if they still leave the side in check. If it isn't, it creates a bitmask for the king square that has all the squares a queen would be able to move to, and then it checks the moves for pieces that start on these squares. For king moves it checks to see if the destination square is attacked, and for en-passant it just makes the move and sees if the side to move is in check.
 3. Self-play training will be accomplished by creating around 15.000 positions from self-play (first six moves will be randomized so the network won't overfit). Then, a batch of around 2.000 positions will be selected randomly, their evaluations will be compared to the actual outcomes from the games, and the error function will be computed by taking the squared sum of there differences. Backpropagation will be used to adjust the network.

@@ -457,7 +457,9 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 					pos->historyHeuristic[pos->pieceList[FROMSQ(bestMove)]][TOSQ(bestMove)] += depth * depth;
 
 					// If the search is super deep, the history table will overflow, so we'll half all the values if this happens at one of them.
-					if (pos->historyHeuristic[pos->pieceList[FROMSQ(bestMove)]][TOSQ(bestMove)] > 900000) {
+					// This is done to prevent the history heuristic from surpassing the killer moves heuristic.
+					// Therefore, we will not let the history-values surpass the minimal value added to killer moves.
+					if (pos->historyHeuristic[pos->pieceList[FROMSQ(bestMove)]][TOSQ(bestMove)] >= 800000) {
 						for (int pce = 0; pce < 12; pce++) {
 							for (int sq = 0; sq < 64; sq++) {
 								pos->historyHeuristic[pce][sq] = pos->historyHeuristic[pce][sq] / 2;
