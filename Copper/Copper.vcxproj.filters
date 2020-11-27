@@ -36,6 +36,9 @@
     <ClInclude Include="evaluation.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="wac_positions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="init.cpp">

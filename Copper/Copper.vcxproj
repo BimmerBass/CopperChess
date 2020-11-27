@@ -152,6 +152,7 @@
     <ClInclude Include="psqt.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="resource1.h" />
+    <ClInclude Include="wac_positions.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="attack.cpp" />
