@@ -576,6 +576,8 @@ void initReductions();
 
 
 // makemove.cpp, movegen.cpp and utils.cpp
+void run_wac();
+
 extern inline bool moveExists(S_BOARD* pos, const int move);
 
 extern void makeNullMove(S_BOARD* pos);
