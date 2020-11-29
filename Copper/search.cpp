@@ -370,17 +370,6 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 		}
 	}
 
-	/*
-	INTERNAL ITERATIVE DEEPENING:
-		- If the transposition table hasn't returned a best move, we'll search the position to a lower depth and hopefully get an estimate on the best move.
-	*/
-
-	if (bestMove == NOMOVE && depth >= 10) {
-		value = -alphabeta(pos, info, depth - 9, -beta, -alpha, true, extend);
-
-		TT::probePos(pos, depth - 9, alpha, beta, &bestMove, &value);
-	}
-
 	// Score the transposition table move highest, so it'll be searched first.
 	if (bestMove != NOMOVE) {
 		for (int i = 0; i < list.count; i++) {
@@ -415,6 +404,7 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 		reduction_depth = 0;
 		new_depth = depth - 1;
 
+		// When PVS is introduced, we can try to do LMR at moves_tried > 1, because we can be more confident that we're in a PV node.
 		if (new_depth >= 3
 			&& moves_tried > 3 
 			&& !pos->inCheck
@@ -430,7 +420,6 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 				reduction_depth += 1;
 			}
 
-			//new_depth = (reduction_depth > 0) ? (new_depth - reduction_depth) : new_depth;
 			new_depth -= reduction_depth;
 		}
 
