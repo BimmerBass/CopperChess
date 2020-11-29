@@ -295,7 +295,7 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 		/*
 		STATIC NULL MOVE PRUNING
 		*/
-		if (!doNull && beta <= MATE) {
+		if (!doNull && abs(beta) <= MATE) {
 			if (depth == 1 && staticEval - 300 > beta) return beta;
 			if (depth == 2 && staticEval - 525 > beta) return beta;
 			if (depth == 3 && staticEval - 900 > beta) depth--;
