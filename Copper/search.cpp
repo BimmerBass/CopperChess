@@ -273,16 +273,6 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 		}
 	}
 
-	// Score the transposition table move highest, so it'll be searched first.
-	if (bestMove != NOMOVE) {
-		for (int i = 0; i < list.count; i++) {
-			if (list.moves[i].move == bestMove) {
-				list.moves[i].score = 4000000;
-				break;
-			}
-		}
-	}
-
 
 	if (depth < 3) {
 		int staticEval = eval::staticEval(pos, alpha, beta);
@@ -378,11 +368,31 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 		}
 	}
 
+	/*
+	INTERNAL ITERATIVE DEEPENING:
+		- If the transposition table hasn't returned a best move, we'll search the position to a lower depth and hopefully get an estimate on the best move.
+	*/
+
+	if (bestMove == NOMOVE && depth >= 10) {
+		value = -alphabeta(pos, info, depth - 9, -beta, -alpha, true, extend);
+
+		TT::probePos(pos, depth - 9, alpha, beta, &bestMove, &value);
+	}
+
+	// Score the transposition table move highest, so it'll be searched first.
+	if (bestMove != NOMOVE) {
+		for (int i = 0; i < list.count; i++) {
+			if (list.moves[i].move == bestMove) {
+				list.moves[i].score = 4000000;
+				break;
+			}
+		}
+	}
 
 	int reduction_depth = 0;
 	int new_depth = 0;
 	int raised_alpha = 0;
-	value = -INF;
+	value = bestScore;
 
 	int moves_tried = 0;
 	for (int moveNum = 0; moveNum < list.count; moveNum++) {
