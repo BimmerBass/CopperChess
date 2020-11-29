@@ -66,6 +66,9 @@ void MoveGeneration::perftTest(int depth, S_BOARD *board){
 
 
 void run_wac() {
+	// Vector with information about all the positions Copper fails.
+	std::vector<std::string> failed_positions;
+
 	std::ofstream result_file;
 
 	result_file.open("wac_results.txt");
@@ -115,6 +118,15 @@ void run_wac() {
 		if (passedPos == false) {
 			result_file << "Position " << i + 1 << ": " << WAC_positions[i] << " bm " << bestMoves
 				<< " --------> FAILED: Copper found: " << printMove(pos->pvArray[0]) << std::endl;
+			
+			std::string failed_position = "Position: ";
+			failed_position += ": ";
+			failed_position += WAC_positions[i];
+			failed_position += " bm " + bestMoves;
+			failed_position += " --------> FAILED: Copper found: " + printMove(pos->pvArray[0]);
+
+			failed_positions.push_back(failed_position);
+
 			failed++;
 		}
 	}
@@ -128,6 +140,12 @@ void run_wac() {
 		result_file << "Total: " << total << std::endl;
 		result_file << "Passed: " << passed << std::endl;
 		result_file << "Failed: " << failed << " (" << double(failed)/double(total) << "% failed)" << std::endl;
+		result_file << "\n\n";
+		result_file << "*--------------- FAILED POSITIONS ---------------*" << std::endl;
+		for (int p = 0; p < failed_positions.size(); p++) {
+			result_file << failed_positions[p] << std::endl;
+		}
+
 	}
 
 	result_file.close();
