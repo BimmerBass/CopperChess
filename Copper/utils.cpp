@@ -66,9 +66,6 @@ void MoveGeneration::perftTest(int depth, S_BOARD *board){
 
 
 void run_wac() {
-	std::vector<std::string> results;
-	results.reserve(WAC_LENGTH);
-
 	std::ofstream result_file;
 
 	result_file.open("wac_results.txt");
@@ -80,10 +77,12 @@ void run_wac() {
 	int total = 0;
 
 	bool passedPos = false;
+	std::string bestMoves = "";
 
 	result_file << "*--------------- RUNNING WAC TEST ---------------*" << std::endl;
 
 	for (int i = 0; i < WAC_LENGTH; i++) { // Loop through all WAC positions
+		bestMoves = "";
 		total++;
 		passedPos = false;
 
@@ -102,6 +101,7 @@ void run_wac() {
 		Search::searchPosition(pos, &info);
 		
 		for (int j = 0; j < 5; j++) {
+			bestMoves += (j != 4) ? WAC_moves[i][j] + " " : WAC_moves[i][j];
 			// Copper has found a move. We print it and continue
 			if (pos->pvArray[0] == parseMove(WAC_moves[i][j], pos)) {
 				result_file << "Position " << i + 1 << ": " << WAC_positions[i] << " bm " << WAC_moves[i][j] << " --------> PASSED" << std::endl;
@@ -112,25 +112,13 @@ void run_wac() {
 		}
 
 		// If we haven't continued, Copper hasn't found one of the right moves.
-		if (!passedPos) {
-			result_file << "Position " << i + 1 << ": " << WAC_positions[i] << " bm " << WAC_moves[i]
+		if (passedPos == false) {
+			result_file << "Position " << i + 1 << ": " << WAC_positions[i] << " bm " << bestMoves
 				<< " --------> FAILED: Copper found: " << printMove(pos->pvArray[0]) << std::endl;
 			failed++;
 		}
-		/*if (pos.pvArray[0] == parseMove(WAC_moves[i], &pos)) {
-			std::cout << "Position " << i + 1 << ": " << WAC_positions[i] << " bm " << WAC_moves[i] << " --------> PASSED" << std::endl;
-			passed++;
-			continue;
-		}
-
-		// We didn't find the right move
-		else {
-			std::cout << "Position " << i + 1 << ": " << WAC_positions[i] << " bm " << WAC_moves[i]
-				<< " --------> FAILED: Copper found: " << printMove(pos.pvArray[0]) << std::endl;
-			failed++;
-			continue;
-		}*/
 	}
+
 
 	if (failed == 0) {
 		result_file << "*--------------- WAC TEST PASSED ---------------*" << std::endl;
