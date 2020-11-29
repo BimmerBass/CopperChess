@@ -245,7 +245,7 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 	info->nodes++;
 
 	// If this position has been reached before, we need not explore it further as it can be a draw.
-	// Later on we will implement a contempt factor to make Copper either play for a draw or a win.
+	// Therefore we will return a contempt factor, that is negative if Copper is winning, and positive if Copper is loosing.
 	if ((isRepetition(pos) || pos->fiftyMove >= 100) && pos->ply > 0) {
 		return contempt_factor(pos);
 	}
@@ -264,26 +264,28 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 												// and we'll then determine a move's legality by trying to make it and see if we're in check.
 	
 	// If there are no legal moves, it is either a checkmate or stalemate.
+	// We'll also return the contempt factor for stalemate, since if we have a queen and king vs king, it'll be very bad if we end up in stalemate.
+	// And vice versa.
 	if (list.count == 0) {
 		if (sqAttacked(kingSq, !pos->whitesMove, pos)) {
 			return -INF + pos->ply; // Checkmate at this ply-depth
 		}
 		else {
-			return 0; // stalemate
+			return contempt_factor(pos); // stalemate
 		}
 	}
 
 
-	if (depth < 3) {
+	if (depth < 3 && !pos->inCheck) {
 		int staticEval = eval::staticEval(pos, alpha, beta);
 
 
 		/*
 		EVAL PRUNING
-			- If we are not in check and beta is not close to a checkmate score, we can return the static evaluation.
+			- If beta is not close to a checkmate score, we can return the static evaluation.
 				with a safety margin of 120cp multiplied by the depth, but only if their difference exceeds beta.
 		*/
-		if (!pos->inCheck && abs(beta - 1) > -INF + 100) {
+		if (abs(beta - 1) > -INF + 100) {
 
 			int eval_margin = 120 * depth;
 
