@@ -1,4 +1,5 @@
 #include "defs.h"
+#include "psqt.h"
 
 
 /*
@@ -44,7 +45,7 @@ void BoardRep::displayBoardState(S_BOARD& board) {
 
 
 void BoardRep::parseFen(const char* fen, S_BOARD& pos){
-	ASSERT(fen != NULL);
+	assert(fen != NULL);
 	
 	clearBoard(&pos);
 	pos.castlePerms = 0;
@@ -104,7 +105,7 @@ void BoardRep::parseFen(const char* fen, S_BOARD& pos){
 		fen++;
 	}
 	
-	ASSERT(*fen == 'w' || *fen == 'b');
+	assert(*fen == 'w' || *fen == 'b');
 	
 	pos.whitesMove = (*fen == 'w') ? WHITE : BLACK;
 	fen += 2;
@@ -128,8 +129,8 @@ void BoardRep::parseFen(const char* fen, S_BOARD& pos){
 		file = fen[0] - 'a';
 		rank = fen[1] - '1';
 		
-		ASSERT(file>=FILE_A && file <= FILE_H);
-		ASSERT(rank>=RANK_1 && rank <= RANK_8);
+		assert(file>=FILE_A && file <= FILE_H);
+		assert(rank>=RANK_1 && rank <= RANK_8);
 		
 		pos.enPassantSquare = rank * 8 + file;
 	}
@@ -218,4 +219,69 @@ void BoardRep::clearBoard(S_BOARD* pos) {
 	for (int i = 0; i < MAXGAMEMOVES; i++) {
 		pos->history.history[i] = {};
 	}
+}
+
+
+void BoardRep::mirrorBoard(S_BOARD* pos) {
+
+	int tempPieceArray[64] = { 0 };
+	S_SIDE tempSide = (pos->whitesMove == WHITE) ? BLACK : WHITE;
+
+	int swapPiece[13] = { BP, BN, BB, BR, BQ, BK, WP, WN, WB, WR, WQ, WK, NO_PIECE };
+
+	int tempCastlePerm = 0;
+
+	int tempEnPas = NO_SQ;
+
+	if (((pos->castlePerms >> WKS) & 1) == 1) { tempCastlePerm |= (1 << BKS); }
+	if (((pos->castlePerms >> WQS) & 1) == 1) { tempCastlePerm |= (1 << BQS); }
+	if (((pos->castlePerms >> BKS) & 1) == 1) { tempCastlePerm |= (1 << WKS); }
+	if (((pos->castlePerms >> BQS) & 1) == 1) { tempCastlePerm |= (1 << WQS); }
+
+	if (pos->enPassantSquare != NO_SQ) {
+		tempEnPas = psqt::Mirror64[pos->enPassantSquare];
+	}
+
+	for (int sq = 0; sq < 64; sq++) {
+		tempPieceArray[sq] = pos->pieceList[psqt::Mirror64[sq]];
+	}
+
+	clearBoard(pos);
+
+	for (int sq = 0; sq < 64; sq++) {
+		pos->pieceList[sq] = swapPiece[tempPieceArray[sq]];
+
+		switch (swapPiece[tempPieceArray[sq]]) {
+		case WP: pos->position[WP] |= SETBIT((uint64_t)0, sq); break;
+		case WN: pos->position[WN] |= SETBIT((uint64_t)0, sq); break;
+		case WB: pos->position[WB] |= SETBIT((uint64_t)0, sq); break;
+		case WR: pos->position[WR] |= SETBIT((uint64_t)0, sq); break;
+		case WQ: pos->position[WQ] |= SETBIT((uint64_t)0, sq); break;
+		case WK: pos->position[WK] |= SETBIT((uint64_t)0, sq); pos->kingPos[0] = sq; break;
+
+		case BP: pos->position[BP] |= SETBIT((uint64_t)0, sq); break;
+		case BN: pos->position[BN] |= SETBIT((uint64_t)0, sq); break;
+		case BB: pos->position[BB] |= SETBIT((uint64_t)0, sq); break;
+		case BR: pos->position[BR] |= SETBIT((uint64_t)0, sq); break;
+		case BQ: pos->position[BQ] |= SETBIT((uint64_t)0, sq); break;
+		case BK: pos->position[BK] |= SETBIT((uint64_t)0, sq); pos->kingPos[1] = sq; break;
+		}
+	}
+
+
+	pos->whitesMove = tempSide;
+
+	pos->castlePerms = tempCastlePerm;
+
+	pos->enPassantSquare = tempEnPas;
+
+	pos->posKey = generatePosKey(pos);
+
+	pos->pawnKey = generatePawnHash(pos);
+
+	pos->WHITE_PIECES = (pos->position[WP] | pos->position[WN] | pos->position[WB] | pos->position[WR] | pos->position[WQ] | pos->position[WK]);
+	pos->BLACK_PIECES = (pos->position[BP] | pos->position[BN] | pos->position[BB] | pos->position[BR] | pos->position[BQ] | pos->position[BK]);
+	pos->EMPTY_SQUARES = ~(pos->WHITE_PIECES | pos->BLACK_PIECES);
+
+	pos->inCheck = (pos->whitesMove == WHITE) ? sqAttacked(pos->kingPos[0], BLACK, pos) : sqAttacked(pos->kingPos[1], WHITE, pos);
 }

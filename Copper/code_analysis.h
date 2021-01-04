@@ -1,26 +1,5 @@
 #include <chrono>
 #include <iostream>
-#ifndef code_analysis_h
-#define code_analysis_h
-
-
-#endif /* code_analysis_h */
-
-//#define DEBUG
-
-#ifndef DEBUG
-#define ASSERT(n)
-#else
-#define ASSERT(n) \
-if(!(n)) { \
-std::printf("'%s' - Failed\n",#n); \
-std::printf("On %s \n",__DATE__); \
-std::printf("At %s \n",__TIME__); \
-std::printf("In File %s \n",__FILE__); \
-std::printf("At Line %d\n",__LINE__); \
-exit(1);}
-#endif
-
 
 
 class Timer { // Will start a timer from initialization until end of code block

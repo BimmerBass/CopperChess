@@ -1,7 +1,7 @@
 #include "defs.h"
 
-#define NAME "CopperChess2.0"
-#define INPUTBUFFER 4000*6
+#define NAME "CopperChess3.0"
+constexpr int INPUTBUFFER = 400 * 6;
 
 /*
 DISCLAIMER:
@@ -72,11 +72,11 @@ void ParseGo(char* line, S_SEARCHINFO* info, S_BOARD* pos) {
 		info->depth = MAXDEPTH;
 	}
 
+#if defined(COPPER_VERBOSE)
 	std::cout << "time: " << time << " start: " << info->starttime << " stop: "
 		<< info->stoptime << " depth: " << info->depth << " timeset: " << info->timeset << "\n";
-	
-	
 	Search::searchPosition(pos, info);
+#endif
 }
 
 
@@ -122,20 +122,88 @@ void ParsePosition(char* lineIn, S_BOARD* pos) {
 	BoardRep::displayBoardState(*pos);
 }
 
+
+void ParsePerft(char* lineIn, S_BOARD* pos) {
+	lineIn += 6;
+
+	char* ptrChar = lineIn;
+
+	if (strncmp(lineIn, "startpos", 8) == 0) {
+		BoardRep::parseFen(START_FEN, *pos);
+	}
+	else {
+		ptrChar = strstr(lineIn, "fen");
+
+		if (ptrChar == NULL) {
+			BoardRep::parseFen(START_FEN, *pos);
+		}
+		else {
+			ptrChar += 4;
+			BoardRep::parseFen(ptrChar, *pos);
+		}
+	}
+
+	ptrChar = strstr(lineIn, "moves");
+	int move = NOMOVE;
+
+	if (ptrChar != NULL) {
+		ptrChar += 6;
+		while (*ptrChar) {
+			std::string moveStr = "";
+			for (int i = 0; i < 5; i++) {
+				moveStr += *(ptrChar + i);
+			}
+
+			move = parseMove(moveStr, pos);
+			if (move == NOMOVE) { break; }
+			MoveGeneration::makeMove(*pos, move);
+			pos->ply = 0;
+			while (*ptrChar && *ptrChar != ' ') { ptrChar++; }
+			ptrChar++;
+		}
+	}
+
+	// After having parsed the fen, we will parse the depth at which we need to run perft.
+	ptrChar = strstr(lineIn, "depth");
+
+	std::string depth_string = "";
+
+	if (ptrChar != NULL) {
+
+		ptrChar += 6;
+
+		while (*ptrChar) {
+			depth_string += *ptrChar;
+			ptrChar++;
+		}
+
+		int depth = std::stoi(depth_string);
+
+		assert(depth > 0);
+
+		MoveGeneration::perftTest(depth, pos);
+	}
+
+}
+
+
 void Uci_Loop() {
 
 	setvbuf(stdout, NULL, _IOLBF, sizeof(NULL));
 	setvbuf(stdin, NULL, _IOLBF, sizeof(NULL));
 
-	//S_BOARD pos[1];
 	S_BOARD* pos = new S_BOARD;
 	S_SEARCHINFO* info = new S_SEARCHINFO;
 
 	char line[INPUTBUFFER];
+
 	printf("id name %s\n", NAME);
 	printf("id author BimmerBass\n");
 	printf("option name Book type check default true\n");
+	printf("option name Hash type spin default 200 min %d max %d\n", MIN_HASH, MAX_HASH); // The default hash size is 200MB with minimum 1MB and maximum 1GB
 	printf("uciok\n");
+
+	int MB = 200;
 
 	while (true) {
 		memset(&line[0], 0, sizeof(line));
@@ -170,6 +238,39 @@ void Uci_Loop() {
 			printf("id author BimmerBass\n");
 			printf("uciok\n");
 		}
+		else if (!strncmp(line, "setoption name Hash value ", 26)) {
+			sscanf_s(line, "%*s %*s %*s %*s %d", &MB, MB);
+			
+			// Here we are just making sure that the input doesn't exceed the set limits
+			if (MB < MIN_HASH) { MB = MIN_HASH; }
+			else if (MB > MAX_HASH) { MB = MAX_HASH; }
+
+			pos->transpositionTable->resize(uint64_t(MB));
+
+		}
+
+		else if (!strncmp(line, "setoption name Book value ", 26)) {
+			char* ptrTrue = nullptr;
+			ptrTrue = strstr(line, "true");
+
+			if (ptrTrue != nullptr) { // Enable book option.
+				engineOptions->use_book = true;
+			}
+			else {
+				engineOptions->use_book = false;
+			}
+
+		}
+
+
+		else if (!strncmp(line, "perft", 5)) {
+			ParsePerft(line, pos);
+		}
+
+		else if (!strncmp(line, "evaltest", 8)) {
+			eval_balance();
+		}
+
 		if (info->quit) {
 			break;
 		}

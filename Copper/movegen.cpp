@@ -27,7 +27,19 @@ inline void scoreQuiets(const S_BOARD* board, S_MOVELIST* legalMoves) {
 		}
 
 		else if (SPECIAL(legalMoves->moves[legalMoves->count].move) == 0) { // If the move is a promotion.
-			legalMoves->moves[legalMoves->count].score = 510;
+			//legalMoves->moves[legalMoves->count].score = 510;
+			legalMoves->moves[legalMoves->count].score = 1000000;
+
+			switch (PROMTO(legalMoves->moves[legalMoves->count].move)) {
+			case 0: // Knight
+				legalMoves->moves[legalMoves->count].score += 510; break;
+			case 1: // Bishop
+				legalMoves->moves[legalMoves->count].score += 520; break;
+			case 2: // Rook
+				legalMoves->moves[legalMoves->count].score += 530; break;
+			case 3: // Queen
+				legalMoves->moves[legalMoves->count].score += 540; break;
+			}
 		}
 
 		else { // Here, we'll add the score from the history heuristic.
@@ -45,7 +57,7 @@ void MoveGeneration::validMoves(S_BOARD* board, S_MOVELIST &legalMoves){
 	S_MOVELIST pseudoLegal;
 	pseudoLegalMoves(board, pseudoLegal); // Get all pseudolegal moves
 	
-	int kingSq = (board->whitesMove == WHITE) ? board->kingPos[0]:board->kingPos[1];
+	int kingSq = (board->whitesMove == WHITE) ? board->kingPos[0] : board->kingPos[1];
 	
 	BitBoard potentialBlockers = (board->whitesMove == WHITE) ? genKingRays(kingSq) & board->WHITE_PIECES : genKingRays(kingSq) & board->BLACK_PIECES;
 
@@ -71,6 +83,9 @@ void MoveGeneration::validMoves(S_BOARD* board, S_MOVELIST &legalMoves){
 			
 			else{ // Other pieces
 				// Make the move
+				assert(board->pieceList[TOSQ(pseudoLegal.moves[moveNum].move)] != WK && board->pieceList[TOSQ(pseudoLegal.moves[moveNum].move)] != BK);
+				assert(board->pieceList[FROMSQ(pseudoLegal.moves[moveNum].move)] != WK && board->pieceList[FROMSQ(pseudoLegal.moves[moveNum].move)] != BK);
+
 				makeMove(*board, pseudoLegal.moves[moveNum].move);
 				if (!sqAttacked(kingSq, board->whitesMove, board)){ // Not in check
 					undoMove(*board);
@@ -179,6 +194,8 @@ void MoveGeneration::kingMoves(S_BOARD* board, S_MOVELIST& s_moves) {
 	else {
 		K = board->position[BK];
 	}
+	assert(K != 0);
+
 	BitBoard OCCUPIED = ~board->EMPTY_SQUARES;
 
 	// Horizontal and vertical
@@ -210,7 +227,8 @@ void MoveGeneration::kingMoves(S_BOARD* board, S_MOVELIST& s_moves) {
 		
 		// Set MMV-LVA scores
 		if (board->pieceList[destination] != NO_PIECE) {
-			s_moves.moves[s_moves.count].score = MvvLva[board->pieceList[destination]][board->pieceList[bitScanForward(K)]] + 1000000;
+			//s_moves.moves[s_moves.count].score = MvvLva[board->pieceList[destination]][board->pieceList[bitScanForward(K)]] + 1000000;
+			s_moves.moves[s_moves.count].score = MvvLva[board->pieceList[destination]][board->pieceList[index]] + 1000000;
 		}
 		
 		s_moves.count += 1;

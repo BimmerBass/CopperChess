@@ -1,4 +1,3 @@
-
 #include "stdio.h"
 #include "defs.h"
 
@@ -12,7 +11,6 @@
 #include <string.h>
 #include <io.h>
 #endif
-
 
 
 // http://home.arcor.de/dreamlike/chess/
@@ -74,4 +72,16 @@ void ReadInput(S_SEARCHINFO *info) {
 		}
 		return;
 	}
+}
+
+void prefetch(void* addr) {
+#if defined(__INTEL_COMPILER)
+	__asm__("");
+#endif
+
+#if (defined(__INTEL_COMPILER) || defined(_MSC_VER))
+	_mm_prefetch((char*)addr, _MM_HINT_NTA);
+#else
+	return;
+#endif
 }

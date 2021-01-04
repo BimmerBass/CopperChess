@@ -45,11 +45,11 @@ uint64_t generatePosKey(const S_BOARD* pos) {
     }
 
     if (pos->enPassantSquare != NO_SQ) {
-        ASSERT(pos->enPassantSquare >= 0 && pos->enPassantSquare <= 63);
+        assert(pos->enPassantSquare >= 0 && pos->enPassantSquare <= 63);
         finalKey ^= pieceKeys[NO_PIECE][pos->enPassantSquare];
     }
 
-    ASSERT(castleNum >= 0 && castleNum <= 15);
+    assert(pos->castlePerms >= 0 && pos->castlePerms <= 15);
 
     finalKey ^= castleKeys[pos->castlePerms];
 

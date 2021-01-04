@@ -50,6 +50,8 @@ inline uint64_t kingRing(const S_BOARD* pos, S_SIDE s) {
 // evaluation.cpp
 int addPsqtVal(int sq, int pce, bool eg);
 int defending_pawns(const S_BOARD* pos, int sq, S_SIDE side);
+
+int pawnless_flank(const S_BOARD* pos, bool side);
 namespace eval {
 	int staticEval(const S_BOARD* pos, int alpha, int beta);
 
@@ -60,6 +62,10 @@ namespace eval {
 	int mg_evaluate(const S_BOARD* pos, int alpha, int beta);
 	int eg_evaluate(const S_BOARD* pos, int alpha, int beta);
 
+
+	int material(const S_BOARD* pos, int phase);
+
+	// material_mg and material_eg are phase separated and called in mg_evaluate and eg_evaluate, but material is not, and i think it is faster.
 	int material_mg(const S_BOARD* pos);
 	int material_eg(const S_BOARD* pos);
 
@@ -77,6 +83,14 @@ namespace eval {
 	int king_mg(const S_BOARD* pos);
 	int king_eg(const S_BOARD* pos);
 
+
+
+	template <PieceType pce>
+	uint64_t mobility(const S_BOARD* pos, S_SIDE side);
+
+	int mobility_mg(const S_BOARD* pos);
+	int mobility_eg(const S_BOARD* pos);
+
 	int scale_factor(const S_BOARD* pos, int eg_eval);
 
 	int outpost(const S_BOARD* pos, int sq, S_SIDE side);
@@ -93,93 +107,104 @@ namespace eval {
 	3. 2R > Q
 	4. R > B + 2P > N + 2P
 	*/
-	enum mgValues : int {
+	/*enum mgValues : int {
+		pawnValMg = 120,
+		knightValMg = 360,
+		bishopValMg = 390,
+		rookValMg = 600,
+		queenValMg = 1150,
+		kingValMg = 20000
+	};*/
+
+	/*enum mgValues : int {
+		pawnValMg = 200,
+		knightValMg = 640,
+		bishopValMg = 700,
+		rookValMg = 1120,
+		queenValMg = 2100,
+		kingValMg = 20000
+	};*/
+
+	/*enum mgValues : int {
 		pawnValMg = 100,
 		knightValMg = 320,
 		bishopValMg = 350,
 		rookValMg = 560,
 		queenValMg = 1050,
 		kingValMg = 20000
-	};
+	};*/
 
-	/*
-		pawnValEg = 200,
-		knightValEg = 560,
-		bishopValEg = 600,
-		rookValEg = 1200,
-		queenValEg = 2300,
-		kingValEg = 20000
-	*/
+	extern int pawnValMg;
+	extern int knightValMg;
+	extern int bishopValMg;
+	extern int rookValMg; 
+	extern int queenValMg;
+	extern int kingValMg;
+	
+	extern int pawnValEg;
+	extern int knightValEg;
+	extern int bishopValEg;
+	extern int rookValEg;
+	extern int queenValEg;
+	extern int kingValEg;
 
-	enum egValues : int {
+	/*enum egValues : int {
 		pawnValEg = 100,
 		knightValEg = 320,
 		bishopValEg = 350,
 		rookValEg = 560,
 		queenValEg = 1050,
 		kingValEg = 20000
-	};
+	};*/
+	
+
+	/*enum egValues : int {
+		pawnValEg = 200,
+		knightValEg = 490,
+		bishopValEg = 530,
+		rookValEg = 905,
+		queenValEg = 1775,
+		kingValEg = 20000
+	};*/
 
 	static int pieceValMg[13] = { pawnValMg, knightValMg, bishopValMg, rookValMg, queenValMg, kingValMg,
 	pawnValMg, knightValMg, bishopValMg, rookValMg, queenValMg, kingValMg, 0 };
-
-
-	class Tuner{
-	public:
-		Tuner(int &tuningVar, int learningRate, int initialBounds, int gameCnt, int movetime);
-		~Tuner();
-
-	private:
-		/*
-		- We'll copy the variable to tune and only change it after the tuning run
-		- The learning rate is the number we'll increment tunedVar with after each game result
-		- The bounds are the initial padding around the variable:
-			- If the tuned variable is 100, and the bounds are 20. The two competing engines will have
-				the values 80 and 120.
-			- If engine(80) wins, we'll add the learningRate to tunedVar, such if for example
-				learninRate = 2, tunedVar = 102.
-			- This will repeat with the new bounds, engine(82) vs. engine(122) until we have played all the games.
-		*/
-		int tunedVar;
-		int learningRate;
-		int bounds;
-
-		int gameCount;
-		int movetime;
-
-		void RunTuning();
-	};
 }
 
 
 
 // Constants
-constexpr int LAZYNESS_MG = eval::knightValMg; // The safety margin for lazy evaluation
-constexpr int LAZYNESS_EG = eval::rookValEg;
+static int LAZYNESS_MG = eval::knightValMg; // The safety margin for lazy evaluation
+static int LAZYNESS_EG = eval::rookValEg;
 
 constexpr int tempo = 18; // The value added to the side to move.
 
 // The below imbalances are taken from GM Larry Kaufman's paper, "The evaluation of piece imbalances"
 // The ratios are taken from the CPW-engine
-constexpr int bishop_pair = eval::pawnValMg / 2;
-constexpr int p_knight_pair = (int)((double)bishop_pair / 3.75);
-constexpr int p_rook_pair = (int)((double)bishop_pair / 1.875);
+static int bishop_pair = eval::pawnValMg / 2;
+static int p_knight_pair = (int)((double)bishop_pair / 3.75);
+static int p_rook_pair = (int)((double)bishop_pair / 1.875);
 
 
-constexpr int knight_pawn_penalty = eval::pawnValMg / 8;
-constexpr int rook_pawn_bonus = eval::pawnValMg / 16;
+static int knight_pawn_penalty = eval::pawnValMg / 8;
+static int rook_pawn_bonus = eval::pawnValMg / 16;
 
 // Pawn coefficients
-constexpr int passedPawnValue[8] = { 0, 5, 10, 25, 35, 60, 100, 140 };
+extern int passedPawnValue[8];
 constexpr int mirrorRankNum[8] = { 7 , 6 , 5 , 4 , 3 , 2 , 1 , 0 };
 constexpr int doubled_penalty = 11;
 constexpr int blocked_penalty[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
 
 // Piece coefficients
-constexpr int outpost_bonus = 30;
-constexpr int safe_outpost_bonus = 55;
+extern int outpost_bonus;
+extern int safe_outpost_bonus;
 
 
 // King bonuses and penalties
 constexpr int castling_bonus = 25;
+
+
+enum material_type { P = 0, N = 1, B = 2, R = 3, Q = 4, K = 5 };
+
+extern int phase_material[25][6];

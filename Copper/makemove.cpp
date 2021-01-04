@@ -7,6 +7,7 @@ INCLUDES THE FUNCTIONS:
 */
 
 inline bool InCheck(const S_BOARD* pos) {
+	assert(pos->position[WK] != 0 && pos->position[BK] != 0);
 	if (pos->whitesMove == WHITE) {
 		return sqAttacked(pos->kingPos[0], BLACK, pos);
 	}
@@ -23,7 +24,10 @@ void MoveGeneration::undoMove(S_BOARD &board){
 		
 		std::copy(previousPos.bitboards, previousPos.bitboards + 12, board.position);
 
-		std::fill(board.pieceList, board.pieceList + 64, NO_PIECE);
+		//std::fill(board.pieceList, board.pieceList + 64, NO_PIECE);
+		for (int sq = 0; sq < 64; sq++) {
+			board.pieceList[sq] = NO_PIECE;
+		}
 
 		BitBoard pceBrd = 0;
 		int sq = NO_SQ;
@@ -49,6 +53,9 @@ void MoveGeneration::undoMove(S_BOARD &board){
 		board.enPassantSquare = previousPos.enPassantSq;
 		board.fiftyMove = previousPos.fiftyMove;
 		
+
+		assert(previousPos.bitboards[WK] != 0 && previousPos.bitboards[BK] != 0);
+
 		int whiteKingPos = bitScanForward(previousPos.bitboards[WK]);
 		int blackKingPos = bitScanForward(previousPos.bitboards[BK]);
 		board.kingPos[0] = whiteKingPos;
@@ -77,6 +84,8 @@ void MoveGeneration::makeMove(S_BOARD &board, int move){
 		positionDescriptors.bitboards[i] = board.position[i];
 	}
 
+	assert(board.position[WK] != 0 && board.position[BK] != 0);
+
 	positionDescriptors.side = board.whitesMove;
 	
 	positionDescriptors.castlingPerms = board.castlePerms;
@@ -98,6 +107,17 @@ void MoveGeneration::makeMove(S_BOARD &board, int move){
 
 	int pieceMoved = board.pieceList[origin];
 	int pieceCaptured = board.pieceList[destination];
+
+	assert(pieceCaptured != WK && pieceCaptured != BK);
+	/*if (pieceCaptured == WK || pieceCaptured == BK) {
+		std::cout << pieceCaptured << std::endl;
+		BoardRep::displayBoardState(board);
+
+		std::cout << "\n" << printMove(move) << std::endl;
+
+		assert(pieceCaptured != WK && pieceCaptured != BK);
+	}*/
+
 	board.pieceList[origin] = NO_PIECE;
 	board.enPassantSquare = NO_SQ;
 

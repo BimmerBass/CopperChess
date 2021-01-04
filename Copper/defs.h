@@ -3,20 +3,37 @@
 #include <string>
 #include <vector>
 #include <chrono>
-#include "code_analysis.h"
+//#undef NDEBUG
+#include <assert.h>
 
-//#define CLRBIT(bb, sq) ((bb) &= ClearMask[(sq)])
-//#define SETBIT(bb, sq) ((bb) |= SetMask[(sq)])
+
+
+
+
+#if (defined(_MSC_VER) || defined(__INTEL_COMPILER))
+#include <xmmintrin.h> // Used for _mm_prefetch
+#include <nmmintrin.h> // Used for countBits
+#endif
+
+// The verbose option is for disabling search output during SPSA tuning.
+//#define COPPER_VERBOSE 1
+
+
 #define FROMSQ(m) (((m) >> (4)) & (63))
 #define TOSQ(m) ((m) >> (10))
 #define PROMTO(m) (((m) >> (2)) & (3))
 #define SPECIAL(m) ((m) & (3))
 
-// Returns x*1MB for transposition table size.
-//#define MB(x) (0x100000 * x)
+// The below conversions are used to calculate the size of the various hash tables.
 #define KB(x) (x << 10)
 #define MB(x) (x << 20)
 #define GB(x) (x << 30)
+
+
+// Here we define the minimum and maximum allowable hash size in megabytes
+#define MIN_HASH 1
+#define MAX_HASH 1000
+
 
 #define MAXPOSITIONMOVES 256  // Maximum amount of expected moves for a position (more than enough)
 #define MAXGAMEMOVES 512 // Wayy more than enough, but just to be on the safe side...
@@ -27,6 +44,8 @@
 
 #define INF 30000
 #define MATE (INF - MAXDEPTH)
+
+#define VALUE_NONE (INF + 2)
 
 #define START_FEN "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
 
@@ -182,14 +201,14 @@ struct S_MOVELIST {
 	int count = 0; // Amount of moves.
 };
 
-enum TT_FLAG { EXACT, LOWER, UPPER };
+enum TT_FLAG { EXACT, LOWER, UPPER, NO_FLAG };
 
 struct S_TTENTRY{
-	BitBoard posKey;
+	uint64_t posKey;
 	int move = NOMOVE;
 	int score = 0;
 
-	TT_FLAG flag = LOWER;
+	TT_FLAG flag = NO_FLAG;
 
 	int depth = 0; // Depth the position has been searched to.
 };
@@ -200,6 +219,8 @@ struct S_TABLE{
 	int numEntries = 0;
 	
 	S_TABLE(uint64_t size, bool gigabytes = false);
+
+	void resize(uint64_t mb_size);
 
 	~S_TABLE();
 };
@@ -222,6 +243,8 @@ public:
 	void storeEvaluation(const S_BOARD* pos, int& score);
 
 	void clearCache();
+
+	void prefetch_cache(const S_BOARD* pos);
 private:
 
 	S_EVALENTRY* entry = nullptr;
@@ -247,6 +270,8 @@ public:
 	void store_pawn_eval(const S_BOARD* pos, int* ev);
 
 	void clear_hash();
+
+	void prefetch_cache(const S_BOARD* pos);
 
 private:
 	PawnHashEntry* entries = nullptr;
@@ -324,7 +349,7 @@ struct S_BOARD {
 	// In the ruy lopez closed variation, killer moves provide around 25%-30% fewer nodes searched.
 	int killerMoves[MAXDEPTH][2] = { {} }; // We'll store two killer moves per ply.
 
-	int historyHeuristic[12][64] = { {} }; // historyHeuristic[fromSq][toSq]
+	int historyHeuristic[12][64] = { {} }; // historyHeuristic[pieceMoved][toSq]
 
 	int ply = 0; // Amount of moves deep in search function
 	S_HISTORY history;
@@ -348,6 +373,15 @@ struct S_SEARCHINFO{
 	float fh = 0;
 	float fhf = 0;
 };
+
+
+// All the options that the GUI can change. This includes the use of opening books and the tt size.
+struct S_OPTIONS {
+	bool use_book = true;
+	int tt_size = 200; // MB
+};
+
+extern S_OPTIONS* engineOptions;
 
 
 /*
@@ -389,10 +423,14 @@ inline bool squaresOnSameDiagonalOrAntiDiagonal(int sq1, int sq2) {
 
 // Used in evaluation.cpp
 inline int countBits(uint64_t x) { // Count amount of turned on bits in a uint64_t number
+#if (defined(__INTEL_COMPILER) || defined(_MSC_VER))
+	return _mm_popcnt_u64(x);
+#else
 	x -= (x >> 1) & m1;
 	x = (x & m2) + ((x >> 2) & m2);
 	x = (x + (x >> 4)) & m4;
 	return (x * h01) >> 56;
+#endif
 }
 
 
@@ -415,7 +453,7 @@ inline int mg_value(Score s) {
 
 inline int bitScanReverse(BitBoard bb) { // Find the MS1B
 	const BitBoard debruijn64 = 0x03f79d71b4cb0a89;
-	ASSERT(bb != 0);
+	assert(bb != 0);
 	bb |= bb >> 1;
 	bb |= bb >> 2;
 	bb |= bb >> 4;
@@ -427,8 +465,8 @@ inline int bitScanReverse(BitBoard bb) { // Find the MS1B
 
 
 inline int bitScanForward(BitBoard bb) { // Find the LS1B
+	assert(bb != 0);
 	const BitBoard debruijn64 = 0x03f79d71b4cb0a89;
-	ASSERT(bb != 0);
 	return index64[((bb ^ (bb - 1)) * debruijn64) >> 58];
 }
 
@@ -450,13 +488,6 @@ inline BitBoard CLRBIT(BitBoard bb, int sq) {
 }
 
 
-template <class T> const T& max(const T& a, const T& b) {
-	return (a < b) ? b : a;     // or: return comp(a,b)?b:a; for version (2)
-}
-
-template <class T> const T& min(const T& a, const T& b) {
-	return !(b < a) ? a : b;     // or: return !comp(b,a)?a:b; for version (2)
-}
 
 // Generating bitboard from king square in all sliding piece directions.
 inline BitBoard genKingRays(int sq) {
@@ -504,7 +535,7 @@ inline long long getTimeMs() {
 
 // Used to pick a more random book move by seeding the time.
 inline uint64_t getRand() {
-	std::srand(getTimeMs());
+	std::srand(std::chrono::duration_cast<std::chrono::milliseconds> (std::chrono::system_clock::now().time_since_epoch()).count());
 	return ((BitBoard)std::rand()
 		| (BitBoard)std::rand() << 15
 		| (BitBoard)std::rand() << 30
@@ -552,6 +583,8 @@ namespace BoardRep {
 	void displayBoardState(S_BOARD &board); // print out position from 12 bitboards
 	void parseFen(const char* fen, S_BOARD& pos);
 
+
+	void mirrorBoard(S_BOARD* pos);
 	void clearBoard(S_BOARD* pos);
 };
 
@@ -573,10 +606,12 @@ void initRookSupportMasks();
 void initManhattanDistances();
 void initOutpostMasks();
 void initReductions();
+void initPhaseMaterial();
 
 
 // makemove.cpp, movegen.cpp and utils.cpp
 void run_wac();
+void eval_balance();
 
 extern inline bool moveExists(S_BOARD* pos, const int move);
 
@@ -620,11 +655,11 @@ bool isRepetition(const S_BOARD* pos);
 namespace Search{
 void pickNextMove(int index, S_MOVELIST* legalMoves);
 
-int alphabeta(S_BOARD* pos, S_SEARCHINFO *info, int depth, int alpha, int beta, bool doNull, bool extend);
+int alphabeta(S_BOARD* pos, S_SEARCHINFO *info, int depth, int alpha, int beta, bool doNull, bool is_pv);
 
 int searchRoot(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, int beta);
 
-void searchPosition(S_BOARD* pos, S_SEARCHINFO *info);
+int searchPosition(S_BOARD* pos, S_SEARCHINFO *info);
 
 void clearForSearch(S_BOARD* pos, S_SEARCHINFO *info);
 
@@ -632,9 +667,13 @@ int Quiescence(int alpha, int beta, S_BOARD* pos, S_SEARCHINFO* info);
 
 void CheckUp(S_SEARCHINFO* info);
 
-int search_widen(S_BOARD* pos, S_SEARCHINFO* info, int depth, int estimate); // Taken from https://www.chessprogramming.org/CPW-Engine_search
+int search_widen(S_BOARD* pos, S_SEARCHINFO* info, int depth, int estimate);
 
 int reduction(bool improving, int depth, int moveCount);
+
+int futility_margin(int d, bool i);
+
+int lmp_limit(int d, bool i);
 
 int contempt_factor(const S_BOARD* pos);
 
@@ -656,7 +695,9 @@ namespace TT{
 	void clearTable(S_TABLE* table);
 
 	// Check to see if there has already been found a move for the given position, and return if yes.
-	int probePos(const S_BOARD* pos, int depth, int alpha, int beta, int *move, int *score);
+	int probePos(const S_BOARD* pos, int depth, int alpha, int beta, int* move, int* score);
+
+	S_TTENTRY* extract_entry(const S_BOARD* pos, bool& ttHit);
 
 	// Insert a position and move into the table
 	void storeEntry(S_BOARD* pos, int move, int depth, TT_FLAG flg, int score);
@@ -670,12 +711,16 @@ namespace TT{
 // uci.cpp
 void ParseGo(char* line, S_SEARCHINFO* info, S_BOARD* pos);
 void ParsePosition(char* lineIn, S_BOARD* pos);
+void ParsePerft(char* line, S_BOARD* pos);
 void Uci_Loop();
+
 
 
 // misc.cpp
 void ReadInput(S_SEARCHINFO* info);
 int InputWaiting();
+
+void prefetch(void* addr);
 
 
 // polybook.cpp

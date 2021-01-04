@@ -1,4 +1,5 @@
 #include "defs.h"
+#include "evaluation.h"
 
 /*
 INCLUDES THE FUNCTIONS:
@@ -11,6 +12,9 @@ INCLUDES THE FUNCTIONS:
 - initAll
 - initRookSupportMasks()
 */
+
+
+S_OPTIONS* engineOptions = new S_OPTIONS();
 
 
 // Bitmasks for setting and clearing bits.
@@ -32,6 +36,7 @@ void initAll(BitBoard(&set)[64], BitBoard(&clear)[64]) {
 	initManhattanDistances();
 	initOutpostMasks();
 	initReductions();
+	initPhaseMaterial();
 
 	initPolyBook();
 }
@@ -349,4 +354,38 @@ void initReductions() {
 	for (int i = 1; i < MAXPOSITIONMOVES; i++) {
 		Reductions[i] = int(22.9 * std::log(i));
 	}
+}
+
+
+int phase_material[25][6] = { {} };
+
+
+void initPhaseMaterial() {
+	int mg_weight;
+	int eg_weight;
+
+	for (int phase = 0; phase < 25; phase++) {
+		mg_weight = phase;
+		eg_weight = 24 - phase;
+
+		// Pawns
+		phase_material[phase][0] = ((mg_weight * eval::pawnValMg) + (eg_weight * eval::pawnValEg)) / 24;
+
+		// Knights
+		phase_material[phase][1] = ((mg_weight * eval::knightValMg) + (eg_weight * eval::knightValEg)) / 24;
+
+		// Bishops
+		phase_material[phase][2] = ((mg_weight * eval::bishopValMg) + (eg_weight * eval::bishopValEg)) / 24;
+
+		// Rooks
+		phase_material[phase][3] = ((mg_weight * eval::rookValMg) + (eg_weight * eval::rookValEg)) / 24;
+
+		// Queens
+		phase_material[phase][4] = ((mg_weight * eval::queenValMg) + (eg_weight * eval::queenValEg)) / 24;
+
+		// Kings
+		phase_material[phase][5] = ((mg_weight * eval::kingValMg) + (eg_weight * eval::kingValEg)) / 24;
+	}
+
+
 }

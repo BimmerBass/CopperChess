@@ -76,8 +76,8 @@ int parseMove(std::string userInput, S_BOARD* board) {
     int from = ((userInput[0] - 'a') + (userInput[1] - '1') * 8);
     int to = ((userInput[2] - 'a') + (userInput[3] - '1') * 8);
     
-    ASSERT(from >= 0 && from <= 63);
-    ASSERT(to >= 0 && to <= 63);
+    assert(from >= 0 && from <= 63);
+    assert(to >= 0 && to <= 63);
 
     S_MOVELIST list;
     MoveGeneration::validMoves(board, list);

@@ -8,6 +8,30 @@ At the moment Copper is a command-line engine only, and can only be used graphic
 
 Due to issues with the UCI-protocol, Copper unfortunately only runs on windows at the moment.
 
+#### Copper is currently being re-written, and doesn't work properly yet!
+When it is done, the following things will have been added/changed:
+- Principal Variation Search (PVS) will be implemented.
+- Re-written search function for readability and bug-finding.
+- UCI checkmate depth score will have been fixed.
+- ProbCut will be added.
+- Late move pruning will be tested, and added if successful.
+- UCI option for using an opening book will be added.
+- Static Exchange Evaluation (SEE) will be added.
+- Singular Exstensions will be added.
+- Internal Iterative Deepening (IID) will be added.
+- King specific evaluation term will be added.
+- Null move reductions will be implemented if tests in the endgame are successful.
+- Mobility evaluation term will be added.
+- Fifty-move rule downscaling will be added to the evaluation function.
+- Prefetch will be added for transposition table lookup and evaluation cache.
+- _mm_popcnt will be added for Intel Compilers.
+- A genetic tuning algorithm will be added.
+    - The entire evaluation function and some search parameters will be tuned with this.
+- An option to change the transposition table size will be added.
+- Currently, Copper doesn't compile on MacOS (g++). This will be fixed.
+Some of the features mentioned above have already been successfully implemented, but some are not yet.
+
+
 #### Strength
 The engine still has bugs and weaknesses, and have therefore not been tested thoroughly yet. Despite of this, it easily beats Stockfish rated 2000 on lichess.org.
 

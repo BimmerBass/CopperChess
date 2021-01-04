@@ -15,11 +15,30 @@ S_TABLE::S_TABLE(uint64_t size, bool gigabytes){
 	
 	TT::clearTable(this);
 
+#if defined(COPPER_VERBOSE)
 	std::cout << "Initialized transposition table with " << numEntries << " entries." << std::endl;
+#endif
 }
 
 S_TABLE::~S_TABLE() {
 	delete[] tableEntry;
+}
+
+
+void S_TABLE::resize(uint64_t mb_size) {
+	// To resize the table, we have to first delete the contents and then write new ones.
+	delete[] tableEntry;
+	numEntries = (MB(mb_size) / sizeof(S_TTENTRY));
+
+	try {
+		tableEntry = new S_TTENTRY[numEntries];
+	}
+	catch (std::bad_alloc& ba) {
+		std::cerr << "std::bad_alloc error caught: " << ba.what() << "\n";
+	}
+#if defined(COPPER_VERBOSE)
+	std::cout << "Resized transposition table with " << numEntries << " entries." << std::endl;
+#endif
 }
 
 
@@ -46,16 +65,39 @@ void TT::storeEntry(S_BOARD* pos, int move, int depth, TT_FLAG flg, int score){
 	
 }
 
+
+
+
+S_TTENTRY* TT::extract_entry(const S_BOARD* pos, bool& ttHit) {
+	int index = pos->posKey % pos->transpositionTable->numEntries;
+
+	// We have the position in the transposition table.
+	if (pos->transpositionTable->tableEntry[index].posKey == pos->posKey) {
+		ttHit = true;
+		return &pos->transpositionTable->tableEntry[index];
+	}
+
+	ttHit = false;
+	return nullptr;
+}
+
+
+
+
+
 int TT::probePos(const S_BOARD* pos, int depth, int alpha, int beta, int* move, int* score) {
 	int index = pos->posKey % pos->transpositionTable->numEntries;
 
 	if (pos->transpositionTable->tableEntry[index].posKey == pos->posKey) {
 		*move = pos->transpositionTable->tableEntry[index].move;
-		if (pos->transpositionTable->tableEntry[index].depth >= depth) {
-			*score = pos->transpositionTable->tableEntry[index].score;
+		
+		*score = pos->transpositionTable->tableEntry[index].score;
 
-			if (*score > MATE) { *score -= pos->ply; }
-			else if (*score < MATE) { *score += pos->ply; }
+		if (*score > MATE) { *score -= pos->ply; }
+		else if (*score < MATE) { *score += pos->ply; }
+
+
+		if (pos->transpositionTable->tableEntry[index].depth >= depth) {
 
 			switch (pos->transpositionTable->tableEntry[index].flag) {
 			case LOWER:

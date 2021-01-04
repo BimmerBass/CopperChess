@@ -11,8 +11,9 @@ S_EVALCACHE::S_EVALCACHE(uint64_t size, bool gigabytes){
 		entry[i].posKey = 0;
 		entry[i].score = 0;
 	}
-
+#if defined(COPPER_VERBOSE)
 	std::cout << "Initialized evaluation cache with " << numEntries << " entries." << std::endl;
+#endif
 }
 
 S_EVALCACHE::~S_EVALCACHE(){
@@ -42,4 +43,9 @@ void S_EVALCACHE::clearCache() {
 		entry[index].posKey = 0;
 		entry[index].score = 0;
 	}
+}
+
+
+void S_EVALCACHE::prefetch_cache(const S_BOARD* pos) {
+	prefetch(&entry[pos->posKey % numEntries]);
 }

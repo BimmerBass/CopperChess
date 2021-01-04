@@ -1,6 +1,26 @@
 #include "evaluation.h"
 
 
+int eval::pawnValMg = 100;
+int eval::knightValMg = 320;
+int eval::bishopValMg = 350;
+int eval::rookValMg = 560;
+int eval::queenValMg = 1050;
+int eval::kingValMg = 20000;
+
+int eval::pawnValEg = 100;
+int eval::knightValEg = 320;
+int eval::bishopValEg = 350;
+int eval::rookValEg = 560;
+int eval::queenValEg = 1050;
+int eval::kingValEg = 20000;
+
+
+int passedPawnValue[8] = { 0, 5, 10, 25, 55, 130, 190, 0 };
+
+int outpost_bonus = 30;
+int safe_outpost_bonus = 55;
+
 // This is the middlegame evaluation
 int eval::mg_evaluate(const S_BOARD* pos, int alpha, int beta) {
 	int v = 0;
@@ -20,6 +40,7 @@ int eval::mg_evaluate(const S_BOARD* pos, int alpha, int beta) {
 
 	v += pawns_mg(pos);
 	v += pieces_mg(pos);
+	v += mobility_mg(pos);
 	
 	return v;
 }
@@ -47,18 +68,74 @@ int eval::eg_evaluate(const S_BOARD* pos, int alpha, int beta) {
 
 	v += pawns_eg(pos);
 	v += pieces_eg(pos);
+	v += mobility_eg(pos);
 
 	return v * (scale_factor(pos, v) / 64);
+}
+
+
+
+
+
+
+
+int pawnless_flank(const S_BOARD* pos, bool side) {
+	int king_file = NO_FILE;
+
+	if (side == WHITE) {
+		king_file = pos->kingPos[0] % 8;
+	}
+	else {
+		king_file = pos->kingPos[1] % 8;
+	}
+
+	int pawn_count_file[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
+
+	// We'll count the total number of pawns on each file.
+	for (int f = 0; f < 8; f++) {
+		pawn_count_file[f] = countBits((pos->position[WP] | pos->position[BP]) & FileMasks8[f]);
+	}
+
+
+	int sum; // The amount of pawns on the flank, that the king occupies.
+
+	if (king_file == 0) { sum = pawn_count_file[FILE_A] + pawn_count_file[FILE_B] + pawn_count_file[FILE_C]; }
+	else if (king_file >= 0 && king_file < 3) { sum = pawn_count_file[FILE_A]
+		+ pawn_count_file[FILE_B] + pawn_count_file[FILE_C] + pawn_count_file[FILE_D];
+	}
+	else if (king_file >= 3 && king_file < 5) { sum = pawn_count_file[FILE_C] + 
+		pawn_count_file[FILE_D] + pawn_count_file[FILE_E] + pawn_count_file[FILE_F]; 
+	}
+	else if (king_file >= 5 && king_file < 7) { sum = pawn_count_file[FILE_E] + pawn_count_file[FILE_F] + 
+		pawn_count_file[FILE_G] + pawn_count_file[FILE_H]; 
+	}
+	else {
+		sum = pawn_count_file[FILE_F] + pawn_count_file[FILE_G] + pawn_count_file[FILE_H];
+	}
+
+
+	return (sum == 0) ? 1 : 0;
 }
 
 
 int eval::king_mg(const S_BOARD* pos) {
 	int v = 0;
 
-	v += (pos->has_castled[0]) ? castling_bonus : 0;
-	v -= (pos->has_castled[1]) ? castling_bonus : 0;
+	// If white has castled
+	if (pos->has_castled[0]) {
+		v += castling_bonus;
 
+		// In the middlegame, the king receives a penalty for being on a pawnless flank as it is quite weak there.
+		v -= 30 * pawnless_flank(pos, WHITE);
+	}
 
+	// If black has castled
+	if (pos->has_castled[1]) {
+		v -= castling_bonus;
+
+		// In the middlegame, the king receives a penalty for being on a pawnless flank as it is quite weak there.
+		v += 30 * pawnless_flank(pos, BLACK);
+	}
 
 	return v;
 }
@@ -66,8 +143,19 @@ int eval::king_mg(const S_BOARD* pos) {
 int eval::king_eg(const S_BOARD* pos) {
 	int v = 0;
 
+	// In the endgame, we don't want our king on a pawnless flank as it is needed to help promote.
+	v -= 18 * pawnless_flank(pos, WHITE);
+	v += 18 * pawnless_flank(pos, BLACK);
+
+
 	return v;
 }
+
+
+
+
+
+
 
 inline bool opposite_bishops(const S_BOARD* pos, int* bc_w = nullptr, int* bc_b = nullptr) {
 	if (bc_w == nullptr || bc_b == nullptr) {
@@ -133,6 +221,10 @@ int eval::scale_factor(const S_BOARD* pos, int eg_eval) {
 
 	return sf;
 }
+
+
+
+
 
 
 int eval::pawns_mg(const S_BOARD* pos) {
@@ -260,15 +352,22 @@ int eval::pawns_eg(const S_BOARD* pos) {
 	return v;
 }
 
+
+
+
+
+
 int eval::outpost(const S_BOARD* pos, int sq, S_SIDE side) {
 	int v = 0;
 	if (side == WHITE) {
 		if (sq >= 56 && sq <= 63) { return 0; } // The 8'th rank is never a good outpost
 
-		if (((SETBIT((uint64_t)0, sq + 9) | SETBIT((uint64_t)0, sq + 7)) & pos->position[BP]) != 0) { // If the square is attacked, it cant be an outpost
+		if (((((SETBIT((uint64_t)0, sq) & ~FileMasks8[FILE_A]) << 7) | ((SETBIT((uint64_t)0, sq) & ~FileMasks8[FILE_H]) << 9))
+			& pos->position[BP]) != 0) { // If the square is attacked, it cant be an outpost
 			return 0;
 		}
 		else {
+			// Warning of buffer overflow here, but not a problem. sq is ensured to be between 0 and 63 when outpost() is called.
 			v = ((whiteOutpostMasks[sq] & pos->position[BP]) == 0) ? safe_outpost_bonus : outpost_bonus;
 
 			// Return double value if the outpost is a knight, as they're usually more valuable on outposts than bishops.
@@ -279,7 +378,10 @@ int eval::outpost(const S_BOARD* pos, int sq, S_SIDE side) {
 	else {
 		if (sq >= 0 && sq <= 7) { return 0; }
 
-		if (((SETBIT((uint64_t)0, sq - 9) | SETBIT((uint64_t)0, sq - 7)) & pos->position[WP]) != 0) {
+		//uint64_t pawn_attacking_squares = (((SETBIT((uint64_t)0, sq) & ~FileMasks8[FILE_A]) >> 9) | ((SETBIT((uint64_t)0, sq) & ~FileMasks8[FILE_H]) >> 7));
+
+		if (((((SETBIT((uint64_t)0, sq) & ~FileMasks8[FILE_A]) >> 9) | ((SETBIT((uint64_t)0, sq) & ~FileMasks8[FILE_H]) >> 7))
+			& pos->position[WP]) != 0) {
 			return 0;
 		}
 		else {
@@ -326,6 +428,7 @@ int eval::pieces_mg(const S_BOARD* pos) {
 
 		// Add value for being on an outpost. Only for rank 5 or above.
 		if (sq / 8 >= RANK_5) {
+			assert(pos->pieceList[sq] == WB);
 			v += outpost(pos, sq, WHITE);
 		}
 
@@ -401,6 +504,7 @@ int eval::pieces_mg(const S_BOARD* pos) {
 
 		// Outpost bonus. Only if on rank four or below.
 		if (sq / 8 <= RANK_4) {
+			assert(pos->pieceList[sq] == BB);
 			v -= outpost(pos, sq, BLACK);
 		}
 
@@ -648,6 +752,35 @@ int eval::pieces_eg(const S_BOARD* pos) {
 }
 
 
+
+
+int eval::mobility_mg(const S_BOARD* pos) {
+	int v = 0;
+
+	v += 3 * (countBits(mobility<KNIGHT>(pos, WHITE)) - countBits(mobility<KNIGHT>(pos, BLACK)));
+	v += 4 * (countBits(mobility<BISHOP>(pos, WHITE)) - countBits(mobility<BISHOP>(pos, BLACK)));
+	v += 2 * (countBits(mobility<ROOK>(pos, WHITE)) - countBits(mobility<ROOK>(pos, BLACK)));
+	v += 1 * (countBits(mobility<QUEEN>(pos, WHITE)) - countBits(mobility<QUEEN>(pos, BLACK)));
+
+	return v;
+}
+
+
+
+int eval::mobility_eg(const S_BOARD* pos) {
+	int v = 0;
+
+	v += 5 * (countBits(mobility<KNIGHT>(pos, WHITE)) - countBits(mobility<KNIGHT>(pos, BLACK)));
+	v += 6 * (countBits(mobility<BISHOP>(pos, WHITE)) - countBits(mobility<BISHOP>(pos, BLACK)));
+	v += 9 * (countBits(mobility<ROOK>(pos, WHITE)) - countBits(mobility<ROOK>(pos, BLACK)));
+	v += 10 * (countBits(mobility<QUEEN>(pos, WHITE)) - countBits(mobility<QUEEN>(pos, BLACK)));
+
+	return v;
+}
+
+
+
+
 int eval::imbalance(const S_BOARD* pos) {
 	int v = 0;
 
@@ -676,6 +809,29 @@ int eval::imbalance(const S_BOARD* pos) {
 
 	return v;
 }
+
+
+
+
+
+
+/*
+THIS IS AN ATTEMPT TO CREATE A GAME-STAGE INDEPENDENT MATERIAL EVALUATION, AND SHOULD NOT BE USED YET DUE TO LACK OF TESTING.
+*/
+
+int eval::material(const S_BOARD* pos, int phase) {
+	int v = 0;
+
+	v += phase_material[phase][P] * (countBits(pos->position[WP]) - countBits(pos->position[BP]));
+	v += phase_material[phase][N] * (countBits(pos->position[WN]) - countBits(pos->position[BN]));
+	v += phase_material[phase][B] * (countBits(pos->position[WB]) - countBits(pos->position[BB]));
+	v += phase_material[phase][R] * (countBits(pos->position[WR]) - countBits(pos->position[BR]));
+	v += phase_material[phase][Q] * (countBits(pos->position[WQ]) - countBits(pos->position[BQ]));
+	v += phase_material[phase][K] * (countBits(pos->position[WK]) - countBits(pos->position[BK]));
+
+	return v;
+}
+
 
 // Compute the material difference in the middlegame
 int eval::material_mg(const S_BOARD* pos) {
@@ -720,6 +876,9 @@ int eval::getMaterial(const S_BOARD* pos, bool side) {
 	return material;
 }
 
+
+
+
 // Add the piece-square tables for the middlegame
 int eval::psqt_mg(const S_BOARD* pos) {
 	int v = 0;
@@ -749,6 +908,10 @@ int eval::psqt_eg(const S_BOARD* pos) {
 	return v;
 }
 
+
+
+
+
 // The phase is a way of finding the amount of non-pawn-material on the board. It is used for a tapered eval, such that the endgame
 //		evaluation becomes more dominant as material is removed from the board.
 int eval::phase(const S_BOARD* pos) {
@@ -759,8 +922,13 @@ int eval::phase(const S_BOARD* pos) {
 	p += 2 * countBits(pos->position[WR] | pos->position[BR]);
 	p += 4 * countBits(pos->position[WQ] | pos->position[BQ]);
 
-	return p;
+
+	return std::min(24, p);
 }
+
+
+
+
 
 using namespace psqt;
 int addPsqtVal(int sq, int pce, bool eg) {
@@ -801,6 +969,9 @@ int addPsqtVal(int sq, int pce, bool eg) {
 	}
 }
 
+
+
+
 int defending_pawns(const S_BOARD* pos, int sq, S_SIDE side) {
 	int cnt = 0;
 	if (side == WHITE) {
@@ -826,6 +997,10 @@ int defending_pawns(const S_BOARD* pos, int sq, S_SIDE side) {
 	}
 	return cnt;
 }
+
+
+
+
 
 // Will return true for positions where a checkmate cannot be forced in any way.
 bool eval::material_draw(const S_BOARD* pos) {

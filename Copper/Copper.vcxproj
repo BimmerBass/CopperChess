@@ -148,6 +148,7 @@
     <ClInclude Include="code_analysis.h" />
     <ClInclude Include="defs.h" />
     <ClInclude Include="evaluation.h" />
+    <ClInclude Include="genetics.h" />
     <ClInclude Include="polykeys.h" />
     <ClInclude Include="psqt.h" />
     <ClInclude Include="resource.h" />
@@ -158,13 +159,15 @@
     <ClCompile Include="attack.cpp" />
     <ClCompile Include="bitboards.cpp" />
     <ClCompile Include="board.cpp" />
-    <ClCompile Include="copperMain.cpp" />
+    <ClCompile Include="main.cpp" />
     <ClCompile Include="evalcache.cpp" />
     <ClCompile Include="evaluation.cpp" />
+    <ClCompile Include="genetics.cpp" />
     <ClCompile Include="main_eval.cpp" />
     <ClCompile Include="hashkeys.cpp" />
     <ClCompile Include="init.cpp" />
     <ClCompile Include="misc.cpp" />
+    <ClCompile Include="mobility.cpp" />
     <ClCompile Include="movegen.cpp" />
     <ClCompile Include="makemove.cpp" />
     <ClCompile Include="pawns.cpp" />

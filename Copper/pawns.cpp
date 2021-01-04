@@ -9,7 +9,9 @@ PawnHashTable::PawnHashTable(uint64_t size) {
 
 	clear_hash();
 
+#if defined(COPPER_VERBOSE)
 	std::cout << "Initialized pawn hash table (" << size << "MB) with " << numEntries << " entries." << std::endl;
+#endif
 }
 
 PawnHashTable::~PawnHashTable() {
@@ -39,4 +41,9 @@ void PawnHashTable::clear_hash() {
 		entries[entry].pawnKey = 0;
 		entries[entry].eval = 0;
 	}
+}
+
+
+void PawnHashTable::prefetch_cache(const S_BOARD* pos) {
+	prefetch(&entries[pos->pawnKey % numEntries]);
 }

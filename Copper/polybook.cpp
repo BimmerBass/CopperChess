@@ -16,6 +16,8 @@ S_BOOKENTRY* entries;
 
 
 void initPolyBook() {
+	engineOptions->use_book = false; // This will only be true if we find entries in the book file.
+
 	FILE* pFile;
 	// Open the opening book ile
 	fopen_s(&pFile, "performance.bin", "rb");
@@ -49,6 +51,10 @@ void initPolyBook() {
 		returnValue = fread(entries, sizeof(S_BOOKENTRY), numEntries, pFile);
 
 		std::cout << "fread() " << returnValue << " entries loaded into memory." << std::endl;
+
+		if (numEntries > 0) { // If we found some entries, we will set this to true.
+			engineOptions->use_book = true;
+		}
 	}
 }
 
@@ -95,7 +101,7 @@ uint64_t polyKeyFromBoard(const S_BOARD* pos) {
 	for (int sq = 0; sq < 64; sq++) {
 		pce = pos->pieceList[sq];
 		if (pce != NO_PIECE) {
-			ASSERT(pce >= wP && pce <= bK);
+			assert(pce >= WP && pce <= BK);
 
 			polyPiece = polyPce[pce];
 
