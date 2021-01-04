@@ -239,7 +239,11 @@ void Uci_Loop() {
 			printf("uciok\n");
 		}
 		else if (!strncmp(line, "setoption name Hash value ", 26)) {
+#if (defined(_WIN32) || defined(_WIN64))
 			sscanf_s(line, "%*s %*s %*s %*s %d", &MB, MB);
+#else
+			sscanf(line, "%*s %*s %*s %*s %d", &MB);
+#endif
 			
 			// Here we are just making sure that the input doesn't exceed the set limits
 			if (MB < MIN_HASH) { MB = MIN_HASH; }

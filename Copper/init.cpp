@@ -352,7 +352,11 @@ int Reductions[MAXPOSITIONMOVES] = {};
 
 void initReductions() {
 	for (int i = 1; i < MAXPOSITIONMOVES; i++) {
+#if (defined(_WIN32) || defined(_WIN64))
 		Reductions[i] = int(22.9 * std::log(i));
+#else
+		Reductions[i] = int(22.9 * log(i));
+#endif
 	}
 }
 

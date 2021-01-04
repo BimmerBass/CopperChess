@@ -583,15 +583,4 @@ void MoveGeneration::pawnMoves(S_BOARD* board, S_MOVELIST& s_moves) { // Needs e
 	}
 }
 
-inline bool moveExists(S_BOARD* pos, const int move) {
-	S_MOVELIST list;
-	MoveGeneration::validMoves(pos, list);
-
-	for (int i = 0; i < list.count; i++){
-		if (list.moves[i].move == move) {
-			return true;
-		}
-	}
-	return false;
-}
 

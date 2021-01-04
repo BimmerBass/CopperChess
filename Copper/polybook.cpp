@@ -19,8 +19,12 @@ void initPolyBook() {
 	engineOptions->use_book = false; // This will only be true if we find entries in the book file.
 
 	FILE* pFile;
-	// Open the opening book ile
+	// Open the opening book file
+#if (defined(_WIN32) || defined(_WIN64))
 	fopen_s(&pFile, "performance.bin", "rb");
+#else
+	pFile = fopen("performance.bin", "rb");
+#endif
 	
 	// Make sure it isn't pointing at nothing.
 	if (pFile == NULL) {
@@ -182,12 +186,19 @@ int ConvertPolyMove(uint16_t move, S_BOARD* pos) {
 
 	char moveStr[6];
 	if (promoPce == 0) {
+#if (defined(_WIN32) || defined(_WIN64))
 		sprintf_s(moveStr, "%c%c%c%c", 
 			FILES[fromFile], 
 			RANKS[fromRank], 
 			FILES[toFile], 
 			RANKS[toRank]);
-
+#else
+		sprintf(moveStr, "%c%c%c%c",
+			FILES[fromFile],
+			RANKS[fromRank],
+			FILES[toFile],
+			RANKS[toRank]);
+#endif
 	}
 	else {
 		char promChar = 'q';
@@ -200,13 +211,21 @@ int ConvertPolyMove(uint16_t move, S_BOARD* pos) {
 		case 3:
 			promChar = 'r'; break;
 		}
-
+#if (defined(_WIN32) || defined(_WIN64))
 		sprintf_s(moveStr, "%c%c%c%c%c",
 			FILES[fromFile],
 			RANKS[fromRank],
 			FILES[toFile],
 			RANKS[toRank],
 			promChar);
+#else
+		sprintf(moveStr, "%c%c%c%c",
+			FILES[fromFile],
+			RANKS[fromRank],
+			FILES[toFile],
+			RANKS[toRank],
+			promChar);
+#endif
 	}
 	return parseMove(moveStr, pos);
 }

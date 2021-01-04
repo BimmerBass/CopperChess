@@ -1,7 +1,7 @@
 #include "stdio.h"
 #include "defs.h"
 
-#ifdef _WIN32
+#if (defined(_WIN32) || defined(_WIN64))
 #include <windows.h>
 #include <io.h>
 #else
@@ -9,7 +9,6 @@
 #include <sys/select.h>
 #include <unistd.h>
 #include <string.h>
-#include <io.h>
 #endif
 
 

@@ -16,7 +16,7 @@
 #endif
 
 // The verbose option is for disabling search output during SPSA tuning.
-//#define COPPER_VERBOSE 1
+#define COPPER_VERBOSE 1
 
 
 #define FROMSQ(m) (((m) >> (4)) & (63))
@@ -568,10 +568,10 @@ FUNCTIONS AND CLASSES
 bool sqAttacked(int sq, bool side, const S_BOARD* pos);
 
 namespace attacks {
-	inline void positiveLineAttacks(BitBoard& attackRays, BitBoard OCCUPIED, int direction, int sq);
-	inline void negativeLineAttacks(BitBoard& attackRays, BitBoard OCCUPIED, int direction, int sq);
-	inline void positiveDiagAttacks(BitBoard& attackRays, BitBoard OCCUPIED, int direction, int sq);
-	inline void negativeDiagAttacks(BitBoard& attackRays, BitBoard OCCUPIED, int direction, int sq);
+	void positiveLineAttacks(BitBoard& attackRays, BitBoard OCCUPIED, int direction, int sq);
+	void negativeLineAttacks(BitBoard& attackRays, BitBoard OCCUPIED, int direction, int sq);
+	void positiveDiagAttacks(BitBoard& attackRays, BitBoard OCCUPIED, int direction, int sq);
+	void negativeDiagAttacks(BitBoard& attackRays, BitBoard OCCUPIED, int direction, int sq);
 }
 
 
@@ -613,7 +613,7 @@ void initPhaseMaterial();
 void run_wac();
 void eval_balance();
 
-extern inline bool moveExists(S_BOARD* pos, const int move);
+
 
 extern void makeNullMove(S_BOARD* pos);
 extern void undoNullMove(S_BOARD* pos, int ep);
@@ -647,6 +647,19 @@ namespace MoveGeneration {
 
 	void kingMoves(S_BOARD* board, S_MOVELIST& s_moves);
 }
+
+inline bool moveExists(S_BOARD* pos, const int move) {
+	S_MOVELIST list;
+	MoveGeneration::validMoves(pos, list);
+
+	for (int i = 0; i < list.count; i++) {
+		if (list.moves[i].move == move) {
+			return true;
+		}
+	}
+	return false;
+}
+
 
 
 // search.cpp
