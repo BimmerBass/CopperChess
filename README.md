@@ -29,6 +29,7 @@ When it is done, the following things will have been added/changed:
     - The entire evaluation function and some search parameters will be tuned with this.
 - An option to change the transposition table size will be added.
 - Currently, Copper doesn't compile on MacOS (g++). This will be fixed.
+
 Some of the features mentioned above have already been successfully implemented, but some are not yet.
 
 
