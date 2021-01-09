@@ -27,6 +27,7 @@ When it is done, the following things will have been added/changed:
 - _mm_popcnt will be added for Intel Compilers.
 - A genetic tuning algorithm will be added.
     - The entire evaluation function and some search parameters will be tuned with this.
+- If the GA doesn't prove successful, Texel tuning will be implemented.
 - An option to change the transposition table size will be added.
 - Currently, Copper doesn't compile on MacOS (g++). This will be fixed.
 

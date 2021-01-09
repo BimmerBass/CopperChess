@@ -6,9 +6,11 @@
 
 
 #define WAC_THREADS 2
+#define MAX_DEL 7500
 
 constexpr double CROSSOVER_RATE = 0.75;
-constexpr double MUTATION_RATE = 0.005;
+constexpr double MUTATION_RATE = 0.05;
+//constexpr double ALPHA = 0.2;
 
 
 static std::default_random_engine generator;
@@ -31,11 +33,28 @@ inline int random_num(int start, int end) {
 }
 
 
+/*
+This is the mutation range which increases by the value of the variable and decreases with the fitness of the cromosome.
+This is done to make the change larger for at larger value, because it probably wouldn't make a difference with a little change,
+and a smaller value with high fitness because we don't want to explore the search space with a good chromosome.
+*/
+inline int mutation_range(int value, int fitness) {
+	int range = int(0.084 * double(value) + 5 - pow(1.000157, double(fitness)));
+
+	return (range > 0) ? range : 10;
+}
+
+
 struct Parameter {
 	Parameter(int* var, int max_d = 0) {
 		variable = var;
 		old_value = *var;
-		max_delta = max_d;
+		if (max_d == 0) {
+			max_delta = MAX_DEL;
+		}
+		else {
+			max_delta = max_d;
+		}
 	}
 
 	int* variable;
@@ -60,12 +79,16 @@ class SearchWac{
 public:
 	SearchWac(std::string searchStr, const char* fen, std::string good_moves[5]);
 
+	~SearchWac();
+
 	bool passed_position();
 
 	void search_position();
 
 private:
 	bool passed = false;
+
+	S_BOARD* pos = NULL;
 
 	std::string search_parameter = "";
 	std::string best_moves[5] = {};
@@ -86,7 +109,7 @@ public:
 	std::vector<Chromosome*> select_parents(std::vector<Chromosome*> pop);
 
 	// Genetic operators
-	std::vector<Chromosome> crossover(Chromosome parent1, Chromosome parent2);
+	Chromosome crossover(Chromosome parent1, Chromosome parent2);
 	void mutate(Chromosome* offspring);
 
 	std::vector<int> return_fitness();

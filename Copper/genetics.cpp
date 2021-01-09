@@ -63,7 +63,7 @@ Generation::Generation(std::vector<Chromosome> pop, std::vector<Parameter*> para
 
 			if (parameters[p]->max_delta <= 0) { // If there has not been set a max allowable deviation of the parameter, just generate a random value.
 				seed_random(); // Seed the random number generator with the time since epoch in nanoseconds.
-				new_chromosome.genes.push_back(randemacher() * std::rand());
+				new_chromosome.genes.push_back(random_num(-MAX_DEL, MAX_DEL));
 			}
 			else { // Generate a random number from value - max_delta to variable + max_delta
 				int new_value = random_num(parameters[p]->old_value - parameters[p]->max_delta,
@@ -83,7 +83,8 @@ The SearchWac class is an attempt to make get_generation_fitness() multithreaded
 SearchWac::SearchWac(std::string searchStr, const char* fen, std::string good_moves[5]) {
 	search_parameter = searchStr;
 
-	
+	pos = new S_BOARD();
+
 	for (int i = 0; i < 5; i++) {
 		best_moves[i] = good_moves[i];
 	}
@@ -95,14 +96,27 @@ SearchWac::SearchWac(std::string searchStr, const char* fen, std::string good_mo
 	}*/
 }
 
+
+SearchWac::~SearchWac() {
+	delete pos;
+}
+
+
 bool SearchWac::passed_position() {
 	return passed;
 }
 
 
-void SearchWac::search_position() {
-	S_BOARD* pos = new S_BOARD();
-	BoardRep::parseFen(position_fen, *pos);
+void SearchWac::search_position() { // sizeof(S_BOARD) = 73952
+	/*S_BOARD* pos = nullptr;
+	try {
+		pos = new S_BOARD();
+		BoardRep::parseFen(position_fen, *pos);
+	}
+	catch (std::bad_alloc& ba) {
+		std::cout << "Exception occured when allocating heap for S_BOARD* pos: " << ba.what() << std::endl;
+	}*/
+
 
 	S_SEARCHINFO info;
 	passed = false; // By default.
@@ -121,12 +135,12 @@ void SearchWac::search_position() {
 	// Now we can search the posiiton:
 	Search::searchPosition(pos, &info);
 
-	// Now we can check if the move found by Copper matches any of the ones in the WAC-test.
+	// Now we can check if the move found by the engine matches any of the ones in the WAC-test.
 	int bestMove = NOMOVE;
 
 	try {
-		bestMove = pos->pvArray[0];
-		
+		bestMove = pos->pvArray[0]; // Get the best move that the engine suggested.
+
 		if (bestMove == NOMOVE) {
 			throw 1;
 		}
@@ -137,12 +151,12 @@ void SearchWac::search_position() {
 
 	for (int m = 0; m < 5; m++) {
 		// Check if the move matches any of the good moves:
-		if (printMove(bestMove) == best_moves[m]) { // Copper found a good move
+		if (printMove(bestMove) == best_moves[m]) { // The engine found a good move
 			passed = true;
 			break;
 		}
 	}
-	delete pos;
+	//delete pos;
 }
 
 
@@ -165,8 +179,9 @@ void Generation::get_generation_fitness() {
 	generation_fitness = 0;
 
 	for (int c = 0; c < population_count; c++) {
-		passed = 0;
 		BoardRep::clearBoard(pos);
+
+		passed = 0;
 		/*
 		Before testing the engine with the values given from the current chromosome, we'll have to insert them.
 		*/
@@ -175,15 +190,18 @@ void Generation::get_generation_fitness() {
 		}
 
 		/*
-		Now we can run through all the WAC positions with Copper.
+		Now we can run through all the WAC positions with the engine.
 		*/
 
-		int total_positions = 0;
+		/*int total_positions = 0;
 
-		std::vector<SearchWac> searches_runnning;
+		std::vector<SearchWac*> searches_runnning;
 		std::vector<std::thread> threads;
 
+		// Only using fifty positions right now to see if the algorithm works. Later this will get significantly increased
 		while (total_positions < 50) {
+			engineOptions->use_book = false;
+			
 			searches_runnning.clear();
 			threads.clear();
 
@@ -191,13 +209,14 @@ void Generation::get_generation_fitness() {
 
 			// Initialise SearchWac objects.
 			for (int n = 0; n < WAC_THREADS; n++) {
-				searches_runnning.push_back(SearchWac("go depth 1", WAC_positions[this_position + n], WAC_moves[this_position + n]));
+				SearchWac this_search("go depth 1", WAC_positions[this_position + n], WAC_moves[this_position + n]);
+				searches_runnning.push_back(&this_search);
 			}
 
-			this_position += WAC_THREADS;
+			this_position += WAC_THREADS;  // WAC_THREADS is set to 2.
 
 			for (int t = 0; t < searches_runnning.size(); t++) {
-				std::thread worker(doRun, &searches_runnning[t]);
+				std::thread worker(doRun, searches_runnning[t]);
 				threads.push_back(std::move(worker));
 			}
 
@@ -207,21 +226,19 @@ void Generation::get_generation_fitness() {
 			}
 
 			for (int s = 0; s < searches_runnning.size(); s++) {
-				passed += (searches_runnning[s].passed_position()) ? 1 : 0;
+				passed += (searches_runnning[s]->passed_position()) ? 1 : 0;
 			}
 
 			total_positions = this_position;
-		}
+		}*/
 
 
-		/*
+
 		// Usually we'll use all positions but for testing i only use the first fifty
-		for (int b = 0; b < 50; b++) {
-
-			int p = random_num(0, WAC_LENGTH - 1);
+		for (int b = 0; b < 100; b++) {
 
 			// Parse the WAC-fen string
-			BoardRep::parseFen(WAC_positions[p], *pos);
+			BoardRep::parseFen(WAC_positions[b], *pos);
 
 			// Initialize a search-info structure and parse a "go"-line. This is just done using the UCI-interface.
 			S_SEARCHINFO info;
@@ -233,7 +250,6 @@ void Generation::get_generation_fitness() {
 
 			// After parsing the go-command, search the position.
 			Search::searchPosition(pos, &info);
-
 
 			// Now check if the best move suggested by Copper matches any of the ones in the WAC test.
 			int bestMove;
@@ -250,12 +266,13 @@ void Generation::get_generation_fitness() {
 
 			for (int m = 0; m < 5; m++) {
 				// The move matches one of the ones suggested by WAC.
-				if (printMove(bestMove) == WAC_moves[p][m]) {
+				if (printMove(bestMove) == WAC_moves[b][m]) {
 					passed++;
 					break;
 				}
 			}
-		}*/
+		}
+
 		
 		// After running the WAC test, set the fitness of this chromosome and increment the total fitness by the same value.
 		population[c].fitness = passed * passed;
@@ -276,9 +293,6 @@ void Generation::get_generation_fitness() {
 			population[c].selection_probability = double(population[c].fitness) / double(generation_fitness);
 		}
 	}
-
-	// Delete the S_BOARD object
-	delete pos;
 }
 
 
@@ -287,7 +301,7 @@ Crossover function: A random number between 1 and the chromosome length minus 1 
 	different but still similar offspring
 */
 
-std::vector<Chromosome> Generation::crossover(Chromosome parent1, Chromosome parent2) {
+Chromosome Generation::crossover(Chromosome parent1, Chromosome parent2) {
 
 	try {
 		if (parent1.genes.size() != parent2.genes.size()) {
@@ -298,31 +312,47 @@ std::vector<Chromosome> Generation::crossover(Chromosome parent1, Chromosome par
 		std::cout << "Exception occured in crossover function: The gene sequences of the parents aren't the same length." << std::endl;
 	}
 
-
-	// The random gene number.
-	int gene_num = random_num(1, parent1.genes.size() - 1);
+	Chromosome offspring;
 
 
-	std::vector<Chromosome> offspring;
+	int max = 0;
+	int min = 0;
 
-	Chromosome offspring1;
-	Chromosome offspring2;
+	int range = 0;
 
-	// Everything with index before the gene_num should be the same
-	for (int g = 0; g < gene_num; g++) {
-		offspring1.genes.push_back(parent1.genes[g]);
-		offspring2.genes.push_back(parent2.genes[g]);
+	for (int g = 0; g < parent1.genes.size(); g++) {
+		
+		if (parent1.genes[g] != parent2.genes[g]) {
+			max = (parent1.genes[g] > parent2.genes[g]) ? parent1.genes[g] : parent2.genes[g];
+			min = (parent1.genes[g] < parent2.genes[g]) ? parent1.genes[g] : parent2.genes[g];
+		}
+		else {
+			max = parent1.genes[g];
+			min = parent2.genes[g];
+		}
+
+		//range = int(0.9 * (double(max) - double(min)));
+		range = max - min;
+
+		if (range <= 1) { // If the range is too small, make it bigger
+			range = 10;
+		}
+
+		int new_val = random_num(min - range, max + range);
+
+		if (new_val > (tuning_parameters[g]->old_value + tuning_parameters[g]->max_delta)) {
+			new_val = tuning_parameters[g]->old_value + tuning_parameters[g]->max_delta;
+		}
+		else if (new_val < (tuning_parameters[g]->old_value - tuning_parameters[g]->max_delta)) {
+			new_val = tuning_parameters[g]->old_value - tuning_parameters[g]->max_delta;
+		}
+
+		offspring.genes.push_back(new_val);
+
+
 	}
 
-	// Everything after - including the element at - the gene_num should be switched
-	for (int g = gene_num; g < parent1.genes.size(); g++) {
-		offspring1.genes.push_back(parent2.genes[g]);
-		offspring2.genes.push_back(parent1.genes[g]);
-	}
-
-	offspring.push_back(offspring1);
-	offspring.push_back(offspring2);
-
+	
 	return offspring;
 }
 
@@ -333,39 +363,38 @@ A mutation can happen when making a new generation. When a mutation happens one 
 
 void Generation::mutate(Chromosome* offspring) {
 
-	// Generate a random number representing the gene that is to be changed
-	//int gene_num = random_num(0, offspring->genes.size() - 1);
-
-	// Before changing the gene, check the parameter that it represents to see if it is bounded to a certain value range.
-	/*if (tuning_parameters[gene_num]->max_delta != 0) {
-		offspring->genes[gene_num] = random_num(tuning_parameters[gene_num]->old_value - tuning_parameters[gene_num]->max_delta,
-			tuning_parameters[gene_num]->old_value + tuning_parameters[gene_num]->max_delta);
-	}
-	else {
-		seed_random();
-		offspring->genes[gene_num] = randemacher() * std::rand();
-	}*/
-
 	for (int i = 0; i < offspring->genes.size(); i++) {
-		double prob = double(random_num(0, 1000)) / 1000.0;
-
+		double prob = double(random_num(0, 1000) / 1000.0);
 		attempted_mutations++;
 
-		if (prob < MUTATION_RATE) { // We can make a random mutation on this gene.
 
+		if (prob <= MUTATION_RATE) {
 			mutations_happened++;
 
-			if (tuning_parameters[i]->max_delta != 0) {
-				offspring->genes[i] = random_num(tuning_parameters[i]->old_value - tuning_parameters[i]->max_delta,
-					tuning_parameters[i]->old_value + tuning_parameters[i]->max_delta);
-			}
-			else {
-				seed_random();
-				offspring->genes[i] = randemacher() * std::rand();
-			}
+
+			int new_val = random_num(tuning_parameters[i]->old_value - tuning_parameters[i]->max_delta,
+				tuning_parameters[i]->old_value + tuning_parameters[i]->max_delta);
+
+			offspring->genes[i] = new_val;
+
+			// Compute the range of mutations:
+			//int range = mutation_range(offspring->genes[i], offspring->fitness);
+			/*int range = offspring->genes[i] / 5;
+			range = (range <= 15) ? 15 : range;
+
+			int new_val = random_num(offspring->genes[i] - range, offspring->genes[i] + range);
 
 
+			if (new_val > (tuning_parameters[i]->old_value + tuning_parameters[i]->max_delta)) {
+				new_val = tuning_parameters[i]->old_value + tuning_parameters[i]->max_delta;
+			}
+			else if (new_val < (tuning_parameters[i]->old_value - tuning_parameters[i]->max_delta)) {
+				new_val = tuning_parameters[i]->old_value - tuning_parameters[i]->max_delta;
+			}
+
+			offspring->genes[i] = new_val;*/
 		}
+
 	}
 
 }
@@ -471,18 +500,14 @@ void Generation::generate_new_population() {
 			std::vector<Chromosome*> parents = select_parents(old_generation);
 
 			// Create two distinct offspring from the parents.
-			std::vector<Chromosome> offspring = crossover(*parents[0], *parents[1]);
+			Chromosome offspring = crossover(*parents[0], *parents[1]);
 
 			// Now divide the probability of choosing parent1 and parent2 by two, such that they probably wont be chosen to reproduce again.
 			parents[0]->selection_probability /= 2;
 			parents[1]->selection_probability /= 2;
 
-			new_generation.push_back(offspring[0]);
-			
-			// Only if we haven't met the population size limit, we'll add the other offspring.
-			if (new_generation.size() < population_count) {
-				new_generation.push_back(offspring[1]);
-			}
+			new_generation.push_back(offspring);
+	
 		}
 		else { // If we aren't doing crossover, we'll just take one of the three best chromosomes.
 			elitism_chosen++;

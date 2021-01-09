@@ -8,7 +8,7 @@ int eval::rookValMg = 560;
 int eval::queenValMg = 1050;
 int eval::kingValMg = 20000;
 
-int eval::pawnValEg = 100;
+int eval::pawnValEg = 120;
 int eval::knightValEg = 320;
 int eval::bishopValEg = 350;
 int eval::rookValEg = 560;

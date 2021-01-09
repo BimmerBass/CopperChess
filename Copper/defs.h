@@ -15,8 +15,9 @@
 #include <nmmintrin.h> // Used for countBits
 #endif
 
+
 // The verbose option is for disabling search output during SPSA tuning.
-#define COPPER_VERBOSE 1
+//#define COPPER_VERBOSE 1
 
 
 #define FROMSQ(m) (((m) >> (4)) & (63))
@@ -329,7 +330,7 @@ struct S_BOARD {
 	int fiftyMove = 0;
 	
 	// Create a transposition table with default size of 200MB.
-	S_TABLE *transpositionTable = new S_TABLE(200);
+	S_TABLE *transpositionTable = new S_TABLE(32);
 	S_EVALCACHE* evaluationCache = new S_EVALCACHE(50); // Allocate 50MB for static evaluations.
 
 	/*

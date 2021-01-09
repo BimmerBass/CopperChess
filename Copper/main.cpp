@@ -1,6 +1,9 @@
 #include "defs.h"
 #include "genetics.h"
 #include "evaluation.h"
+#include "code_analysis.h"
+
+#include <bitset>
 
 
 int* params[20] = { &eval::pawnValMg, &eval::knightValMg, &eval::bishopValMg, &eval::rookValMg, &eval::queenValMg,
@@ -15,6 +18,7 @@ int main() {
 
 	/*std::vector<Parameter> tuning_parameters;
 	
+	/*
 	tuning_parameters.push_back(Parameter(&eval::pawnValMg, 200));
 	tuning_parameters.push_back(Parameter(&eval::knightValMg, 300));
 	tuning_parameters.push_back(Parameter(&eval::bishopValMg, 300));
@@ -26,30 +30,43 @@ int main() {
 	tuning_parameters.push_back(Parameter(&eval::bishopValEg, 300));
 	tuning_parameters.push_back(Parameter(&eval::rookValEg, 450));
 	tuning_parameters.push_back(Parameter(&eval::queenValEg, 1050));
-
-
-	/*tuning_parameters.push_back(Parameter(&passedPawnValue[0], 200));
-	tuning_parameters.push_back(Parameter(&passedPawnValue[1], 200));
-	tuning_parameters.push_back(Parameter(&passedPawnValue[2], 200));
-	tuning_parameters.push_back(Parameter(&passedPawnValue[3], 200));
-	tuning_parameters.push_back(Parameter(&passedPawnValue[4], 200));
-	tuning_parameters.push_back(Parameter(&passedPawnValue[5], 200));
-	tuning_parameters.push_back(Parameter(&passedPawnValue[6], 200));
-	tuning_parameters.push_back(Parameter(&passedPawnValue[7], 200));
-
-
-	tuning_parameters.push_back(Parameter(&outpost_bonus, 150));
-	tuning_parameters.push_back(Parameter(&safe_outpost_bonus, 200));
 	
-	int population_count = 8;
-	int generation_count = 100;
+
+
+	//tuning_parameters.push_back(Parameter(&eval::pawnValMg, 200));
+	tuning_parameters.push_back(Parameter(&eval::knightValMg, 300));
+	tuning_parameters.push_back(Parameter(&eval::bishopValMg, 300));
+	tuning_parameters.push_back(Parameter(&eval::rookValMg, 500));
+	tuning_parameters.push_back(Parameter(&eval::queenValMg, 1000));
+	
+
+	// PawnValEg = 120
+	//tuning_parameters.push_back(Parameter(&eval::pawnValEg, 200));
+	tuning_parameters.push_back(Parameter(&eval::knightValEg, 300));
+	tuning_parameters.push_back(Parameter(&eval::bishopValEg, 300));
+	tuning_parameters.push_back(Parameter(&eval::rookValEg, 500));
+	tuning_parameters.push_back(Parameter(&eval::queenValEg, 1000));
+
+	/*
+	tuning_parameters.push_back(Parameter(&passedPawnValue[0], 350));
+	tuning_parameters.push_back(Parameter(&passedPawnValue[1], 350));
+	tuning_parameters.push_back(Parameter(&passedPawnValue[2], 350));
+	tuning_parameters.push_back(Parameter(&passedPawnValue[3], 350));
+	tuning_parameters.push_back(Parameter(&passedPawnValue[4], 350));
+	tuning_parameters.push_back(Parameter(&passedPawnValue[5], 350));
+	tuning_parameters.push_back(Parameter(&passedPawnValue[6], 350));
+	tuning_parameters.push_back(Parameter(&passedPawnValue[7], 350));
+	
+	tuning_parameters.push_back(Parameter(&outpost_bonus, 200));
+	tuning_parameters.push_back(Parameter(&safe_outpost_bonus, 300));
+	
+	int population_count = 20;
+	int generation_count = 50;
 
 	GeneticTuning tuner(tuning_parameters, population_count, generation_count);
-
+	
 	tuner.run_ga();
 	*/
-
-
 	Uci_Loop();
 
 

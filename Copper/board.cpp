@@ -196,8 +196,13 @@ void BoardRep::clearBoard(S_BOARD* pos) {
 
 	pos->fiftyMove = 0;
 
+	/*
+	Clear all tables.
+	*/
 	TT::clearTable(pos->transpositionTable);
 	pos->evaluationCache->clearCache();
+	pos->pawn_table_mg->clear_hash();
+	pos->pawn_table_eg->clear_hash();
 
 	pos->is_checkmate = false;
 	pos->is_stalemate = false;

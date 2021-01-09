@@ -525,68 +525,6 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 	}
 
 
-	/*
-	ENHANCED TRANSPOSITION CUTOFF:
-		- If the transposition table didn't return a score for this position, we can search the strongest moves in hopes that it does have entries in some of
-			the child nodes that produce a cutoff. This is only done at depth >= 3 as it would otherwise be too computationally expensive near the leaf nodes.
-	*/
-	/*if (!ttHit && depth >= 3) {
-		int next_alpha = -beta;
-		int next_beta = -alpha;
-		bool new_ttHit = false;
-		int new_ttScore = -INF;
-		int new_ttDepth = 0;
-		TT_FLAG new_ttFlag = NO_FLAG;
-
-		int oldMoveScore = 0;
-
-		// We'll only check the five expected strongest moves.
-		for (int i = 0; i < 5; i++) {
-			
-			oldMoveScore = pos_moves.moves[i].score;
-
-			pickNextMove(i, &pos_moves);
-
-			MoveGeneration::makeMove(*pos, pos_moves.moves[i].move);
-
-			pos_moves.moves[i].score = oldMoveScore;
-
-			ttEntry = TT::extract_entry(pos, new_ttHit);
-
-			new_ttScore = (new_ttHit) ? ttEntry->score : INF;
-
-			if (new_ttScore > MATE) { new_ttScore -= pos->ply; }
-			else if (new_ttScore < MATE) { new_ttScore += pos->ply; }
-
-
-			new_ttDepth = (new_ttHit) ? ttEntry->depth : 0;
-
-			new_ttFlag = (new_ttHit) ? ttEntry->flag : NO_FLAG;
-
-
-			if (new_ttHit && new_ttDepth >= depth - 1){
-				switch (new_ttFlag) {
-				case LOWER:
-					if (new_ttScore <= next_alpha) {
-						return alpha;
-					}
-					break;
-				case UPPER:
-					if (new_ttScore >= next_beta) {
-						return beta;
-					}
-					break;
-				case EXACT:
-					return new_ttScore;
-				}
-			}
-
-		}
-
-
-	}*/
-
-
 
 	int piece_captured = NO_PIECE;
 	int new_depth = 0;
@@ -908,17 +846,23 @@ int Search::search_widen(S_BOARD* pos, S_SEARCHINFO* info, int depth, int estima
 	}
 
 asp_search:
+
 	v = searchRoot(pos, info, depth, alpha, beta);
 
 	if (v <= alpha) {
 		beta = (alpha + beta) / 2;
 		alpha = std::max(v - delta, -INF);
 
+		assert(beta > alpha);
+
 		delta += (delta / 4) + 5;
 		goto asp_search;
 	}
 	else if (v >= beta) {
 		beta = std::min(v + delta, INF);
+
+		assert(beta > alpha);		
+
 		delta += (delta / 4) + 5;
 		goto asp_search;
 	}
