@@ -1,6 +1,6 @@
 #include "evaluation.h"
 
-
+/*
 int eval::pawnValMg = 100;
 int eval::knightValMg = 320;
 int eval::bishopValMg = 350;
@@ -13,6 +13,21 @@ int eval::knightValEg = 320;
 int eval::bishopValEg = 350;
 int eval::rookValEg = 560;
 int eval::queenValEg = 1050;
+int eval::kingValEg = 20000;*/
+
+
+int eval::pawnValMg = 100;
+int eval::knightValMg = 657;
+int eval::bishopValMg = 585;
+int eval::rookValMg = 821;
+int eval::queenValMg = 1625;
+int eval::kingValMg = 20000;
+
+int eval::pawnValEg = 120;
+int eval::knightValEg = 311;
+int eval::bishopValEg = 307;
+int eval::rookValEg = 531;
+int eval::queenValEg = 913;
 int eval::kingValEg = 20000;
 
 

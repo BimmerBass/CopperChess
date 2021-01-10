@@ -17,7 +17,7 @@
 
 
 // The verbose option is for disabling search output during SPSA tuning.
-//#define COPPER_VERBOSE 1
+#define COPPER_VERBOSE 1
 
 
 #define FROMSQ(m) (((m) >> (4)) & (63))
@@ -244,6 +244,7 @@ public:
 	void storeEvaluation(const S_BOARD* pos, int& score);
 
 	void clearCache();
+	void resize_cache(uint64_t mb_size);
 
 	void prefetch_cache(const S_BOARD* pos);
 private:

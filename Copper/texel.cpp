@@ -81,7 +81,7 @@ double texel::eval_error(tuning_positions* EPDS, double k) {
 #pragma omp parallel shared(error)
 	{
 		S_BOARD* pos = new S_BOARD;
-#pragma omp for schedule(static, 50000) reduction(+:error)
+#pragma omp for schedule(static, EPDS->positions.size() / partitions) reduction(+:error)
 		for (int p = 0; p < EPDS->positions.size(); p++) {
 			//for (int p = 0; p < 5000; p++) {
 
@@ -150,4 +150,124 @@ double texel::find_k(tuning_positions* EPDS) {
 	k_initial = k_best;
 
 	return k_best;
+}
+
+
+double texel::changed_eval_error(std::vector<int*> params, std::vector<int> new_values, tuning_positions* EPDS, double k) {
+
+	// Firstly, change all the parameters to the desired values:
+	for (int i = 0; i < params.size(); i++) {
+		*params[i] = new_values[i];
+	}
+
+	// Now return the evaluation error.
+	return eval_error(EPDS, k);
+}
+
+
+void texel::tune(std::vector<int*> initial_guess, std::string epd_file, int runs) {
+	// Copy all arguments
+	std::vector<int*> parameters = initial_guess;
+
+	// Copy the initial values of the variables and make a vector in which we can change them
+	std::vector<int> initial_values;
+	std::vector<int> theta;
+
+	for (int i = 0; i < parameters.size(); i++) {
+		initial_values.push_back(*parameters[i]);
+		theta.push_back(*parameters[i]);
+	}
+
+	std::string filepath = epd_file;
+	int iterations = runs;
+
+	// Now load the file containing all positions:
+	tuning_positions* EPDS = load_file(filepath);
+
+	// Find the optimal k
+	//double k = 0.0;
+	double k = 1.987;
+	//k = find_k(EPDS);
+
+	// Now we'll loop through all the iterations:
+	std::cout << "Starting Texel SPSA tuning session with " << parameters.size() << " parameters in " << iterations << " iterations" << std::endl;
+
+	std::vector<int> theta_plus;
+	std::vector<int> theta_minus;
+	std::vector<int> delta;
+	
+	
+	/*
+		Calculate SPSA parameters
+	*/
+
+	double BIG_A = 0.1 * double(iterations);
+	double a = 3 * double(A_END) * pow(BIG_A + double(iterations), alpha);
+	double c = 3 * double(C_END) * pow(double(iterations), gamma);
+
+
+	for (int n = 0; n < iterations; n++) {
+		// Calculate an and cn.
+		int an = int(a / (pow(BIG_A + double(n) + 1.0, alpha)));
+		int cn = int(c / (pow(double(n) + 1.0, gamma)));
+
+		std::cout << "Iteration nr. " << (n + 1) << ": an = " << an << ", cn = " << cn << std::endl;
+
+		// Clear theta_plus, theta_minus and populate delta.
+		theta_plus.clear();
+		theta_minus.clear();
+		delta.clear();
+
+
+		for (int i = 0; i < parameters.size(); i++) {
+			delta.push_back(randemacher());
+
+			theta_plus.push_back(theta[i] + cn * delta[i]);
+			theta_minus.push_back(theta[i] - cn * delta[i]);
+		}
+
+
+		// Now that we've done this, we can measure the error of theta_plus and theta_minus respectively:
+		//double tPlus_error = double(EPDS->positions.size()) * changed_eval_error(parameters, theta_plus, EPDS, k);
+		//double tMinus_error = double(EPDS->positions.size()) * changed_eval_error(parameters, theta_minus, EPDS, k);
+		double tPlus_error = 10000.0 * changed_eval_error(parameters, theta_plus, EPDS, k);
+		double tMinus_error = 10000.0 * changed_eval_error(parameters, theta_minus, EPDS, k);
+
+
+		std::cout << "Theta plus error: " << tPlus_error << ", Theta minus error: " << tMinus_error << std::endl;
+		
+		/*
+		Now we can calculate ghat for all parameters:
+		*/
+		double g_hat = 0;
+		for (int i = 0; i < parameters.size(); i++) {
+			g_hat = ((tPlus_error - tMinus_error)) / (2.0 * double(cn) * double(delta[i]));
+
+			// Adjust the variable in theta using gradient descent:
+			theta[i] = theta[i] - int(double(an) * g_hat);
+		}
+
+		// Display the new values to the user:
+		std::cout << "Updated values:" << std::endl;
+
+		for (int i = 0; i < theta.size(); i++) {
+			std::cout << "[" << (i + 1) << "]: " << theta[i] << " (Original value: " << initial_values[i] << ")" << std::endl;
+		}
+		std::cout << "\n\n";
+
+	}
+
+
+	/*
+	After all iterations, display the results.
+	*/
+
+	std::cout << "Texel tuning with SPSA results for " << parameters.size() << " variables, after " << iterations << " iterations" << std::endl;
+	std::cout << "-------------------------------------------------------------------------" << std::endl;
+
+	for (int i = 0; i < theta.size(); i++) {
+		std::cout << "[" << (i + 1) << "]: " << theta[i] << " (Original value: " << initial_values[i] << ")" << std::endl;
+	}
+	std::cout << "\n\n";
+
 }

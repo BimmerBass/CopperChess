@@ -4,17 +4,32 @@
 #include "code_analysis.h"
 
 #include <fstream>
-
-
-#include <atomic>
-#include <thread>
+#include <random>
 
 
 
 
 static int k_precision = 5; // The number of iterations used to find the optimal k
-//static double k_initial = 1.987;
 static double k_initial = 1.0;
+
+const int partitions = 20;
+
+/*
+SPSA parameters
+*/
+const int A_END = 8;
+const int C_END = 4;
+const double alpha = 0.602;
+const double gamma = 0.101;
+
+
+static std::default_random_engine generator;
+static std::bernoulli_distribution distribution(0.5);
+
+// Bernoulli +-1 distribution with p = 50%
+inline int randemacher() {
+	return (distribution(generator)) ? 1 : -1;
+}
 
 
 struct Parameter {
@@ -66,5 +81,7 @@ namespace texel {
 
 	double eval_error(tuning_positions* EPDS, double k);
 
-	void tune(std::vector<Parameter> initial_guess, std::string epd_file, int iterations = 0);
+	double changed_eval_error(std::vector<int*> params, std::vector<int> new_values, tuning_positions* EPDS, double k);
+
+	void tune(std::vector<int*> initial_guess, std::string epd_file, int runs = 0);
 }

@@ -45,6 +45,24 @@ void S_EVALCACHE::clearCache() {
 	}
 }
 
+void S_EVALCACHE::resize_cache(uint64_t mb_size) {
+	// Delete the old cache
+	delete[] entry;
+
+	numEntries = (MB(mb_size) / sizeof(S_EVALENTRY));
+
+	// Now create a new cache
+	try {
+		entry = new S_EVALENTRY[numEntries];
+	}
+	catch (std::bad_alloc& ba) {
+		std::cerr << "std::bad_alloc thrown while resizing evaluation cache: " << ba.what() << std::endl;
+	}
+#if defined(COPPER_VERBOSE)
+	std::cout << "Resized evaluation cache to " << mb_size << "MB with " << numEntries << " entries" << std::endl;
+#endif
+}
+
 
 void S_EVALCACHE::prefetch_cache(const S_BOARD* pos) {
 	prefetch(&entry[pos->posKey % numEntries]);

@@ -193,6 +193,9 @@ void Uci_Loop() {
 	setvbuf(stdin, NULL, _IOLBF, sizeof(NULL));
 
 	S_BOARD* pos = new S_BOARD;
+	pos->transpositionTable->resize(64);
+	pos->evaluationCache->resize_cache(32);
+
 	S_SEARCHINFO* info = new S_SEARCHINFO;
 
 	char line[INPUTBUFFER];
@@ -200,7 +203,7 @@ void Uci_Loop() {
 	printf("id name %s\n", NAME);
 	printf("id author BimmerBass\n");
 	printf("option name Book type check default true\n");
-	printf("option name Hash type spin default 200 min %d max %d\n", MIN_HASH, MAX_HASH); // The default hash size is 200MB with minimum 1MB and maximum 1GB
+	printf("option name Hash type spin default 100 min %d max %d\n", MIN_HASH, MAX_HASH); // The default hash size is 200MB with minimum 1MB and maximum 1GB
 	printf("uciok\n");
 
 	int MB = 200;

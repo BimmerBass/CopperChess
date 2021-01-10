@@ -13,11 +13,25 @@
 int main() {
 	initAll(SetMask, ClearMask);
 
-	texel::tuning_positions* EPDS = texel::load_file("C:\\Users\\abild\\Desktop\\tuner_positions\\\quiet-labeled.epd");
+	//texel::tuning_positions* EPDS = texel::load_file("C:\\Users\\abild\\Desktop\\tuner_positions\\\quiet-labeled.epd");
 
-	double k = texel::find_k(EPDS);
+	//double k = texel::find_k(EPDS);
 
-	//Uci_Loop();
+	/*std::vector<int*> init_g;
+
+	init_g.push_back(&eval::knightValMg);
+	init_g.push_back(&eval::bishopValMg);
+	init_g.push_back(&eval::rookValMg);
+	init_g.push_back(&eval::queenValMg);
+
+	init_g.push_back(&eval::knightValEg);
+	init_g.push_back(&eval::bishopValEg);
+	init_g.push_back(&eval::rookValEg);
+	init_g.push_back(&eval::queenValEg);
+
+	texel::tune(init_g, "C:\\Users\\abild\\Desktop\\tuner_positions\\\quiet-labeled.epd", 200);*/
+
+	Uci_Loop();
 
 
 	cleanPolyBook();
