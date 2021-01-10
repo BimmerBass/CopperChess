@@ -43,7 +43,6 @@ void S_TABLE::resize(uint64_t mb_size) {
 
 
 void TT::clearTable(S_TABLE* table){
-	
 	for (int i = 0; i < table->numEntries; i++){
 		table->tableEntry[i].posKey = (uint64_t)0;
 		table->tableEntry[i].flag = LOWER;

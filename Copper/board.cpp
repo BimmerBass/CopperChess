@@ -8,6 +8,16 @@ INCLUDES THE FUNCTIONS:
 - BoardRepresentation::displayBoardState
 */
 
+
+S_BOARD::~S_BOARD() {
+	delete transpositionTable;
+	delete evaluationCache;
+	
+	delete pawn_table_mg;
+	delete pawn_table_eg;
+}
+
+
 void BoardRep::displayBoardState(S_BOARD& board) {
 	std::string output = "................................................................";
 	for (int index = 0; index < 12; index++) {
@@ -44,10 +54,10 @@ void BoardRep::displayBoardState(S_BOARD& board) {
 }
 
 
-void BoardRep::parseFen(const char* fen, S_BOARD& pos){
+void BoardRep::parseFen(const char* fen, S_BOARD& pos, bool clear_tables){
 	assert(fen != NULL);
 	
-	clearBoard(&pos);
+	clearBoard(&pos, clear_tables);
 	pos.castlePerms = 0;
 	
 	int rank = RANK_8;
@@ -169,7 +179,7 @@ void BoardRep::parseFen(const char* fen, S_BOARD& pos){
 	}
 }
 
-void BoardRep::clearBoard(S_BOARD* pos) {
+void BoardRep::clearBoard(S_BOARD* pos, bool clear_tables) {
 	for (int i = 0; i < 12; i++) {
 		pos->position[i] = (uint64_t)0;
 	}
@@ -199,10 +209,13 @@ void BoardRep::clearBoard(S_BOARD* pos) {
 	/*
 	Clear all tables.
 	*/
-	TT::clearTable(pos->transpositionTable);
-	pos->evaluationCache->clearCache();
-	pos->pawn_table_mg->clear_hash();
-	pos->pawn_table_eg->clear_hash();
+	if (clear_tables) {
+		TT::clearTable(pos->transpositionTable);
+		pos->evaluationCache->clearCache();
+		pos->pawn_table_mg->clear_hash();
+		pos->pawn_table_eg->clear_hash();
+	}
+
 
 	pos->is_checkmate = false;
 	pos->is_stalemate = false;

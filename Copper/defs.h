@@ -330,8 +330,8 @@ struct S_BOARD {
 	int fiftyMove = 0;
 	
 	// Create a transposition table with default size of 200MB.
-	S_TABLE *transpositionTable = new S_TABLE(32);
-	S_EVALCACHE* evaluationCache = new S_EVALCACHE(50); // Allocate 50MB for static evaluations.
+	S_TABLE *transpositionTable = new S_TABLE(1);
+	S_EVALCACHE* evaluationCache = new S_EVALCACHE(1); // Allocate 50MB for static evaluations.
 
 	/*
 	PAWN HASH TABLES
@@ -355,6 +355,8 @@ struct S_BOARD {
 	int ply = 0; // Amount of moves deep in search function
 	S_HISTORY history;
 	
+
+	~S_BOARD();
 };
 
 struct S_SEARCHINFO{
@@ -582,11 +584,11 @@ namespace BoardRep {
 	S_BOARD* arrayToBitboards(std::string arrayRepresentation[8][8], S_SIDE white, bool castlingPermitions[4], int enPassant = NO_SQ);
 
 	void displayBoardState(S_BOARD &board); // print out position from 12 bitboards
-	void parseFen(const char* fen, S_BOARD& pos);
+	void parseFen(const char* fen, S_BOARD& pos, bool clear_tables = true);
 
 
 	void mirrorBoard(S_BOARD* pos);
-	void clearBoard(S_BOARD* pos);
+	void clearBoard(S_BOARD* pos, bool clear_tables = true);
 };
 
 

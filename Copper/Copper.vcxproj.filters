@@ -42,6 +42,9 @@
     <ClInclude Include="genetics.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="texel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="init.cpp">
@@ -108,6 +111,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="texel.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
