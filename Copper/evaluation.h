@@ -171,8 +171,50 @@ constexpr int supported_eg = 10;
 /*
 Piece coefficients
 */
+
+// Outpost bonuses:
 extern int outpost_bonus;
 extern int safe_outpost_bonus;
+extern int knight_outpost_bonus;
+extern int endgame_outpost_scaling;
+
+
+// Pawn related piece coefficients
+extern int N_pawn_defence_mg;
+extern int B_pawn_defence_mg;
+
+extern int PawnOn_bCol_mg;
+extern int PawnOn_bCol_eg;
+
+extern int enemy_pawns_on_diag_eg;
+
+// Bonuses for "eye'ing" the enemy king-ring
+extern int bishop_kingring_mg;
+extern int bishop_kingring_eg;
+
+
+// Rook coefficients
+extern int doubled_rooks_mg;
+
+extern int rook_on_queen_mg;
+extern int rook_on_queen_eg;
+
+extern int rook_behind_passer_eg;
+
+extern int rook_kingring_mg;
+extern int rook_kingring_eg;
+
+extern int open_rook_mg;
+extern int open_rook_eg;
+
+extern int semi_rook_mg;
+extern int semi_rook_eg;
+
+
+// Queen coefficents
+extern int queen_behind_passer_eg;
+extern int queen_kingDist_bonus_eg;
+
 
 
 // King bonuses and penalties

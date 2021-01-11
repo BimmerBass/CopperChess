@@ -2,8 +2,43 @@
 
 
 
+
 int outpost_bonus = 30;
 int safe_outpost_bonus = 55;
+int knight_outpost_bonus = 2;
+int endgame_outpost_scaling = 2;
+
+int N_pawn_defence_mg = 10;
+int B_pawn_defence_mg = 5;
+
+int PawnOn_bCol_mg = 3;
+int PawnOn_bCol_eg = 7;
+
+int bishop_kingring_mg = 25;
+
+int enemy_pawns_on_diag_eg = 5;
+
+int doubled_rooks_mg = 30;
+
+int rook_on_queen_mg = 5;
+int rook_on_queen_eg = 11;
+
+
+int rook_behind_passer_eg = 50;
+
+int rook_kingring_mg = 15;
+int rook_kingring_eg = 7;
+
+int open_rook_mg = 45;
+int open_rook_eg = 29;
+
+int semi_rook_mg = 20;
+int semi_rook_eg = 7;
+
+int queen_behind_passer_eg = 20;
+int queen_kingDist_bonus_eg = 2;
+
+
 
 // This is the middlegame evaluation
 int eval::mg_evaluate(const S_BOARD* pos, int alpha, int beta) {
@@ -362,8 +397,8 @@ int eval::outpost(const S_BOARD* pos, int sq, S_SIDE side) {
 			// Warning of buffer overflow here, but not a problem. sq is ensured to be between 0 and 63 when outpost() is called.
 			v = ((whiteOutpostMasks[sq] & pos->position[BP]) == 0) ? safe_outpost_bonus : outpost_bonus;
 
-			// Return double value if the outpost is a knight, as they're usually more valuable on outposts than bishops.
-			return (pos->pieceList[sq] == WN) ? 2 * v : v;
+			// Return bigger value if the outpost is a knight, as they're usually more valuable on outposts than bishops.
+			return (pos->pieceList[sq] == WN) ? knight_outpost_bonus * v : v;
 		}
 
 	}
@@ -380,7 +415,7 @@ int eval::outpost(const S_BOARD* pos, int sq, S_SIDE side) {
 			v = ((blackOutpostMasks[sq] & pos->position[WP]) == 0) ? safe_outpost_bonus : outpost_bonus;
 
 			// Return double value if the outpost is a knight.
-			return (pos->pieceList[sq] == BN) ? 2 * v : v;
+			return (pos->pieceList[sq] == BN) ? knight_outpost_bonus * v : v;
 		}
 	}
 	return 0;
@@ -412,7 +447,7 @@ int eval::pieces_mg(const S_BOARD* pos) {
 		}
 
 		// Add value if defended by pawns.
-		v += 10 * defending_pawns(pos, sq, WHITE);
+		v += N_pawn_defence_mg * defending_pawns(pos, sq, WHITE);
 	}
 
 	while (bishopBrd != 0) {
@@ -425,25 +460,25 @@ int eval::pieces_mg(const S_BOARD* pos) {
 		}
 
 		// Add value for being defended by pawns. (Smaller than the bonus for knights)
-		v += 5 * defending_pawns(pos, sq, WHITE);
+		v += B_pawn_defence_mg * defending_pawns(pos, sq, WHITE);
 
 		// Penalty for amount of pawns of our own color on the bishops square-color
 		if ((DARK_SQUARES & SETBIT((uint64_t)0, sq)) == 0) { // Light square bishop
-			v -= 3 * countBits(pos->position[WP] & ~DARK_SQUARES);
+			v -= PawnOn_bCol_mg * countBits(pos->position[WP] & ~DARK_SQUARES);
 		}
 		else {
-			v -= 3 * countBits(pos->position[WP] & DARK_SQUARES);
+			v -= PawnOn_bCol_mg * countBits(pos->position[WP] & DARK_SQUARES);
 		}
 		
 		// Bonus for being on same diagonal or anti-diagonal as enemy king ring
 		v += (((diagonalMasks[7 + (sq / 8) - (sq % 8)] | antidiagonalMasks[(sq / 8) + (sq % 8)])
-			& b_kingRing) != 0) ? 25 : 0;
+			& b_kingRing) != 0) ? bishop_kingring_mg: 0;
 	}
 
 	// Bonus for having doubled rooks
 	for (int f = 0; f < 8; f++) {
 		if (countBits(rookBrd & FileMasks8[f]) >= 2) {
-			v += 30;
+			v += doubled_rooks_mg;
 		}
 	}
 
@@ -451,15 +486,15 @@ int eval::pieces_mg(const S_BOARD* pos) {
 		sq = PopBit(&rookBrd);
 
 		// Bonus for being on the same file as the enemy queen.
-		v += ((FileMasks8[sq % 8] & pos->position[BQ]) != 0) ? 5 : 0;
+		v += ((FileMasks8[sq % 8] & pos->position[BQ]) != 0) ? rook_on_queen_mg : 0;
 
 		// Bonus for open or semi-open file
 		int fileBonus = 0;
 		if (((pos->position[WP] | pos->position[BP]) & FileMasks8[sq % 8]) == 0) { // Fully open file. No pawns
-			fileBonus = 45;
+			fileBonus = open_rook_mg;
 		}
 		else if ((pos->position[WP] & FileMasks8[sq % 8]) == 0 && (pos->position[BP] & FileMasks8[sq % 8]) != 0) { // Only half-open file. No white pawns only
-			fileBonus = 20;
+			fileBonus = semi_rook_mg;
 		}
 		else {
 			fileBonus = 0;
@@ -467,7 +502,7 @@ int eval::pieces_mg(const S_BOARD* pos) {
 		v += fileBonus;
 
 		// Bonus for being on the enemy king ring.
-		v += (((FileMasks8[sq % 8] | RankMasks8[sq / 8]) & b_kingRing) != 0) ? 15 : 0;
+		v += (((FileMasks8[sq % 8] | RankMasks8[sq / 8]) & b_kingRing) != 0) ? rook_kingring_mg : 0;
 
 	}
 
@@ -488,7 +523,7 @@ int eval::pieces_mg(const S_BOARD* pos) {
 			v -= outpost(pos, sq, BLACK);
 		}
 		// Add value depending on amount of defending pawns of the square
-		v -= 10 * defending_pawns(pos, sq, BLACK);
+		v -= N_pawn_defence_mg * defending_pawns(pos, sq, BLACK);
 	}
 
 	while (bishopBrd != 0) {
@@ -501,25 +536,25 @@ int eval::pieces_mg(const S_BOARD* pos) {
 		}
 
 		// Add value for being defended by pawns. (Smaller than the bonus for knights)
-		v -= 5 * defending_pawns(pos, sq, BLACK);
+		v -= B_pawn_defence_mg * defending_pawns(pos, sq, BLACK);
 
 		// Penalty for amount of pawns of our own color on the bishops square-color
 		if ((DARK_SQUARES & SETBIT((uint64_t)0, sq)) == 0) { // Light square bishop
-			v += 3 * countBits(pos->position[BP] & ~DARK_SQUARES);
+			v += PawnOn_bCol_mg * countBits(pos->position[BP] & ~DARK_SQUARES);
 		}
 		else {
-			v += 3 * countBits(pos->position[BP] & DARK_SQUARES);
+			v += PawnOn_bCol_mg * countBits(pos->position[BP] & DARK_SQUARES);
 		}
 
 		// Bonus for being on same diagonal or anti-diagonal as enemy king ring
 		v -= (((diagonalMasks[7 + (sq / 8) - (sq % 8)] | antidiagonalMasks[(sq / 8) + (sq % 8)])
-			& w_kingRing) != 0) ? 25 : 0;
+			& w_kingRing) != 0) ? bishop_kingring_mg : 0;
 	}
 
 	// Bonus for having doubled rooks
 	for (int f = 0; f < 8; f++) {
 		if (countBits(rookBrd & FileMasks8[f]) >= 2) {
-			v -= 30;
+			v -= doubled_rooks_mg;
 		}
 	}
 
@@ -527,21 +562,21 @@ int eval::pieces_mg(const S_BOARD* pos) {
 		sq = PopBit(&rookBrd);
 
 		// Bonus for same file as enemy queen.
-		v -= ((FileMasks8[sq % 8] & pos->position[WQ]) != 0) ? 5 : 0;
+		v -= ((FileMasks8[sq % 8] & pos->position[WQ]) != 0) ? rook_on_queen_mg : 0;
 
 		// Bonus for open or semi-open file
 		int fileBonus = 0;
 		if (((pos->position[WP] | pos->position[BP]) & FileMasks8[sq % 8]) == 0) { // No pawns => fully open file.
-			fileBonus = 45;
+			fileBonus = open_rook_mg;
 		}
 		if ((pos->position[BP] & FileMasks8[sq % 8]) == 0 && (pos->position[WP] & FileMasks8[sq % 8]) != 0) { // There are only white pawns => semi-open
-			fileBonus = 20;
+			fileBonus = semi_rook_mg;
 		}
 
 		v -= fileBonus;
 
 		// Bonus for being on the enemy king ring.
-		v -= (((FileMasks8[sq % 8] | RankMasks8[sq / 8]) & w_kingRing) != 0) ? 15 : 0;
+		v -= (((FileMasks8[sq % 8] | RankMasks8[sq / 8]) & w_kingRing) != 0) ? rook_kingring_mg : 0;
 	}
 
 
@@ -575,7 +610,7 @@ int eval::pieces_eg(const S_BOARD* pos) {
 		
 		// Add value for being on an outpost. This is smaller than in the middlegame.
 		if (sq / 8 >= RANK_5) {
-			v += outpost(pos, sq, WHITE) / 2;
+			v += outpost(pos, sq, WHITE) / endgame_outpost_scaling;
 		}
 	}
 
@@ -588,14 +623,14 @@ int eval::pieces_eg(const S_BOARD* pos) {
 
 		// Give penalty proportional to the amount of pawns on this bishops colour
 		if ((DARK_SQUARES & SETBIT((uint64_t)0, sq)) != 0) {
-			v -= 7 * countBits(DARK_SQUARES & pos->position[WP]);
+			v -= PawnOn_bCol_eg * countBits(DARK_SQUARES & pos->position[WP]);
 		}
 		else {
-			v -= 7 * countBits(~DARK_SQUARES & pos->position[WP]);
+			v -= PawnOn_bCol_eg * countBits(~DARK_SQUARES & pos->position[WP]);
 		}
 
 		// Give bonus proportional to amount of enemy pawns on the bishops diagonals.
-		v += 5 * countBits((diagonalMasks[7 + (sq / 8) - (sq % 8)] | antidiagonalMasks[(sq / 8) + (sq % 8)]) & pos->position[BP]);
+		v += enemy_pawns_on_diag_eg * countBits((diagonalMasks[7 + (sq / 8) - (sq % 8)] | antidiagonalMasks[(sq / 8) + (sq % 8)]) & pos->position[BP]);
 	}
 
 	for (int f = 0; f < 8; f++) {
@@ -614,23 +649,23 @@ int eval::pieces_eg(const S_BOARD* pos) {
 
 		// Give bonus if we are defending a passed pawn.
 		if ((FileMasks8[sq % 8] & passedPawns) != 0) {
-			v += 50;
+			v += rook_behind_passer_eg;
 		}
 
 		// Give bonus for eyeing the black king-ring
-		v += (((FileMasks8[sq % 8] | RankMasks8[sq / 8]) & b_kingRing) != 0) ? 7 : 0;
+		v += (((FileMasks8[sq % 8] | RankMasks8[sq / 8]) & b_kingRing) != 0) ? rook_kingring_eg : 0;
 
 		// Bonus for being on the same file as the black queen
-		v += ((FileMasks8[sq % 8] & pos->position[BQ]) != 0) ? 11 : 0;
+		v += ((FileMasks8[sq % 8] & pos->position[BQ]) != 0) ? rook_on_queen_eg : 0;
 
 
 		// Bonus for open or semi-open file
 		int fileBonus = 0;
 		if (((pos->position[WP] | pos->position[BP]) & FileMasks8[sq % 8]) == 0) { // Fully open file. No pawns
-			fileBonus = 29;
+			fileBonus = open_rook_eg;
 		}
 		else if ((pos->position[WP] & FileMasks8[sq % 8]) == 0 && (pos->position[BP] & FileMasks8[sq % 8]) != 0) { // Only half-open file. No white pawns only
-			fileBonus = 7;
+			fileBonus = semi_rook_eg;
 		}
 		else {
 			fileBonus = 0;
@@ -643,11 +678,11 @@ int eval::pieces_eg(const S_BOARD* pos) {
 
 		// Bonus for being behind passed pawns.
 		if ((FileMasks8[sq % 8] & passedPawns) != 0) {
-			v += 20;
+			v += queen_behind_passer_eg;
 		}
 
 		// Give bonus inversely proportional to the manhattan distance to the black king
-		v += 2 * ManhattanDistance[sq][pos->kingPos[1]];
+		v += queen_kingDist_bonus_eg * ManhattanDistance[sq][pos->kingPos[1]];
 	}
 
 
@@ -664,7 +699,7 @@ int eval::pieces_eg(const S_BOARD* pos) {
 
 		// Bonus for being on an outpost.
 		if (sq / 8 <= RANK_4) {
-			v -= outpost(pos, sq, BLACK) / 2;
+			v -= outpost(pos, sq, BLACK) / endgame_outpost_scaling;
 		}
 	}
 
@@ -677,14 +712,14 @@ int eval::pieces_eg(const S_BOARD* pos) {
 
 		// Give penalty proportional to the amount of pawns on this bishops colour
 		if ((DARK_SQUARES & SETBIT((uint64_t)0, sq)) != 0) {
-			v += 7 * countBits(DARK_SQUARES & pos->position[BP]);
+			v += PawnOn_bCol_eg * countBits(DARK_SQUARES & pos->position[BP]);
 		}
 		else {
-			v += 7 * countBits(~DARK_SQUARES & pos->position[BP]);
+			v += PawnOn_bCol_eg * countBits(~DARK_SQUARES & pos->position[BP]);
 		}
 
 		// Give bonus proportional to amount of enemy pawns on the bishops diagonals.
-		v -= 5 * countBits((diagonalMasks[7 + (sq / 8) - (sq % 8)] | antidiagonalMasks[(sq / 8) + (sq % 8)]) & pos->position[WP]);
+		v -= enemy_pawns_on_diag_eg * countBits((diagonalMasks[7 + (sq / 8) - (sq % 8)] | antidiagonalMasks[(sq / 8) + (sq % 8)]) & pos->position[WP]);
 	}
 
 	passedPawns = 0;
@@ -703,23 +738,23 @@ int eval::pieces_eg(const S_BOARD* pos) {
 
 		// Give bonus if we are defending a passed pawn.
 		if ((FileMasks8[sq % 8] & passedPawns) != 0) {
-			v -= 50;
+			v -= rook_behind_passer_eg;
 		}
 
 		// Give bonus for eyeing the white king-ring
-		v -= (((FileMasks8[sq % 8] | RankMasks8[sq / 8]) & w_kingRing) != 0) ? 7 : 0;
+		v -= (((FileMasks8[sq % 8] | RankMasks8[sq / 8]) & w_kingRing) != 0) ? rook_kingring_eg : 0;
 
 		// Bonus for being on the same file as the white queen
-		v -= ((FileMasks8[sq % 8] & pos->position[WQ]) != 0) ? 11 : 0;
+		v -= ((FileMasks8[sq % 8] & pos->position[WQ]) != 0) ? rook_on_queen_eg : 0;
 
 
 		// Bonus for open or semi-open file
 		int fileBonus = 0;
 		if (((pos->position[WP] | pos->position[BP]) & FileMasks8[sq % 8]) == 0) { // Fully open file. No pawns
-			fileBonus = 29;
+			fileBonus = open_rook_eg;
 		}
 		else if ((pos->position[WP] & FileMasks8[sq % 8]) != 0 && (pos->position[BP] & FileMasks8[sq % 8]) == 0) { // Only half-open file. No white pawns only
-			fileBonus = 7;
+			fileBonus = semi_rook_eg;
 		}
 		else {
 			fileBonus = 0;
@@ -731,11 +766,11 @@ int eval::pieces_eg(const S_BOARD* pos) {
 		sq = PopBit(&queenBrd);
 
 		if ((FileMasks8[sq % 8] & passedPawns) != 0) {
-			v -= 20;
+			v -= queen_behind_passer_eg;
 		}
 
 		// Give bonus inversely proportional to the manhattan distance to the black king
-		v -= 2 * ManhattanDistance[sq][pos->kingPos[0]];
+		v -= queen_kingDist_bonus_eg * ManhattanDistance[sq][pos->kingPos[0]];
 	}
 
 
