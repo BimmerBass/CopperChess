@@ -202,9 +202,13 @@ void texel::tune(std::vector<int*> initial_guess, std::string epd_file, int runs
 	*/
 
 	double BIG_A = 0.1 * double(iterations);
-	double a = 3 * double(A_END) * pow(BIG_A + double(iterations), alpha);
+	/*double a = 3 * double(A_END) * pow(BIG_A + double(iterations), alpha);
 	double c = 3 * double(C_END) * pow(double(iterations), gamma);
+	*/
+	double c = 3 * double(C_END) * pow(double(iterations), gamma);
+	double a_end = double(R_END) * pow(double(C_END), 2.0);
 
+	double a = a_end * pow((BIG_A + double(iterations)), alpha);
 
 	for (int n = 0; n < iterations; n++) {
 		// Calculate an and cn.
@@ -230,8 +234,8 @@ void texel::tune(std::vector<int*> initial_guess, std::string epd_file, int runs
 		// Now that we've done this, we can measure the error of theta_plus and theta_minus respectively:
 		//double tPlus_error = double(EPDS->positions.size()) * changed_eval_error(parameters, theta_plus, EPDS, k);
 		//double tMinus_error = double(EPDS->positions.size()) * changed_eval_error(parameters, theta_minus, EPDS, k);
-		double tPlus_error = 10000.0 * changed_eval_error(parameters, theta_plus, EPDS, k);
-		double tMinus_error = 10000.0 * changed_eval_error(parameters, theta_minus, EPDS, k);
+		double tPlus_error = 1000.0 * changed_eval_error(parameters, theta_plus, EPDS, k);
+		double tMinus_error = 1000.0 * changed_eval_error(parameters, theta_minus, EPDS, k);
 
 
 		std::cout << "Theta plus error: " << tPlus_error << ", Theta minus error: " << tMinus_error << std::endl;

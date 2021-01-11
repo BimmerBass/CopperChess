@@ -173,14 +173,10 @@ The fitness function is simply the amount of WAC positions that the engine gets 
 */
 
 void Generation::get_generation_fitness() {
-	S_BOARD* pos = new S_BOARD;
-
 	int passed;
 	generation_fitness = 0;
 
 	for (int c = 0; c < population_count; c++) {
-		BoardRep::clearBoard(pos);
-
 		passed = 0;
 		/*
 		Before testing the engine with the values given from the current chromosome, we'll have to insert them.
@@ -189,90 +185,55 @@ void Generation::get_generation_fitness() {
 			*(tuning_parameters[v]->variable) = population[c].genes[v];
 		}
 
-		/*
-		Now we can run through all the WAC positions with the engine.
-		*/
-
-		/*int total_positions = 0;
-
-		std::vector<SearchWac*> searches_runnning;
-		std::vector<std::thread> threads;
-
-		// Only using fifty positions right now to see if the algorithm works. Later this will get significantly increased
-		while (total_positions < 50) {
-			engineOptions->use_book = false;
-			
-			searches_runnning.clear();
-			threads.clear();
-
-			int this_position = total_positions;
-
-			// Initialise SearchWac objects.
-			for (int n = 0; n < WAC_THREADS; n++) {
-				SearchWac this_search("go depth 1", WAC_positions[this_position + n], WAC_moves[this_position + n]);
-				searches_runnning.push_back(&this_search);
-			}
-
-			this_position += WAC_THREADS;  // WAC_THREADS is set to 2.
-
-			for (int t = 0; t < searches_runnning.size(); t++) {
-				std::thread worker(doRun, searches_runnning[t]);
-				threads.push_back(std::move(worker));
-			}
-
-			// Wait for the searches to finish and check the search results.
-			for (int t = 0; t < threads.size(); t++) {
-				threads[t].join();
-			}
-
-			for (int s = 0; s < searches_runnning.size(); s++) {
-				passed += (searches_runnning[s]->passed_position()) ? 1 : 0;
-			}
-
-			total_positions = this_position;
-		}*/
-
 
 
 		// Usually we'll use all positions but for testing i only use the first fifty
-		for (int b = 0; b < 100; b++) {
-
-			// Parse the WAC-fen string
-			BoardRep::parseFen(WAC_positions[b], *pos);
-
-			// Initialize a search-info structure and parse a "go"-line. This is just done using the UCI-interface.
-			S_SEARCHINFO info;
-
-			char goLine[] = "go depth 1";
-
-			ParseGo(goLine, &info, pos);
+#pragma omp parallel shared(passed)
+		{
+			S_BOARD* pos = new S_BOARD;
+#pragma omp for schedule(static, 20) reduction(+:passed)
+			for (int b = 0; b < 100; b++) {
 
 
-			// After parsing the go-command, search the position.
-			Search::searchPosition(pos, &info);
+				// Parse the WAC-fen string
+				BoardRep::parseFen(WAC_positions[b], *pos);
 
-			// Now check if the best move suggested by Copper matches any of the ones in the WAC test.
-			int bestMove;
-			try {
-				bestMove = pos->pvArray[0];
+				// Initialize a search-info structure and parse a "go"-line. This is just done using the UCI-interface.
+				S_SEARCHINFO* info = new S_SEARCHINFO;
 
-				if (bestMove == NOMOVE) {
-					throw 1;
+				char goLine[] = "go depth 1";
+
+				ParseGo(goLine, info, pos);
+
+
+				// After parsing the go-command, search the position.
+				Search::searchPosition(pos, info);
+
+				// Now check if the best move suggested by Copper matches any of the ones in the WAC test.
+				int bestMove;
+				try {
+					bestMove = pos->pvArray[0];
+
+					if (bestMove == NOMOVE) {
+						throw 1;
+					}
 				}
-			}
-			catch (int e) {
-				std::cout << "Exception occured during chromosome testing: " << "Copper didn't return a best move." << std::endl;
-			}
-
-			for (int m = 0; m < 5; m++) {
-				// The move matches one of the ones suggested by WAC.
-				if (printMove(bestMove) == WAC_moves[b][m]) {
-					passed++;
-					break;
+				catch (int e) {
+					std::cout << "Exception occured during chromosome testing: " << "Copper didn't return a best move." << std::endl;
 				}
+
+				for (int m = 0; m < 5; m++) {
+					// The move matches one of the ones suggested by WAC.
+					if (printMove(bestMove) == WAC_moves[b][m]) {
+						passed++;
+						break;
+					}
+				}
+
+				delete info;
 			}
+			delete pos;
 		}
-
 		
 		// After running the WAC test, set the fitness of this chromosome and increment the total fitness by the same value.
 		population[c].fitness = passed * passed;

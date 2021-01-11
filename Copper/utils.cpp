@@ -173,7 +173,7 @@ void eval_balance() {
 		BoardRep::parseFen(WAC_positions[i], *pos);
 
 		std::cout << "Position " << i + 1 << ": ";
-
+		
 		eval = eval::staticEval(pos, 0, 0);
 
 		BoardRep::mirrorBoard(pos);

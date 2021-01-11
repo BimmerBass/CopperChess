@@ -1,37 +1,6 @@
 #include "evaluation.h"
 
-/*
-int eval::pawnValMg = 100;
-int eval::knightValMg = 320;
-int eval::bishopValMg = 350;
-int eval::rookValMg = 560;
-int eval::queenValMg = 1050;
-int eval::kingValMg = 20000;
 
-int eval::pawnValEg = 120;
-int eval::knightValEg = 320;
-int eval::bishopValEg = 350;
-int eval::rookValEg = 560;
-int eval::queenValEg = 1050;
-int eval::kingValEg = 20000;*/
-
-
-int eval::pawnValMg = 100;
-int eval::knightValMg = 657;
-int eval::bishopValMg = 585;
-int eval::rookValMg = 821;
-int eval::queenValMg = 1625;
-int eval::kingValMg = 20000;
-
-int eval::pawnValEg = 120;
-int eval::knightValEg = 311;
-int eval::bishopValEg = 307;
-int eval::rookValEg = 531;
-int eval::queenValEg = 913;
-int eval::kingValEg = 20000;
-
-
-int passedPawnValue[8] = { 0, 5, 10, 25, 55, 130, 190, 0 };
 
 int outpost_bonus = 30;
 int safe_outpost_bonus = 55;
@@ -246,9 +215,11 @@ int eval::pawns_mg(const S_BOARD* pos) {
 	int v = 0;
 
 	// Probe the middlegame pawn-hash table.
+#ifndef TUNE
 	if (pos->pawn_table_mg->probe_pawn_hash(pos, &v) == true) {
 		return v;
 	}
+#endif
 
 	int index = NO_SQ;
 
@@ -256,7 +227,7 @@ int eval::pawns_mg(const S_BOARD* pos) {
 	BitBoard blackPawns = pos->position[BP];
 
 	// Penalty for doubled pawns
-	v -= doubled_penalty * (doubledCnt(whitePawns) - doubledCnt(blackPawns));
+	v -= doubled_penalty_mg * (doubledCnt(whitePawns) - doubledCnt(blackPawns));
 
 
 	// Give penalty for pieces blocking the E- and D- pawns
@@ -280,12 +251,12 @@ int eval::pawns_mg(const S_BOARD* pos) {
 		bool doubled = (countBits(FileMasks8[index % 8] & pos->position[WP]) >= 2) ? true : false;
 		bool isolated = (((pos->position[WP] ^ ((uint64_t)1 << index)) & isolatedPawnMasks[index % 8]) == 0) ? true : false;
 
-		if (doubled && isolated) { v -= 11; }
-		else if (isolated) { v -= 5; }
+		if (doubled && isolated) { v -= DoubledIsolatedMg; }
+		else if (isolated) { v -= isolatedMg; }
 
 		// Bonus for being supported by another pawn
 		int supportPawns = defending_pawns(pos, index, WHITE);
-		v += 5 * countBits(supportPawns);
+		v += supported_mg * countBits(supportPawns);
 	}
 
 	while (blackPawns != 0) {
@@ -296,16 +267,18 @@ int eval::pawns_mg(const S_BOARD* pos) {
 		bool doubled = (countBits(FileMasks8[index % 8] & pos->position[BP]) >= 2) ? true : false;
 		bool isolated = (((pos->position[BP] ^ ((uint64_t)1 << index)) & isolatedPawnMasks[index % 8]) == 0) ? true : false;
 
-		if (doubled && isolated) { v += 11; }
-		else if (isolated) { v += 5; }
+		if (doubled && isolated) { v += DoubledIsolatedMg; }
+		else if (isolated) { v += isolatedMg; }
 
 		// Bonus for being supported
 		int supportPawns = defending_pawns(pos, index, BLACK);
-		v -= 5 * countBits(supportPawns);
+		v -= supported_mg * countBits(supportPawns);
 	}
 
 	// Store the pawn structure evaluation in the pawn hash table
+#ifndef TUNE
 	pos->pawn_table_mg->store_pawn_eval(pos, &v);
+#endif
 
 	return v;
 }
@@ -315,9 +288,11 @@ int eval::pawns_eg(const S_BOARD* pos) {
 	int v = 0;
 
 	// Probe the endgame pawn hash table
+#ifndef TUNE
 	if (pos->pawn_table_eg->probe_pawn_hash(pos, &v) == true) {
 		return v;
 	}
+#endif
 
 	int index = NO_SQ;
 
@@ -325,7 +300,7 @@ int eval::pawns_eg(const S_BOARD* pos) {
 	BitBoard blackPawns = pos->position[BP];
 
 	// Penalty for doubled pawns
-	v -= 56 * (doubledCnt(whitePawns) - doubledCnt(blackPawns));
+	v -= doubled_penalty_eg * (doubledCnt(whitePawns) - doubledCnt(blackPawns));
 
 	while (whitePawns != 0) {
 		index = PopBit(&whitePawns);
@@ -337,12 +312,12 @@ int eval::pawns_eg(const S_BOARD* pos) {
 		bool doubled = (countBits(FileMasks8[index % 8] & pos->position[WP]) >= 2) ? true : false;
 		bool isolated = (((pos->position[WP] ^ ((uint64_t)1 << index)) & isolatedPawnMasks[index % 8]) == 0) ? true : false;
 
-		if (doubled && isolated) { v -= 56; }
-		else if (isolated) { v -= 15; }
+		if (doubled && isolated) { v -= DoubledIsolatedEg; }
+		else if (isolated) { v -= isolatedEg; }
 
 		// Bonus for being supported by another pawn
 		int supportPawns = defending_pawns(pos, index, WHITE);
-		v += 10 * countBits(supportPawns);
+		v += supported_eg * countBits(supportPawns);
 	}
 
 	while (blackPawns != 0) {
@@ -353,16 +328,18 @@ int eval::pawns_eg(const S_BOARD* pos) {
 		bool doubled = (countBits(FileMasks8[index % 8] & pos->position[BP]) >= 2) ? true : false;
 		bool isolated = (((pos->position[BP] ^ ((uint64_t)1 << index)) & isolatedPawnMasks[index % 8]) == 0) ? true : false;
 
-		if (doubled && isolated) { v += 56; }
-		else if (isolated) { v += 15; }
+		if (doubled && isolated) { v += DoubledIsolatedEg; }
+		else if (isolated) { v += isolatedEg; }
 
 		// Bonus for being supported
 		int supportPawns = defending_pawns(pos, index, BLACK);
-		v -= 10 * countBits(supportPawns);
+		v -= supported_eg * countBits(supportPawns);
 	}
 
 	// Store the pawn-evaluation in the endgame pawn-hash-table
+#ifndef TUNE
 	pos->pawn_table_eg->store_pawn_eval(pos, &v);
+#endif
 
 	return v;
 }

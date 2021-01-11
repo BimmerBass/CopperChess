@@ -2,6 +2,8 @@
 #include "defs.h"
 #include "psqt.h"
 
+//#define TUNE
+
 
 
 enum PieceType {
@@ -99,73 +101,25 @@ namespace eval {
 
 	int getMaterial(const S_BOARD* pos, bool side);
 
-	/*
-	The piece values are inspired by the ones found on chessprogramming.org in the sense that they meet the same requirements:
 
-	1. B > N > 3P
-	2. B + N > R + P
-	3. 2R > Q
-	4. R > B + 2P > N + 2P
-	*/
-	/*enum mgValues : int {
-		pawnValMg = 120,
-		knightValMg = 360,
-		bishopValMg = 390,
-		rookValMg = 600,
-		queenValMg = 1150,
-		kingValMg = 20000
-	};*/
-
-	/*enum mgValues : int {
-		pawnValMg = 200,
-		knightValMg = 640,
-		bishopValMg = 700,
-		rookValMg = 1120,
-		queenValMg = 2100,
-		kingValMg = 20000
-	};*/
-
-	/*enum mgValues : int {
+	enum mgValues : int {
 		pawnValMg = 100,
-		knightValMg = 320,
-		bishopValMg = 350,
-		rookValMg = 560,
-		queenValMg = 1050,
+		knightValMg = 657,
+		bishopValMg = 585,
+		rookValMg = 821,
+		queenValMg = 1625,
 		kingValMg = 20000
-	};*/
+	};
 
-	extern int pawnValMg;
-	extern int knightValMg;
-	extern int bishopValMg;
-	extern int rookValMg; 
-	extern int queenValMg;
-	extern int kingValMg;
-	
-	extern int pawnValEg;
-	extern int knightValEg;
-	extern int bishopValEg;
-	extern int rookValEg;
-	extern int queenValEg;
-	extern int kingValEg;
-
-	/*enum egValues : int {
-		pawnValEg = 100,
-		knightValEg = 320,
-		bishopValEg = 350,
-		rookValEg = 560,
-		queenValEg = 1050,
+	enum egValues : int {
+		pawnValEg = 120,
+		knightValEg = 311,
+		bishopValEg = 307,
+		rookValEg = 531,
+		queenValEg = 913,
 		kingValEg = 20000
-	};*/
-	
+	};
 
-	/*enum egValues : int {
-		pawnValEg = 200,
-		knightValEg = 490,
-		bishopValEg = 530,
-		rookValEg = 905,
-		queenValEg = 1775,
-		kingValEg = 20000
-	};*/
 
 	static int pieceValMg[13] = { pawnValMg, knightValMg, bishopValMg, rookValMg, queenValMg, kingValMg,
 	pawnValMg, knightValMg, bishopValMg, rookValMg, queenValMg, kingValMg, 0 };
@@ -189,14 +143,34 @@ static int p_rook_pair = (int)((double)bishop_pair / 1.875);
 static int knight_pawn_penalty = eval::pawnValMg / 8;
 static int rook_pawn_bonus = eval::pawnValMg / 16;
 
-// Pawn coefficients
-extern int passedPawnValue[8];
+/*
+Pawn coefficients.
+*/
+constexpr int passedPawnValue[8] = { 0, 12, 19, 34, 80, 167, 193, 0 };
 constexpr int mirrorRankNum[8] = { 7 , 6 , 5 , 4 , 3 , 2 , 1 , 0 };
-constexpr int doubled_penalty = 11;
+
+// Penalties for doubled pawns
+constexpr int doubled_penalty_mg = 8;
+constexpr int doubled_penalty_eg = 61;
+
 constexpr int blocked_penalty[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
+// Penalties for isolated and doubled pawns:
+constexpr int DoubledIsolatedMg = 31;
+constexpr int DoubledIsolatedEg = 51;
 
-// Piece coefficients
+constexpr int isolatedMg = 11;
+constexpr int isolatedEg = 26;
+
+// Bonus for a pawn being supported
+constexpr int supported_mg = 24;
+constexpr int supported_eg = 10;
+
+
+
+/*
+Piece coefficients
+*/
 extern int outpost_bonus;
 extern int safe_outpost_bonus;
 
