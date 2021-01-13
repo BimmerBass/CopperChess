@@ -916,6 +916,11 @@ int Search::searchPosition(S_BOARD* pos, S_SEARCHINFO* info) {
 			}
 
 			if (info->stopped == true) {
+				// If this is the very first iteration we'll have to give the best move. Otherwise copper will return NOMOVE (a1a1n)
+				if (currDepth == 1) {
+					pvMoves = TT::getPvLine(pos, currDepth);
+					bestMove = pos->pvArray[0];
+				}
 				break; // Break out if the GUI has interrupted the search
 			}
 

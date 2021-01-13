@@ -168,6 +168,42 @@ void doRun(SearchWac* instance) {
 }
 
 
+void Generation::get_generation_error(texel::tuning_positions* EPDS, double k) {
+	generation_fitness = 0;
+
+	std::vector<int*> params;
+
+	for (int i = 0; i < tuning_parameters.size(); i++) {
+		params.push_back(tuning_parameters[i]->variable);
+	}
+
+
+	for (int c = 0; c < population_count; c++) {
+
+		double fitness = 1.0 / texel::changed_eval_error(params, population[c].genes, EPDS, k);
+		population[c].fitness = fitness * fitness;
+
+		generation_fitness += fitness * fitness;
+	}
+
+	// After having gone through all the chromosomes and having gotten their fitness, calculate their selection probability. Given by prob = fitness/total_fitness
+
+	// If the total fitness is zero, they should all have the same probability.
+	if (generation_fitness == 0) {
+		for (int c = 0; c < population_count; c++) {
+			population[c].selection_probability = 1.0 / double(population_count);
+		}
+	}
+	else {
+
+		for (int c = 0; c < population_count; c++) {
+			population[c].selection_probability = double(population[c].fitness) / double(generation_fitness);
+		}
+	}
+
+}
+
+
 /*
 The fitness function is simply the amount of WAC positions that the engine gets right with each chromosome's values.
 */
@@ -436,7 +472,6 @@ std::vector<Chromosome*> Generation::select_parents(std::vector<Chromosome*> pop
 
 
 void Generation::generate_new_population() {
-
 	std::vector<Chromosome> new_generation;
 
 	std::vector<Chromosome*> old_generation;
@@ -517,8 +552,26 @@ std::vector<Chromosome> Generation::return_individuals() {
 	return ind_vector;
 }
 
+Chromosome Generation::get_fittest_individual() {
+	int best_index = 0;
+	double best_fitness = 0.0;
+
+	for (int i = 0; i < population_count; i++) {
+		if (population[i].fitness > best_fitness) {
+			best_fitness = population[i].fitness;
+			best_index = i;
+		}
+	}
+
+	return population[best_index];
+}
+
 
 void GeneticTuning::run_ga() {
+	GenAdvancement Population_evolution;
+	Population_evolution.clear();
+	std::string date_time = getDateTime();
+
 	attempted_mutations = 0;
 	mutations_happened = 0;
 
@@ -536,6 +589,8 @@ void GeneticTuning::run_ga() {
 	current_gen = new Generation(initPop, parameter_settings_ptrs, population_count);
 	std::vector<Chromosome> population;
 
+	texel::tuning_positions* EPDS = texel::load_file("C:\\Users\\abild\\Desktop\\tuner_positions\\quiet-labeled.epd");
+	double k = 2.0706;
 
 	// Now we'll loop through the generations
 	for (int i = 0; i < generations; i++) {
@@ -563,8 +618,14 @@ void GeneticTuning::run_ga() {
 		std::chrono::time_point<std::chrono::high_resolution_clock> start_time = std::chrono::high_resolution_clock::now();
 
 		// Get the generation fitness:
-		current_gen->get_generation_fitness();
+		//current_gen->get_generation_fitness();
+		current_gen->get_generation_error(EPDS, k);
 
+
+		// Get the best individual and save it.
+		Chromosome best = current_gen->get_fittest_individual();
+
+		Population_evolution.push_back(FittestData(best.fitness, i, best.genes));
 
 		std::chrono::time_point<std::chrono::high_resolution_clock> end_time = std::chrono::high_resolution_clock::now();
 
@@ -629,4 +690,44 @@ void GeneticTuning::run_ga() {
 			std::cout << "\n";
 		}
 	}
+
+
+	std::string filename = "genetic-";
+	filename += date_time;
+	filename += ".csv";
+
+
+	std::ofstream outFile(filename);
+
+	outFile << "Iteration; ";
+	outFile << Population_evolution[0].iteration;
+	for (int i = 1; i < Population_evolution.size(); i++) {
+		outFile << ";" << Population_evolution[i].iteration;
+	}
+	outFile << "\n";
+
+	outFile << "Evalulation error;";
+	outFile << Population_evolution[0].error;
+	for (int i = 1; i < Population_evolution.size(); i++) {
+		outFile << ";" << Population_evolution[i].error;
+	}
+	outFile << "\n";
+
+	outFile << "Fitness;";
+	outFile << Population_evolution[0].fitness;
+	for (int i = 1; i < Population_evolution.size(); i++) {
+		outFile << ";" << Population_evolution[i].fitness;
+	}
+	outFile << "\n";
+
+	for (int n = 0; n < Population_evolution[0].variables.size(); n++) {
+		outFile << "Variable " << (n + 1) << ";";
+		outFile << Population_evolution[0].variables[n];
+
+		for (int i = 1; i < Population_evolution.size(); i++) {
+			outFile << ";" << Population_evolution[i].variables[n];
+		}
+		outFile << "\n";
+	}
+	
 }

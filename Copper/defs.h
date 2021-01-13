@@ -438,23 +438,6 @@ inline int countBits(uint64_t x) { // Count amount of turned on bits in a uint64
 }
 
 
-// Taken from stockfish. Used in the evaluation function and psqt.h
-enum Score :int { SCORE_ZERO };
-constexpr Score make_score(int mg, int eg) {
-	return Score((int)((unsigned int)eg << 16) + mg);
-}
-
-inline int eg_value(Score s) {
-	union { uint16_t u; int16_t s; } eg = { uint16_t(unsigned(s + 0x8000) >> 16) };
-	return int(eg.s);
-}
-
-inline int mg_value(Score s) {
-	union { uint16_t u; int16_t s; } mg = { uint16_t(unsigned(s)) };
-	return int(mg.s);
-}
-
-
 inline int bitScanReverse(BitBoard bb) { // Find the MS1B
 	const BitBoard debruijn64 = 0x03f79d71b4cb0a89;
 	assert(bb != 0);
@@ -745,3 +728,20 @@ int getBookMove(S_BOARD* pos);
 void cleanPolyBook();
 void initPolyBook();
 
+
+// psqt.h
+// Taken from stockfish. Used in the evaluation function and psqt.h
+enum Score :int { SCORE_ZERO };
+constexpr Score make_score(int mg, int eg) {
+	return Score((int)((unsigned int)eg << 16) + mg);
+}
+
+inline int eg_value(Score s) {
+	union { uint16_t u; int16_t s; } eg = { uint16_t(unsigned(s + 0x8000) >> 16) };
+	return int(eg.s);
+}
+
+inline int mg_value(Score s) {
+	union { uint16_t u; int16_t s; } mg = { uint16_t(unsigned(s)) };
+	return int(mg.s);
+}

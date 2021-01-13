@@ -5,7 +5,6 @@
 //#define TUNE
 
 
-
 enum PieceType {
 	NO_PIECE_TYPE, PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING,
 	ALL_PIECES = 0,
@@ -95,7 +94,7 @@ namespace eval {
 
 	int scale_factor(const S_BOARD* pos, int eg_eval);
 
-	int outpost(const S_BOARD* pos, int sq, S_SIDE side);
+	int outpost(const S_BOARD* pos, int sq, S_SIDE side, bool middlegame);
 
 	bool material_draw(const S_BOARD* pos);
 
@@ -173,10 +172,15 @@ Piece coefficients
 */
 
 // Outpost bonuses:
-extern int outpost_bonus;
-extern int safe_outpost_bonus;
-extern int knight_outpost_bonus;
-extern int endgame_outpost_scaling;
+extern int outpost_bonus_mg;
+extern int outpost_bonus_eg;
+
+extern int safe_outpost_bonus_mg;
+extern int safe_outpost_bonus_eg;
+
+extern int knight_outpost_bonus_mg;
+extern int knight_outpost_bonus_eg;
+
 
 
 // Pawn related piece coefficients
@@ -190,7 +194,6 @@ extern int enemy_pawns_on_diag_eg;
 
 // Bonuses for "eye'ing" the enemy king-ring
 extern int bishop_kingring_mg;
-extern int bishop_kingring_eg;
 
 
 // Rook coefficients

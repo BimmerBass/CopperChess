@@ -5,6 +5,9 @@
 
 #include <fstream>
 #include <random>
+#include <algorithm>
+#include <iomanip>
+#include <sstream>
 
 
 
@@ -17,9 +20,8 @@ const int partitions = 20;
 /*
 SPSA parameters
 */
-//const int A_END = 8;
-const int C_END = 4;
-const int R_END = 5;
+const double C_END = 8.0;
+const double R_END = 0.0002;
 
 const double alpha = 0.602;
 const double gamma = 0.101;
@@ -29,32 +31,70 @@ static std::default_random_engine generator;
 static std::bernoulli_distribution distribution(0.5);
 
 // Bernoulli +-1 distribution with p = 50%
-inline int randemacher() {
+inline double randemacher() {
 	return (distribution(generator)) ? 1 : -1;
 }
 
 
-struct Parameter {
-	Parameter(int* var, int max_d = 0) {
-		variable = var;
-		old_value = *var;
+// Function to get the date and time to write to the filename
+inline std::string getDateTime()
+{
+	auto time = std::time(nullptr);
+	std::stringstream ss;
 
-		max_delta = max_d;
-	}
-
-	int* variable;
-
-	int old_value;
-	int max_delta;
-};
-
-
-inline double sigmoid(double q, double k) {
-	return (double)(1.0 / (1 + pow(10, -(k * q / 400))));
+#if (defined(_WIN32) || defined(_WIN64))
+	tm ltm;
+	localtime_s(&ltm, &time);
+	ss << std::put_time(&ltm, "%F_%T"); // ISO 8601 without timezone information.
+#else
+	ss << std::put_time(std::localtime(&time), "%F_%T");
+#endif
+	auto s = ss.str();
+	std::replace(s.begin(), s.end(), ':', '-');
+	return s;
 }
 
 
+inline double sigmoid(double q, double k) {
+	return (double)(1.0 / (1 + pow(10, -(k * q / 400.0))));
+}
+
+
+struct DataPoint {
+	DataPoint(double error, int iteration_number, std::vector<int> theta) {
+		error_val = error;
+		iteration = iteration_number;
+		
+		for (int i = 0; i < theta.size(); i++) {
+			variables.push_back(theta[i]);
+		}
+	}
+
+	double error_val;
+	int iteration;
+	
+	std::vector<int> variables;
+};
+
+typedef std::vector<DataPoint> ErrorData;
+
 namespace texel {
+
+
+	struct Parameter {
+		Parameter(int* var, int min = -INF, int max = INF) {
+			variable = var;
+
+			min_val = (min == -INF) ? (*var - INF) : min;
+			max_val = (max == INF) ? (*var + INF) : max;
+		}
+
+		int* variable;
+
+		int min_val;
+		int max_val;
+	};
+
 
 	struct texel_pos {
 		std::string fen = "";
@@ -85,5 +125,5 @@ namespace texel {
 
 	double changed_eval_error(std::vector<int*> params, std::vector<int> new_values, tuning_positions* EPDS, double k);
 
-	void tune(std::vector<int*> initial_guess, std::string epd_file, int runs = 0);
+	void tune(std::vector<texel::Parameter> initial_guess, std::string epd_file, int runs = 0);
 }

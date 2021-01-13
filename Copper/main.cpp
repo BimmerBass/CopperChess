@@ -1,4 +1,5 @@
 #include "defs.h"
+#include "genetics.h"
 
 
 
@@ -11,49 +12,112 @@
 int main() {
 	initAll(SetMask, ClearMask);
 
-	//texel::tuning_positions* EPDS = texel::load_file("C:\\Users\\abild\\Desktop\\tuner_positions\\\quiet-labeled.epd");
 
-	//double k = texel::find_k(EPDS);
-	/*
-	std::vector<int*> init_g;
+	/*std::vector<texel::Parameter> init_g;
 
-	init_g.push_back(&doubled_penalty_mg);
-	//init_g.push_back(&doubled_penalty_eg);
-	//init_g.push_back(&passedPawnValue[0]);
-	//init_g.push_back(&passedPawnValue[1]);
-	//init_g.push_back(&passedPawnValue[2]);
-	//init_g.push_back(&passedPawnValue[3]);
-	//init_g.push_back(&passedPawnValue[4]);
-	//init_g.push_back(&passedPawnValue[5]);
-	//init_g.push_back(&passedPawnValue[6]);
-	//init_g.push_back(&passedPawnValue[7]);
-	init_g.push_back(&DoubledIsolatedMg);
-	//init_g.push_back(&DoubledIsolatedEg);
-	init_g.push_back(&isolatedMg);
-	//init_g.push_back(&isolatedEg);
-	//init_g.push_back(&supported_mg);
-	init_g.push_back(&supported_eg);
+	init_g.push_back(texel::Parameter(&outpost_bonus_mg, 0, 70));
+	init_g.push_back(texel::Parameter(&outpost_bonus_eg, 0, 70));
+
+	init_g.push_back(texel::Parameter(&safe_outpost_bonus_mg, 0, 100));
+	init_g.push_back(texel::Parameter(&safe_outpost_bonus_eg, 0, 100));
+
+	init_g.push_back(texel::Parameter(&knight_outpost_bonus_mg, 1, 5));
+	init_g.push_back(texel::Parameter(&knight_outpost_bonus_eg, 1, 5));
+
+	init_g.push_back(texel::Parameter(&N_pawn_defence_mg, 5, 15));
+	init_g.push_back(texel::Parameter(&B_pawn_defence_mg, 1, 10));
+
+	init_g.push_back(texel::Parameter(&PawnOn_bCol_mg, 0, 10));
+	init_g.push_back(texel::Parameter(&PawnOn_bCol_eg, 0, 10));
+
+	init_g.push_back(texel::Parameter(&bishop_kingring_mg, 10, 60));
+
+	init_g.push_back(texel::Parameter(&enemy_pawns_on_diag_eg, 0, 15));
+
+	init_g.push_back(texel::Parameter(&doubled_rooks_mg, 25, 100));
+
+	init_g.push_back(texel::Parameter(&rook_on_queen_mg, 0, 40));
+	init_g.push_back(texel::Parameter(&rook_on_queen_eg, 0, 40));
+
+	init_g.push_back(texel::Parameter(&rook_behind_passer_eg, 20, 150));
+
+	init_g.push_back(texel::Parameter(&rook_kingring_mg, 5, 40));
+	init_g.push_back(texel::Parameter(&rook_kingring_eg, 5, 40));
+
+	init_g.push_back(texel::Parameter(&open_rook_mg, 20, 90));
+	init_g.push_back(texel::Parameter(&open_rook_eg, 10, 90));
+
+	init_g.push_back(texel::Parameter(&semi_rook_mg, 5, 45));
+	init_g.push_back(texel::Parameter(&semi_rook_eg, 5, 45));
+
+	init_g.push_back(texel::Parameter(&queen_behind_passer_eg, 0, 40));
+	init_g.push_back(texel::Parameter(&queen_kingDist_bonus_eg, 1, 15));
 
 
-	texel::tune(init_g, "C:\\Users\\abild\\Desktop\\tuner_positions\\\quiet-labeled.epd", 200);*/
+	for (int i = 0; i < init_g.size(); i++) {
+		int new_val = random_num(init_g[i].min_val, init_g[i].max_val);
 
-	//std::vector<Parameter> init_g;
-	//
-	//init_g.push_back(Parameter(&doubled_penalty_mg, 20));
-	//init_g.push_back(Parameter(&DoubledIsolatedMg, 20));
-	//init_g.push_back(Parameter(&isolatedMg, 20));
-	//init_g.push_back(Parameter(&supported_eg, 30));
-	//
-	//int population_count = 15;
-	//int generation_count = 100;
+		*init_g[i].variable = std::max(std::min(new_val, init_g[i].max_val), init_g[i].min_val);
+	}
+
+	texel::tune(init_g, "C:\\Users\\abild\\Desktop\\tuner_positions\\quiet-labeled.epd", 200);*/
+	
+	//int population_count = 12;
+	//int generation_count = 200;
 	//
 	//GeneticTuning tuner(init_g, population_count, generation_count);
 	//
 	//tuner.run_ga();
 
+	
+	
 	Uci_Loop();
 
 
 	cleanPolyBook();
 	return 0;
 }
+
+
+/*
+
+
+	init_g.push_back(Parameter(&outpost_bonus_mg, 40));
+	init_g.push_back(Parameter(&outpost_bonus_eg, 40));
+
+	init_g.push_back(Parameter(&safe_outpost_bonus_mg, 100));
+	init_g.push_back(Parameter(&safe_outpost_bonus_eg, 100));
+
+	init_g.push_back(Parameter(&knight_outpost_bonus_mg, 10));
+	init_g.push_back(Parameter(&knight_outpost_bonus_eg, 10));
+
+	init_g.push_back(Parameter(&N_pawn_defence_mg, 50));
+	init_g.push_back(Parameter(&B_pawn_defence_mg, 50));
+
+	init_g.push_back(Parameter(&PawnOn_bCol_mg, 20));
+	init_g.push_back(Parameter(&PawnOn_bCol_eg, 20));
+
+	init_g.push_back(Parameter(&bishop_kingring_mg, 100));
+
+	init_g.push_back(Parameter(&enemy_pawns_on_diag_eg, 20));
+
+	init_g.push_back(Parameter(&doubled_rooks_mg, 150));
+
+	init_g.push_back(Parameter(&rook_on_queen_mg, 40));
+	init_g.push_back(Parameter(&rook_on_queen_eg, 40));
+
+	init_g.push_back(Parameter(&rook_behind_passer_eg, 150));
+
+	init_g.push_back(Parameter(&rook_kingring_mg, 50));
+	init_g.push_back(Parameter(&rook_kingring_eg, 50));
+
+	init_g.push_back(Parameter(&open_rook_mg, 70));
+	init_g.push_back(Parameter(&open_rook_eg, 70));
+
+	init_g.push_back(Parameter(&semi_rook_mg, 60));
+	init_g.push_back(Parameter(&semi_rook_eg, 60));
+
+	init_g.push_back(Parameter(&queen_behind_passer_eg, 70));
+	init_g.push_back(Parameter(&queen_kingDist_bonus_eg, 10));
+
+*/

@@ -178,6 +178,7 @@ namespace psqt {
 
 	// A pawn-square table for the penalties of blocking a pawn.
 #define S(mg, eg) make_score(mg, eg)
+
 	const Score blockedPawnTable[64] = {
 		S(0, 0),	S(0, 0),	S(0, 0),	S(0, 0),	S(0, 0),	S(0, 0),	S(0, 0),	S(0, 0),
 		S(0, 0),	S(0, 0),	S(0, 0),	S(0, 0),	S(0, 0),	S(0, 0),	S(0, 0),	S(0, 0),
@@ -188,6 +189,7 @@ namespace psqt {
 		S(0, -5),	S(0, -5),	S(0, -5),	S(0, -5),	S(0, -5),	S(0, -5),	S(0, -5),	S(0, -5),
 		S(0, -10),	S(0, -10),	S(0, -10),	S(0, -10),	S(0, -10),	S(0, -10),	S(0, -10),	S(0, -10)
 	};
+
 #undef S
 }
 

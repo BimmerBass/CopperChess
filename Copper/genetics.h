@@ -2,7 +2,8 @@
 #include <random>
 #include <thread>
 
-#include "defs.h"
+
+#include "texel.h"
 
 
 #define WAC_THREADS 2
@@ -12,14 +13,6 @@ constexpr double CROSSOVER_RATE = 0.75;
 constexpr double MUTATION_RATE = 0.05;
 //constexpr double ALPHA = 0.2;
 
-
-static std::default_random_engine generator;
-static std::bernoulli_distribution distribution(0.5);
-
-// Bernoulli +-1 distribution with p = 50%
-inline double randemacher() {
-	return (distribution(generator)) ? 1.0 : -1.0;
-}
 
 inline void seed_random() {
 	std::srand(std::chrono::duration_cast<std::chrono::nanoseconds> (std::chrono::system_clock::now().time_since_epoch()).count());
@@ -64,10 +57,33 @@ struct Parameter {
 };
 
 
+struct FittestData {
+	FittestData(double fitness_value, int iteration_number, std::vector<int> theta) {
+		fitness = fitness_value;
+		error = 1.0 / fitness;
+
+		iteration = iteration_number;
+
+		for (int i = 0; i < theta.size(); i++) {
+			variables.push_back(theta[i]);
+		}
+	}
+
+	double fitness = 0.0;
+	double error = 0.0;
+
+	int iteration = 0;
+
+	std::vector<int> variables;
+};
+
+typedef std::vector<FittestData> GenAdvancement;
+
+
 struct Chromosome {
 	std::vector<int> genes;
 
-	int fitness = 0;
+	double fitness = 0;
 	double selection_probability = 0.0;
 };
 
@@ -103,6 +119,9 @@ public:
 	// Fitness testing
 	void get_generation_fitness();
 
+	// This way of finding the fitness function uses the inverse error of the texel tuning method as a fitness value
+	void get_generation_error(texel::tuning_positions* EPDS, double k);
+	
 	void generate_new_population();
 
 	// Selection
@@ -112,6 +131,7 @@ public:
 	Chromosome crossover(Chromosome parent1, Chromosome parent2);
 	void mutate(Chromosome* offspring);
 
+	Chromosome get_fittest_individual();
 	std::vector<int> return_fitness();
 	std::vector<Chromosome> return_individuals();
 
@@ -121,7 +141,7 @@ private:
 	std::vector<Parameter*> tuning_parameters;
 
 	int population_count;
-	int generation_fitness;
+	double generation_fitness;
 };
 
 

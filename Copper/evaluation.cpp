@@ -2,11 +2,16 @@
 
 
 
+/*
+int outpost_bonus_mg = 30;
+int outpost_bonus_eg = 15;
 
-int outpost_bonus = 30;
-int safe_outpost_bonus = 55;
-int knight_outpost_bonus = 2;
-int endgame_outpost_scaling = 2;
+int safe_outpost_bonus_mg = 55;
+int safe_outpost_bonus_eg = 29;
+
+int knight_outpost_bonus_mg = 2;
+int knight_outpost_bonus_eg = 2;
+
 
 int N_pawn_defence_mg = 10;
 int B_pawn_defence_mg = 5;
@@ -36,8 +41,48 @@ int semi_rook_mg = 20;
 int semi_rook_eg = 7;
 
 int queen_behind_passer_eg = 20;
-int queen_kingDist_bonus_eg = 2;
+int queen_kingDist_bonus_eg = 2;*/
 
+
+int outpost_bonus_mg = 1;
+int outpost_bonus_eg = 3;
+
+int safe_outpost_bonus_mg = 2;
+int safe_outpost_bonus_eg = 3;
+
+int knight_outpost_bonus_mg = 1;
+int knight_outpost_bonus_eg = 2;
+
+
+int N_pawn_defence_mg = 11;
+int B_pawn_defence_mg = 3;
+
+int PawnOn_bCol_mg = 1;
+int PawnOn_bCol_eg = 9;
+
+int bishop_kingring_mg = 12;
+
+int enemy_pawns_on_diag_eg = 14;
+
+int doubled_rooks_mg = 69;
+
+int rook_on_queen_mg = 9;
+int rook_on_queen_eg = 14;
+
+
+int rook_behind_passer_eg = 125;
+
+int rook_kingring_mg = 8;
+int rook_kingring_eg = 19;
+
+int open_rook_mg = 34;
+int open_rook_eg = 23;
+
+int semi_rook_mg = 14;
+int semi_rook_eg = 16;
+
+int queen_behind_passer_eg = 13;
+int queen_kingDist_bonus_eg = 4;
 
 
 // This is the middlegame evaluation
@@ -384,38 +429,69 @@ int eval::pawns_eg(const S_BOARD* pos) {
 
 
 
-int eval::outpost(const S_BOARD* pos, int sq, S_SIDE side) {
+int eval::outpost(const S_BOARD* pos, int sq, S_SIDE side, bool middlegame) {
 	int v = 0;
-	if (side == WHITE) {
-		if (sq >= 56 && sq <= 63) { return 0; } // The 8'th rank is never a good outpost
+	if (middlegame) {
+		if (side == WHITE) {
+			if (sq >= 56 && sq <= 63) { return 0; } // The 8'th rank is never a good outpost
 
-		if (((((SETBIT((uint64_t)0, sq) & ~FileMasks8[FILE_A]) << 7) | ((SETBIT((uint64_t)0, sq) & ~FileMasks8[FILE_H]) << 9))
-			& pos->position[BP]) != 0) { // If the square is attacked, it cant be an outpost
-			return 0;
+			if (((((SETBIT((uint64_t)0, sq) & ~FileMasks8[FILE_A]) << 7) | ((SETBIT((uint64_t)0, sq) & ~FileMasks8[FILE_H]) << 9))
+				& pos->position[BP]) != 0) { // If the square is attacked, it cant be an outpost
+				return 0;
+			}
+			else {
+				// Warning of buffer overflow here, but not a problem. sq is ensured to be between 0 and 63 when outpost() is called.
+				v = ((whiteOutpostMasks[sq] & pos->position[BP]) == 0) ? safe_outpost_bonus_mg : outpost_bonus_mg;
+
+				// Return bigger value if the outpost is a knight, as they're usually more valuable on outposts than bishops.
+				return v;
+			}
+
 		}
 		else {
-			// Warning of buffer overflow here, but not a problem. sq is ensured to be between 0 and 63 when outpost() is called.
-			v = ((whiteOutpostMasks[sq] & pos->position[BP]) == 0) ? safe_outpost_bonus : outpost_bonus;
+			if (sq >= 0 && sq <= 7) { return 0; }
 
-			// Return bigger value if the outpost is a knight, as they're usually more valuable on outposts than bishops.
-			return (pos->pieceList[sq] == WN) ? knight_outpost_bonus * v : v;
+			if (((((SETBIT((uint64_t)0, sq) & ~FileMasks8[FILE_A]) >> 9) | ((SETBIT((uint64_t)0, sq) & ~FileMasks8[FILE_H]) >> 7))
+				& pos->position[WP]) != 0) {
+				return 0;
+			}
+			else {
+				v = ((blackOutpostMasks[sq] & pos->position[WP]) == 0) ? safe_outpost_bonus_mg : outpost_bonus_mg;
+
+				return v;
+			}
 		}
-
 	}
+
+	// If we're in the endgame, we'll have to use the eg values.
 	else {
-		if (sq >= 0 && sq <= 7) { return 0; }
+		if (side == WHITE) {
+			if (sq >= 56 && sq <= 63) { return 0; } // The 8'th rank is never a good outpost
 
-		//uint64_t pawn_attacking_squares = (((SETBIT((uint64_t)0, sq) & ~FileMasks8[FILE_A]) >> 9) | ((SETBIT((uint64_t)0, sq) & ~FileMasks8[FILE_H]) >> 7));
+			if (((((SETBIT((uint64_t)0, sq) & ~FileMasks8[FILE_A]) << 7) | ((SETBIT((uint64_t)0, sq) & ~FileMasks8[FILE_H]) << 9))
+				& pos->position[BP]) != 0) { // If the square is attacked, it cant be an outpost
+				return 0;
+			}
+			else {
+				// Warning of buffer overflow here, but not a problem. sq is ensured to be between 0 and 63 when outpost() is called.
+				v = ((whiteOutpostMasks[sq] & pos->position[BP]) == 0) ? safe_outpost_bonus_eg : outpost_bonus_eg;
 
-		if (((((SETBIT((uint64_t)0, sq) & ~FileMasks8[FILE_A]) >> 9) | ((SETBIT((uint64_t)0, sq) & ~FileMasks8[FILE_H]) >> 7))
-			& pos->position[WP]) != 0) {
-			return 0;
+				return v;
+			}
+
 		}
 		else {
-			v = ((blackOutpostMasks[sq] & pos->position[WP]) == 0) ? safe_outpost_bonus : outpost_bonus;
+			if (sq >= 0 && sq <= 7) { return 0; }
 
-			// Return double value if the outpost is a knight.
-			return (pos->pieceList[sq] == BN) ? knight_outpost_bonus * v : v;
+			if (((((SETBIT((uint64_t)0, sq) & ~FileMasks8[FILE_A]) >> 9) | ((SETBIT((uint64_t)0, sq) & ~FileMasks8[FILE_H]) >> 7))
+				& pos->position[WP]) != 0) {
+				return 0;
+			}
+			else {
+				v = ((blackOutpostMasks[sq] & pos->position[WP]) == 0) ? safe_outpost_bonus_eg : outpost_bonus_eg;
+
+				return v;
+			}
 		}
 	}
 	return 0;
@@ -443,7 +519,7 @@ int eval::pieces_mg(const S_BOARD* pos) {
 
 		// Add value if on an outpost. Only if the square is on the fifth rank or above.
 		if (sq / 8 >= RANK_5) {
-			v += outpost(pos, sq, WHITE);
+			v += knight_outpost_bonus_mg * outpost(pos, sq, WHITE, true);
 		}
 
 		// Add value if defended by pawns.
@@ -456,7 +532,7 @@ int eval::pieces_mg(const S_BOARD* pos) {
 		// Add value for being on an outpost. Only for rank 5 or above.
 		if (sq / 8 >= RANK_5) {
 			assert(pos->pieceList[sq] == WB);
-			v += outpost(pos, sq, WHITE);
+			v += outpost(pos, sq, WHITE, true);
 		}
 
 		// Add value for being defended by pawns. (Smaller than the bonus for knights)
@@ -520,7 +596,7 @@ int eval::pieces_mg(const S_BOARD* pos) {
 
 		// Add value for being on an outpost. Only on fourth rank and below.
 		if (sq / 8 <= RANK_4) {
-			v -= outpost(pos, sq, BLACK);
+			v -= knight_outpost_bonus_mg * outpost(pos, sq, BLACK, true);
 		}
 		// Add value depending on amount of defending pawns of the square
 		v -= N_pawn_defence_mg * defending_pawns(pos, sq, BLACK);
@@ -532,7 +608,7 @@ int eval::pieces_mg(const S_BOARD* pos) {
 		// Outpost bonus. Only if on rank four or below.
 		if (sq / 8 <= RANK_4) {
 			assert(pos->pieceList[sq] == BB);
-			v -= outpost(pos, sq, BLACK);
+			v -= outpost(pos, sq, BLACK, true);
 		}
 
 		// Add value for being defended by pawns. (Smaller than the bonus for knights)
@@ -610,7 +686,7 @@ int eval::pieces_eg(const S_BOARD* pos) {
 		
 		// Add value for being on an outpost. This is smaller than in the middlegame.
 		if (sq / 8 >= RANK_5) {
-			v += outpost(pos, sq, WHITE) / endgame_outpost_scaling;
+			v += knight_outpost_bonus_eg * outpost(pos, sq, WHITE, false);
 		}
 	}
 
@@ -699,7 +775,7 @@ int eval::pieces_eg(const S_BOARD* pos) {
 
 		// Bonus for being on an outpost.
 		if (sq / 8 <= RANK_4) {
-			v -= outpost(pos, sq, BLACK) / endgame_outpost_scaling;
+			v -= knight_outpost_bonus_eg * outpost(pos, sq, BLACK, false);
 		}
 	}
 
