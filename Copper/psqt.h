@@ -10,16 +10,8 @@ TODO: Adjust the endgame piece-square tables.
 namespace psqt {
 	// Pawns are incentivized to develop in the center, and to not move in front of a castled king.
 	// Pawns in front of the king will be evaluated in the piece-evaluations.
-	const int PawnTableMg[64] = {
-		0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,
-		10	,	10	,	10	,	-20	,	-20	,	0	,	10	,	10	,
-		5	,	0	,	0	,	-5	,	-5	,	0	,	0	,	5	,
-		-3	,	-5	,	-5	,	20	,	20	,	5	,	0	,	0	,
-		-6	,	-10	,	-5	,	7	,	7	,	0	,	0	,	0	,
-		0	,	-5	,	5	,	2	,	2	,	0	,	0	,	0	,
-		10	,	10	,	15	,	20	,	20	,	15	,	10	,	10	,
-		0	,	0	,	0	,	0	,	0	,	0	,	0	,	0
-	};
+	extern int PawnTableMg[64];
+
 
 	// In the endgame, we generally want the pawns to advance. The engine is incentivized to push pawns on the sides, but this difference
 	// isn't that big

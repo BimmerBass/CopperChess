@@ -196,7 +196,7 @@ void texel::tune(std::vector<texel::Parameter> initial_guess, std::string epd_fi
 	tuning_positions* EPDS = load_file(filepath);
 
 	// Find the optimal k
-	double k = find_k(EPDS);
+	double k = 2.01; // find_k(EPDS);
 	
 
 	// Now we'll loop through all the iterations:
@@ -256,6 +256,7 @@ void texel::tune(std::vector<texel::Parameter> initial_guess, std::string epd_fi
 		gamma_n.push_back(gn);
 
 		std::cout << "Iteration nr. " << (n + 1) << ": an = " << an << ", cn = " << cn << std::endl;
+		std::cout << "Beta_n = " << bn << ", gamma_n = " << gn << std::endl;
 
 		// Clear theta_plus, theta_minus and populate delta.
 		theta_plus.clear();
@@ -277,7 +278,6 @@ void texel::tune(std::vector<texel::Parameter> initial_guess, std::string epd_fi
 		double tPlus_error = double(EPDS->positions.size()) * changed_eval_error(param_ptrs, theta_plus, EPDS, k);
 		double tMinus_error = double(EPDS->positions.size()) * changed_eval_error(param_ptrs, theta_minus, EPDS, k);
 
-
 		std::cout << "Theta plus error: " << tPlus_error << ", Theta minus error: " << tMinus_error << std::endl;
 		
 		//
@@ -286,8 +286,12 @@ void texel::tune(std::vector<texel::Parameter> initial_guess, std::string epd_fi
 		for (int i = 0; i < parameters.size(); i++) {
 			g_hat = ((tPlus_error - tMinus_error)) / (2.0 * double(cn) * double(delta[i]));
 
+			//momentum[i] = bn * momentum[i] + (1.0 - bn) * g_hat;
+			//velocity[i] = gn * momentum[i] + (1.0 - gn) * pow(g_hat, 2);
+
 			momentum[i] = bn * momentum[i] + (1.0 - bn) * g_hat;
 			velocity[i] = gn * momentum[i] + (1.0 - gn) * pow(g_hat, 2);
+
 
 
 			double m_hat = bn * momentum[i];
@@ -314,12 +318,13 @@ void texel::tune(std::vector<texel::Parameter> initial_guess, std::string epd_fi
 			m_hat /= beta_sum;
 			v_hat /= gamma_sum;
 
+
 			if (n == 0) {
 				m_hat = 0;
 				v_hat = 1;
 			}
 
-			double step = ((an * m_hat) / (sqrt(v_hat) + epsilon));
+			double step = ((an * m_hat) / (sqrt(abs(v_hat)) + epsilon));
 
 			step_size.push_back(step);
 
