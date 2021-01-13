@@ -196,7 +196,8 @@ void texel::tune(std::vector<texel::Parameter> initial_guess, std::string epd_fi
 	tuning_positions* EPDS = load_file(filepath);
 
 	// Find the optimal k
-	double k = 2.1499; // find_k(EPDS);
+	double k = find_k(EPDS);
+	
 
 	// Now we'll loop through all the iterations:
 	std::cout << "Starting Texel SPSA tuning session with " << parameters.size() << " parameters in " << iterations << " iterations" << std::endl;
@@ -218,60 +219,41 @@ void texel::tune(std::vector<texel::Parameter> initial_guess, std::string epd_fi
 	double a = a_end * pow(BIG_A + double(iterations), alpha);
 
 
-	std::vector<double> averaged_gradient;
+	std::vector<int> step_size;
+	step_size.push_back(0);
+
+	std::vector<double> momentum;
+	std::vector<double> velocity;
+
+
+	std::vector<double> beta_n;
+	std::vector<double> gamma_n;
+
 	double g_hat = 0;
 
 	for (int i = 0; i < theta.size(); i++) {
-		averaged_gradient.push_back(double(0.0));
+
+		momentum.push_back(0.0);
+		velocity.push_back(0.0);
 	}
 
-	//
-	//Here we compute a. This is done, as recommended by Spall, by computing a = (maximum initial change) * ((pow(A + 1), alpha) / g_hat(theta_0))
-	//
-
-	//double max_init_change = 100.0;
-	//
-	//std::cout << "[*] Please enter maximal initial change of the variables's values (can't be zero.): ";
-	//
-	//std::cin >> max_init_change;
-	//std::cout << "\n";
-	//
-	//for (int p = 0; p < theta.size(); p++) {
-	//	int rand_1 = randemacher();
-	//
-	//	theta_plus.push_back(theta[p] + int(c * rand_1));
-	//	theta_minus.push_back(theta[p] - int(c * rand_1));
-	//}
-	//
-	//double theta_plus_err =  changed_eval_error(parameters, theta_plus, EPDS, k);
-	//double theta_minus_err = changed_eval_error(parameters, theta_minus, EPDS, k);
-	//
-	//double g_hat_0 = abs((theta_plus_err - theta_minus_err) / (2.0 * c));
-	//
-	//double a = max_init_change * (pow(BIG_A + 1.0, alpha) / g_hat_0);
-	
-	//double c = double(C_END) * pow(double(iterations), gamma);
-	//double a_end = double(R_END) * pow(double(C_END), 2.0);
-	//
-	//double a = a_end * pow((BIG_A + double(iterations)), alpha);
 
 	for (int n = 0; n < iterations; n++) {
-		double theta_regularization = 0;
-		for (int i = 0; i < theta.size(); i++) {
-			theta_regularization += pow((double(theta[i] - initial_values[i])), 2.0);
-		}
-		theta_regularization *= alpha_reg;
 
-		double error = changed_eval_error(param_ptrs, theta, EPDS, k) + theta_regularization;	
+		double error = changed_eval_error(param_ptrs, theta, EPDS, k);	
 
-		data.push_back(DataPoint(error, n + 1, abs(g_hat), abs(averaged_gradient[0]), theta));
+		data.push_back(DataPoint(error, n + 1, abs(g_hat), abs(step_size[n]), theta));
 
 
 		// Calculate an and cn.
 		double an = a / (pow(BIG_A + double(n) + 1.0, alpha));
 		double cn = c / (pow(double(n) + 1.0, gamma));
 
-		double rho_n = 1.0 / (1.0 + 20.0 * exp(-(1 / pow(double(iterations), alpha)) * n));
+		double bn = beta_0 / pow(double(n) + 1.0, lambda);
+		double gn = gamma_0 / pow(double(n) + 1.0, lambda);
+
+		beta_n.push_back(bn);
+		gamma_n.push_back(gn);
 
 		std::cout << "Iteration nr. " << (n + 1) << ": an = " << an << ", cn = " << cn << std::endl;
 
@@ -279,9 +261,6 @@ void texel::tune(std::vector<texel::Parameter> initial_guess, std::string epd_fi
 		theta_plus.clear();
 		theta_minus.clear();
 		delta.clear();
-
-		double tPlus_reg = 0.0;
-		double tMinus_reg = 0.0;
 
 		for (int i = 0; i < parameters.size(); i++) {
 			delta.push_back(randemacher());
@@ -291,19 +270,12 @@ void texel::tune(std::vector<texel::Parameter> initial_guess, std::string epd_fi
 
 			theta_plus.push_back(tPlus_i);
 			theta_minus.push_back(tMinus_i);
-
-			tPlus_reg += pow(double(tPlus_i - initial_values[i]), 2);
-			tMinus_reg += pow(double(tMinus_i - initial_values[i]), 2);
 		}
-		tPlus_reg *= alpha_reg;
-		tMinus_reg *= alpha_reg;
 
 
 		// Now that we've done this, we can measure the error of theta_plus and theta_minus respectively:
-		double tPlus_error = double(EPDS->positions.size()) * changed_eval_error(param_ptrs, theta_plus, EPDS, k) + tPlus_reg;
-		double tMinus_error = double(EPDS->positions.size()) * changed_eval_error(param_ptrs, theta_minus, EPDS, k) + tMinus_reg;
-		//double tPlus_error = changed_eval_error(parameters, theta_plus, EPDS, k);
-		//double tMinus_error = changed_eval_error(parameters, theta_minus, EPDS, k);
+		double tPlus_error = double(EPDS->positions.size()) * changed_eval_error(param_ptrs, theta_plus, EPDS, k);
+		double tMinus_error = double(EPDS->positions.size()) * changed_eval_error(param_ptrs, theta_minus, EPDS, k);
 
 
 		std::cout << "Theta plus error: " << tPlus_error << ", Theta minus error: " << tMinus_error << std::endl;
@@ -314,11 +286,44 @@ void texel::tune(std::vector<texel::Parameter> initial_guess, std::string epd_fi
 		for (int i = 0; i < parameters.size(); i++) {
 			g_hat = ((tPlus_error - tMinus_error)) / (2.0 * double(cn) * double(delta[i]));
 
-			//averaged_gradient[i] = rho_n * averaged_gradient[i] + (1.0 - rho_n) * g_hat;
+			momentum[i] = bn * momentum[i] + (1.0 - bn) * g_hat;
+			velocity[i] = gn * momentum[i] + (1.0 - gn) * pow(g_hat, 2);
 
-			// Adjust the variable in theta using gradient descent:
-			theta[i] = theta[i] - int(an * g_hat);
-			//theta[i] = theta[i] - int(an * averaged_gradient[i]);
+
+			double m_hat = bn * momentum[i];
+			double v_hat = gn * velocity[i];
+
+			double beta_sum = 0.0;
+			double gamma_sum = 0.0;
+
+			for (int r = 0; r < n; r++) {
+
+				double bs = (1.0 - beta_n[n - 1 - r]);
+				double gs = (1.0 - gamma_n[n - 1 - r]);
+
+				for (int j = 0; j < r; j++) {
+					bs *= beta_n[n - j];
+					gs *= gamma_n[n - j];
+				}
+
+				beta_sum += bs;
+				gamma_sum += gs;
+
+			}
+
+			m_hat /= beta_sum;
+			v_hat /= gamma_sum;
+
+			if (n == 0) {
+				m_hat = 0;
+				v_hat = 1;
+			}
+
+			double step = ((an * m_hat) / (sqrt(v_hat) + epsilon));
+
+			step_size.push_back(step);
+
+			theta[i] = theta[i] - step;
 			theta[i] = std::max(std::min(theta[i], parameters[i].max_val), parameters[i].min_val);
 		}
 
@@ -408,10 +413,10 @@ void texel::tune(std::vector<texel::Parameter> initial_guess, std::string epd_fi
 		}
 		outFile << "\n";
 
-		outFile << "Smoothed gradient;";
-		outFile << data[0].averaged_gradient;
+		outFile << "Step size;";
+		outFile << data[0].step;
 		for (int i = 1; i < data.size(); i++) {
-			outFile << ";" << data[i].averaged_gradient;
+			outFile << ";" << data[i].step;
 		}
 		outFile << "\n";
 

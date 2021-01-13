@@ -20,13 +20,21 @@ const int partitions = 20;
 /*
 SPSA parameters
 */
-const double C_END = 8.0;
-const double R_END = 0.0002;
+const double C_END = 4.0;
+const double R_END = 0.02;
 
 const double alpha = 0.602;
 const double gamma = 0.101;
 
-const double alpha_reg = 0.0;
+
+const double beta_0 = 0.999;
+const double gamma_0 = 0.999;
+
+const double lambda = 0.4;
+
+const double epsilon = 1.0 * pow(10.0, -12.0);
+
+
 
 static std::default_random_engine generator;
 static std::bernoulli_distribution distribution(0.5);
@@ -67,7 +75,7 @@ struct DataPoint {
 		iteration = iteration_number;
 
 		gradient = g_hat;
-		averaged_gradient = BIG_G;
+		step = BIG_G;
 		
 		for (int i = 0; i < theta.size(); i++) {
 			variables.push_back(theta[i]);
@@ -78,7 +86,7 @@ struct DataPoint {
 	int iteration;
 
 	double gradient;
-	double averaged_gradient;
+	double step;
 	
 	std::vector<int> variables;
 };

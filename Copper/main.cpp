@@ -15,10 +15,21 @@ int main() {
 
 	std::vector<texel::Parameter> init_g;
 
+	init_g.push_back(texel::Parameter(&knight_mob_mg, 1, 15));
+	init_g.push_back(texel::Parameter(&knight_mob_eg, 1, 15));
+
+	init_g.push_back(texel::Parameter(&bishop_mob_mg, 1, 15));
+	init_g.push_back(texel::Parameter(&bishop_mob_eg, 1, 15));
+
+	init_g.push_back(texel::Parameter(&rook_mob_mg, 1, 15));
+	init_g.push_back(texel::Parameter(&rook_mob_eg, 1, 15));
+
+	init_g.push_back(texel::Parameter(&queen_mob_mg, 1, 15));
+	init_g.push_back(texel::Parameter(&queen_mob_eg, 1, 15));
 
 
 
-
+	
 	for (int i = 0; i < init_g.size(); i++) {
 		int new_val = random_num(init_g[i].min_val, init_g[i].max_val);
 
