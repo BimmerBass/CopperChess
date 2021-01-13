@@ -196,7 +196,7 @@ void texel::tune(std::vector<texel::Parameter> initial_guess, std::string epd_fi
 	tuning_positions* EPDS = load_file(filepath);
 
 	// Find the optimal k
-	double k = find_k(EPDS);
+	double k = 2.1499; // find_k(EPDS);
 
 	// Now we'll loop through all the iterations:
 	std::cout << "Starting Texel SPSA tuning session with " << parameters.size() << " parameters in " << iterations << " iterations" << std::endl;
@@ -204,7 +204,7 @@ void texel::tune(std::vector<texel::Parameter> initial_guess, std::string epd_fi
 	std::vector<int> theta_plus;
 	std::vector<int> theta_minus;
 	std::vector<double> delta;
-	
+
 	
 	//
 	//	Calculate SPSA parameters
@@ -216,6 +216,14 @@ void texel::tune(std::vector<texel::Parameter> initial_guess, std::string epd_fi
 	double c = double(C_END) * pow(double(iterations), gamma);
 	double a_end = R_END * pow(c, 2.0);
 	double a = a_end * pow(BIG_A + double(iterations), alpha);
+
+
+	std::vector<double> averaged_gradient;
+	double g_hat = 0;
+
+	for (int i = 0; i < theta.size(); i++) {
+		averaged_gradient.push_back(double(0.0));
+	}
 
 	//
 	//Here we compute a. This is done, as recommended by Spall, by computing a = (maximum initial change) * ((pow(A + 1), alpha) / g_hat(theta_0))
@@ -248,14 +256,22 @@ void texel::tune(std::vector<texel::Parameter> initial_guess, std::string epd_fi
 	//double a = a_end * pow((BIG_A + double(iterations)), alpha);
 
 	for (int n = 0; n < iterations; n++) {
-		double error = changed_eval_error(param_ptrs, theta, EPDS, k);	
+		double theta_regularization = 0;
+		for (int i = 0; i < theta.size(); i++) {
+			theta_regularization += pow((double(theta[i] - initial_values[i])), 2.0);
+		}
+		theta_regularization *= alpha_reg;
 
-		data.push_back(DataPoint(error, n + 1, theta));
+		double error = changed_eval_error(param_ptrs, theta, EPDS, k) + theta_regularization;	
+
+		data.push_back(DataPoint(error, n + 1, abs(g_hat), abs(averaged_gradient[0]), theta));
 
 
 		// Calculate an and cn.
 		double an = a / (pow(BIG_A + double(n) + 1.0, alpha));
 		double cn = c / (pow(double(n) + 1.0, gamma));
+
+		double rho_n = 1.0 / (1.0 + 20.0 * exp(-(1 / pow(double(iterations), alpha)) * n));
 
 		std::cout << "Iteration nr. " << (n + 1) << ": an = " << an << ", cn = " << cn << std::endl;
 
@@ -264,18 +280,28 @@ void texel::tune(std::vector<texel::Parameter> initial_guess, std::string epd_fi
 		theta_minus.clear();
 		delta.clear();
 
+		double tPlus_reg = 0.0;
+		double tMinus_reg = 0.0;
 
 		for (int i = 0; i < parameters.size(); i++) {
 			delta.push_back(randemacher());
 
-			theta_plus.push_back(theta[i] + int(cn * delta[i]));
-			theta_minus.push_back(theta[i] - int(cn * delta[i]));
+			int tPlus_i = theta[i] + int(cn * delta[i]);
+			int tMinus_i = theta[i] - int(cn * delta[i]);
+
+			theta_plus.push_back(tPlus_i);
+			theta_minus.push_back(tMinus_i);
+
+			tPlus_reg += pow(double(tPlus_i - initial_values[i]), 2);
+			tMinus_reg += pow(double(tMinus_i - initial_values[i]), 2);
 		}
+		tPlus_reg *= alpha_reg;
+		tMinus_reg *= alpha_reg;
 
 
 		// Now that we've done this, we can measure the error of theta_plus and theta_minus respectively:
-		double tPlus_error = double(EPDS->positions.size()) * changed_eval_error(param_ptrs, theta_plus, EPDS, k);
-		double tMinus_error = double(EPDS->positions.size()) * changed_eval_error(param_ptrs, theta_minus, EPDS, k);
+		double tPlus_error = double(EPDS->positions.size()) * changed_eval_error(param_ptrs, theta_plus, EPDS, k) + tPlus_reg;
+		double tMinus_error = double(EPDS->positions.size()) * changed_eval_error(param_ptrs, theta_minus, EPDS, k) + tMinus_reg;
 		//double tPlus_error = changed_eval_error(parameters, theta_plus, EPDS, k);
 		//double tMinus_error = changed_eval_error(parameters, theta_minus, EPDS, k);
 
@@ -285,12 +311,14 @@ void texel::tune(std::vector<texel::Parameter> initial_guess, std::string epd_fi
 		//
 		//Now we can calculate ghat for all parameters:
 		//
-		double g_hat = 0;
 		for (int i = 0; i < parameters.size(); i++) {
 			g_hat = ((tPlus_error - tMinus_error)) / (2.0 * double(cn) * double(delta[i]));
 
+			//averaged_gradient[i] = rho_n * averaged_gradient[i] + (1.0 - rho_n) * g_hat;
+
 			// Adjust the variable in theta using gradient descent:
 			theta[i] = theta[i] - int(an * g_hat);
+			//theta[i] = theta[i] - int(an * averaged_gradient[i]);
 			theta[i] = std::max(std::min(theta[i], parameters[i].max_val), parameters[i].min_val);
 		}
 
@@ -370,6 +398,20 @@ void texel::tune(std::vector<texel::Parameter> initial_guess, std::string epd_fi
 		outFile << data[0].error_val;
 		for (int i = 1; i < data.size(); i++) {
 			outFile << ";" << data[i].error_val;
+		}
+		outFile << "\n";
+
+		outFile << "Gradient;";
+		outFile << data[0].gradient;
+		for (int i = 1; i < data.size(); i++) {
+			outFile << ";" << data[i].gradient;
+		}
+		outFile << "\n";
+
+		outFile << "Smoothed gradient;";
+		outFile << data[0].averaged_gradient;
+		for (int i = 1; i < data.size(); i++) {
+			outFile << ";" << data[i].averaged_gradient;
 		}
 		outFile << "\n";
 

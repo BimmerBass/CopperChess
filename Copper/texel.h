@@ -26,6 +26,7 @@ const double R_END = 0.0002;
 const double alpha = 0.602;
 const double gamma = 0.101;
 
+const double alpha_reg = 0.0;
 
 static std::default_random_engine generator;
 static std::bernoulli_distribution distribution(0.5);
@@ -61,9 +62,12 @@ inline double sigmoid(double q, double k) {
 
 
 struct DataPoint {
-	DataPoint(double error, int iteration_number, std::vector<int> theta) {
+	DataPoint(double error, int iteration_number, double g_hat, double BIG_G, std::vector<int> theta) {
 		error_val = error;
 		iteration = iteration_number;
+
+		gradient = g_hat;
+		averaged_gradient = BIG_G;
 		
 		for (int i = 0; i < theta.size(); i++) {
 			variables.push_back(theta[i]);
@@ -72,6 +76,9 @@ struct DataPoint {
 
 	double error_val;
 	int iteration;
+
+	double gradient;
+	double averaged_gradient;
 	
 	std::vector<int> variables;
 };

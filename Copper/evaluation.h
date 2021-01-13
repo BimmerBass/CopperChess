@@ -172,51 +172,69 @@ Piece coefficients
 */
 
 // Outpost bonuses:
-extern int outpost_bonus_mg;
-extern int outpost_bonus_eg;
+constexpr int outpost_bonus_mg = 1;
+constexpr int outpost_bonus_eg = 3;
 
-extern int safe_outpost_bonus_mg;
-extern int safe_outpost_bonus_eg;
+constexpr int safe_outpost_bonus_mg = 2;
+constexpr int safe_outpost_bonus_eg = 3;
 
-extern int knight_outpost_bonus_mg;
-extern int knight_outpost_bonus_eg;
+constexpr int knight_outpost_bonus_mg = 1;
+constexpr int knight_outpost_bonus_eg = 2;
 
 
 
 // Pawn related piece coefficients
-extern int N_pawn_defence_mg;
-extern int B_pawn_defence_mg;
+constexpr int N_pawn_defence_mg = 11;
+constexpr int B_pawn_defence_mg = 3;
 
-extern int PawnOn_bCol_mg;
-extern int PawnOn_bCol_eg;
+constexpr int PawnOn_bCol_mg = 1;
+constexpr int PawnOn_bCol_eg = 9;
 
-extern int enemy_pawns_on_diag_eg;
+constexpr int enemy_pawns_on_diag_eg = 14;
 
 // Bonuses for "eye'ing" the enemy king-ring
-extern int bishop_kingring_mg;
+constexpr int bishop_kingring_mg = 12;
 
 
 // Rook coefficients
-extern int doubled_rooks_mg;
+constexpr int doubled_rooks_mg = 69;
 
-extern int rook_on_queen_mg;
-extern int rook_on_queen_eg;
+constexpr int rook_on_queen_mg = 9;
+constexpr int rook_on_queen_eg = 14;
 
-extern int rook_behind_passer_eg;
+constexpr int rook_behind_passer_eg = 125;
 
-extern int rook_kingring_mg;
-extern int rook_kingring_eg;
+constexpr int rook_kingring_mg = 8;
+constexpr int rook_kingring_eg = 19;
 
-extern int open_rook_mg;
-extern int open_rook_eg;
+constexpr int open_rook_mg = 34;
+constexpr int open_rook_eg = 23;
 
-extern int semi_rook_mg;
-extern int semi_rook_eg;
+constexpr int semi_rook_mg = 14;
+constexpr int semi_rook_eg = 16;
 
 
 // Queen coefficents
-extern int queen_behind_passer_eg;
-extern int queen_kingDist_bonus_eg;
+constexpr int queen_behind_passer_eg = 13;
+constexpr int queen_kingDist_bonus_eg = 4;
+
+
+
+
+/*
+Mobility coefficients
+*/
+extern int knight_mob_mg;
+extern int knight_mob_eg;
+
+extern int bishop_mob_mg;
+extern int bishop_mob_eg;
+
+extern int rook_mob_mg;
+extern int rook_mob_eg;
+
+extern int queen_mob_mg;
+extern int queen_mob_eg;
 
 
 

@@ -2,87 +2,18 @@
 
 
 
-/*
-int outpost_bonus_mg = 30;
-int outpost_bonus_eg = 15;
+int knight_mob_mg = 3;
+int knight_mob_eg = 5;
 
-int safe_outpost_bonus_mg = 55;
-int safe_outpost_bonus_eg = 29;
+int bishop_mob_mg = 4;
+int bishop_mob_eg = 6;
 
-int knight_outpost_bonus_mg = 2;
-int knight_outpost_bonus_eg = 2;
+int rook_mob_mg = 2;
+int rook_mob_eg = 9;
 
+int queen_mob_mg = 1;
+int queen_mob_eg = 10;
 
-int N_pawn_defence_mg = 10;
-int B_pawn_defence_mg = 5;
-
-int PawnOn_bCol_mg = 3;
-int PawnOn_bCol_eg = 7;
-
-int bishop_kingring_mg = 25;
-
-int enemy_pawns_on_diag_eg = 5;
-
-int doubled_rooks_mg = 30;
-
-int rook_on_queen_mg = 5;
-int rook_on_queen_eg = 11;
-
-
-int rook_behind_passer_eg = 50;
-
-int rook_kingring_mg = 15;
-int rook_kingring_eg = 7;
-
-int open_rook_mg = 45;
-int open_rook_eg = 29;
-
-int semi_rook_mg = 20;
-int semi_rook_eg = 7;
-
-int queen_behind_passer_eg = 20;
-int queen_kingDist_bonus_eg = 2;*/
-
-
-int outpost_bonus_mg = 1;
-int outpost_bonus_eg = 3;
-
-int safe_outpost_bonus_mg = 2;
-int safe_outpost_bonus_eg = 3;
-
-int knight_outpost_bonus_mg = 1;
-int knight_outpost_bonus_eg = 2;
-
-
-int N_pawn_defence_mg = 11;
-int B_pawn_defence_mg = 3;
-
-int PawnOn_bCol_mg = 1;
-int PawnOn_bCol_eg = 9;
-
-int bishop_kingring_mg = 12;
-
-int enemy_pawns_on_diag_eg = 14;
-
-int doubled_rooks_mg = 69;
-
-int rook_on_queen_mg = 9;
-int rook_on_queen_eg = 14;
-
-
-int rook_behind_passer_eg = 125;
-
-int rook_kingring_mg = 8;
-int rook_kingring_eg = 19;
-
-int open_rook_mg = 34;
-int open_rook_eg = 23;
-
-int semi_rook_mg = 14;
-int semi_rook_eg = 16;
-
-int queen_behind_passer_eg = 13;
-int queen_kingDist_bonus_eg = 4;
 
 
 // This is the middlegame evaluation
@@ -860,10 +791,10 @@ int eval::pieces_eg(const S_BOARD* pos) {
 int eval::mobility_mg(const S_BOARD* pos) {
 	int v = 0;
 
-	v += 3 * (countBits(mobility<KNIGHT>(pos, WHITE)) - countBits(mobility<KNIGHT>(pos, BLACK)));
-	v += 4 * (countBits(mobility<BISHOP>(pos, WHITE)) - countBits(mobility<BISHOP>(pos, BLACK)));
-	v += 2 * (countBits(mobility<ROOK>(pos, WHITE)) - countBits(mobility<ROOK>(pos, BLACK)));
-	v += 1 * (countBits(mobility<QUEEN>(pos, WHITE)) - countBits(mobility<QUEEN>(pos, BLACK)));
+	v += knight_mob_mg * (countBits(mobility<KNIGHT>(pos, WHITE)) - countBits(mobility<KNIGHT>(pos, BLACK)));
+	v += bishop_mob_mg * (countBits(mobility<BISHOP>(pos, WHITE)) - countBits(mobility<BISHOP>(pos, BLACK)));
+	v += rook_mob_mg * (countBits(mobility<ROOK>(pos, WHITE)) - countBits(mobility<ROOK>(pos, BLACK)));
+	v += queen_mob_mg * (countBits(mobility<QUEEN>(pos, WHITE)) - countBits(mobility<QUEEN>(pos, BLACK)));
 
 	return v;
 }
@@ -873,10 +804,10 @@ int eval::mobility_mg(const S_BOARD* pos) {
 int eval::mobility_eg(const S_BOARD* pos) {
 	int v = 0;
 
-	v += 5 * (countBits(mobility<KNIGHT>(pos, WHITE)) - countBits(mobility<KNIGHT>(pos, BLACK)));
-	v += 6 * (countBits(mobility<BISHOP>(pos, WHITE)) - countBits(mobility<BISHOP>(pos, BLACK)));
-	v += 9 * (countBits(mobility<ROOK>(pos, WHITE)) - countBits(mobility<ROOK>(pos, BLACK)));
-	v += 10 * (countBits(mobility<QUEEN>(pos, WHITE)) - countBits(mobility<QUEEN>(pos, BLACK)));
+	v += knight_mob_eg * (countBits(mobility<KNIGHT>(pos, WHITE)) - countBits(mobility<KNIGHT>(pos, BLACK)));
+	v += bishop_mob_eg * (countBits(mobility<BISHOP>(pos, WHITE)) - countBits(mobility<BISHOP>(pos, BLACK)));
+	v += rook_mob_eg * (countBits(mobility<ROOK>(pos, WHITE)) - countBits(mobility<ROOK>(pos, BLACK)));
+	v += queen_mob_eg * (countBits(mobility<QUEEN>(pos, WHITE)) - countBits(mobility<QUEEN>(pos, BLACK)));
 
 	return v;
 }
