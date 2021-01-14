@@ -83,7 +83,6 @@ double texel::eval_error(tuning_positions* EPDS, double k) {
 		S_BOARD* pos = new S_BOARD;
 #pragma omp for schedule(static, EPDS->positions.size() / partitions) reduction(+:error)
 		for (int p = 0; p < EPDS->positions.size(); p++) {
-			//for (int p = 0; p < 5000; p++) {
 
 			double game_result = EPDS->positions[p].game_result;
 
@@ -196,7 +195,7 @@ void texel::tune(std::vector<texel::Parameter> initial_guess, std::string epd_fi
 	tuning_positions* EPDS = load_file(filepath);
 
 	// Find the optimal k
-	double k = 2.01; // find_k(EPDS);
+	double k = find_k(EPDS);
 	
 
 	// Now we'll loop through all the iterations:
@@ -324,7 +323,7 @@ void texel::tune(std::vector<texel::Parameter> initial_guess, std::string epd_fi
 				v_hat = 1;
 			}
 
-			double step = ((an * m_hat) / (sqrt(abs(v_hat)) + epsilon));
+			double step = std::round(double((an * m_hat) / (sqrt(abs(v_hat)) + epsilon)));
 
 			step_size.push_back(step);
 

@@ -13,7 +13,7 @@ int main() {
 	initAll(SetMask, ClearMask);
 
 
-	std::vector<texel::Parameter> init_g;
+	//std::vector<texel::Parameter> init_g;
 
 	//init_g.push_back(texel::Parameter(&knight_mob_mg, 1, 15));
 	//init_g.push_back(texel::Parameter(&knight_mob_eg, 1, 15));
@@ -27,10 +27,9 @@ int main() {
 	//init_g.push_back(texel::Parameter(&queen_mob_mg, 1, 15));
 	//init_g.push_back(texel::Parameter(&queen_mob_eg, 1, 15));
 
-	for (int sq = 0; sq < 64; sq++) {
-		init_g.push_back(texel::Parameter(&psqt::PawnTableMg[sq], -50, 50));
-	}
-
+	//for (int sq = 0; sq < 64; sq++) {
+	//	init_g.push_back(texel::Parameter(&psqt::PawnTableMg[sq], -50, 50));
+	//}
 
 
 	
@@ -40,7 +39,7 @@ int main() {
 	//	*init_g[i].variable = std::max(std::min(new_val, init_g[i].max_val), init_g[i].min_val);
 	//}
 
-	texel::tune(init_g, "C:\\Users\\abild\\Desktop\\tuner_positions\\quiet-labeled.epd", 200);
+	//texel::tune(init_g, "C:\\Users\\abild\\Desktop\\tuner_positions\\quiet-labeled.epd", 200);
 	
 	//int population_count = 12;
 	//int generation_count = 200;
@@ -51,7 +50,7 @@ int main() {
 
 	
 	
-	//Uci_Loop();
+	Uci_Loop();
 
 
 	cleanPolyBook();

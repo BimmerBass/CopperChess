@@ -14,17 +14,6 @@ constexpr double MUTATION_RATE = 0.05;
 //constexpr double ALPHA = 0.2;
 
 
-inline void seed_random() {
-	std::srand(std::chrono::duration_cast<std::chrono::nanoseconds> (std::chrono::system_clock::now().time_since_epoch()).count());
-}
-
-// This function simply returns a random number in the range [start, end]
-inline int random_num(int start, int end) {
-	seed_random();
-	int range = (end - start) + 1;
-	return (start + (std::rand() % range));
-}
-
 
 /*
 This is the mutation range which increases by the value of the variable and decreases with the fitness of the cromosome.

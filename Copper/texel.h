@@ -11,6 +11,19 @@
 
 
 
+inline void seed_random() {
+	std::srand(std::chrono::duration_cast<std::chrono::nanoseconds> (std::chrono::system_clock::now().time_since_epoch()).count());
+}
+
+// This function simply returns a random number in the range [start, end]
+inline int random_num(int start, int end) {
+	seed_random();
+	int range = (end - start) + 1;
+	return (start + (std::rand() % range));
+}
+
+
+
 
 static int k_precision = 5; // The number of iterations used to find the optimal k
 static double k_initial = 1.0;
@@ -20,7 +33,8 @@ const int partitions = 20;
 /*
 SPSA parameters
 */
-const double C_END = 4.0;
+const double C_END = 10.0;
+//const double R_END = 0.002;
 const double R_END = 0.002;
 
 const double alpha = 0.602;
@@ -30,8 +44,8 @@ const double gamma = 0.101;
 //const double beta_0 = 0.999;
 //const double gamma_0 = 0.999;
 
-const double beta_0 = 0.99;
-const double gamma_0 = 0.99;
+const double beta_0 = 0.9;
+const double gamma_0 = 0.9;
 
 const double lambda = 0.4;
 

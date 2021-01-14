@@ -15,6 +15,7 @@ int queen_mob_mg = 1;
 int queen_mob_eg = 10;
 
 
+
 /*
 int psqt::PawnTableMg[64] = {
 		0	,	0	,	0	,	0	,	0	,	0	,	0	,	0	,
@@ -38,7 +39,6 @@ int psqt::PawnTableMg[64] = {
 		10	,	10	,	15	,	20	,	20	,	15	,	10	,	10	,
 		0	,	0	,	0	,	0	,	0	,	0	,	0	,	0
 };
-
 
 // This is the middlegame evaluation
 int eval::mg_evaluate(const S_BOARD* pos, int alpha, int beta) {
