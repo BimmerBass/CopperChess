@@ -13,7 +13,7 @@ int main() {
 	initAll(SetMask, ClearMask);
 
 
-	//std::vector<texel::Parameter> init_g;
+	/*std::vector<texel::Parameter> init_g;
 	//
 	//init_g.push_back(texel::Parameter(&knight_mob_mg));
 	//init_g.push_back(texel::Parameter(&knight_mob_eg));
@@ -28,8 +28,17 @@ int main() {
 	//init_g.push_back(texel::Parameter(&queen_mob_eg));
 	//
 	//
-	//texel::tune(init_g, "C:\\Users\\abild\\Desktop\\tuner_positions\\quiet-labeled.epd", 200);
+
+	for (int i = 0; i < sTable_length; i++) {
+		init_g.push_back(texel::Parameter(&safety_mg[i]));
+	}
+	for (int i = 0; i < sTable_length; i++) {
+		init_g.push_back(texel::Parameter(&safety_eg[i]));
+	}
+
+	texel::tune(init_g, "C:\\Users\\abild\\Desktop\\tuner_positions\\quiet-labeled.epd", 300);*/
 	
+
 
 	Uci_Loop();
 

@@ -2,6 +2,20 @@
 
 
 
+int safety_mg[sTable_length] = {
+	0	,	0	,	5	,	7	,	10	,	15	,
+	20	,	35	,	50	,	75	,	100	,	120	,
+	150	,	200	,	230	,	275	,	325	,	400	,
+	450	,	500	,	500	,	500	,	500	,	500
+};
+
+int safety_eg[sTable_length] = {
+	0	,	0	,	5	,	7	,	10	,	15	,
+	20	,	35	,	50	,	75	,	100	,	120	,
+	150	,	200	,	230	,	275	,	325	,	400	,
+	450	,	500	,	500	,	500	,	500	,	500
+};
+
 // This is the middlegame evaluation
 int eval::mg_evaluate(const S_BOARD* pos, int alpha, int beta) {
 	int v = 0;
@@ -22,6 +36,8 @@ int eval::mg_evaluate(const S_BOARD* pos, int alpha, int beta) {
 	v += pawns_mg(pos);
 	v += pieces_mg(pos);
 	v += mobility_mg(pos);
+
+	v += king_mg(pos);
 	
 	return v;
 }
@@ -50,6 +66,8 @@ int eval::eg_evaluate(const S_BOARD* pos, int alpha, int beta) {
 	v += pawns_eg(pos);
 	v += pieces_eg(pos);
 	v += mobility_eg(pos);
+
+	v += king_eg(pos);
 
 	return v * (scale_factor(pos, v) / 64);
 }
@@ -99,24 +117,54 @@ int pawnless_flank(const S_BOARD* pos, bool side) {
 }
 
 
+
+int king_attackers(const S_BOARD* pos, bool side, uint64_t kingZone) {
+	int count = 0;
+
+	uint64_t enemy_knights = (side == WHITE) ? pos->position[BN] : pos->position[WN];
+	uint64_t enemy_bishops = (side == WHITE) ? pos->position[BB] : pos->position[WB];
+	uint64_t enemy_rooks = (side == WHITE) ? pos->position[BR] : pos->position[WR];
+	uint64_t enemy_queens = (side == WHITE) ? pos->position[BQ] : pos->position[WQ];
+
+	int kingSq = (side == WHITE) ? pos->kingPos[0] : pos->kingPos[1];
+
+	count += 2 * countBits((enemy_bishops & (diagonalMasks[7 + (kingSq / 8) - (kingSq % 8)] | antidiagonalMasks[(kingSq / 8) + (kingSq % 8)]))
+		| (enemy_knights & kingZone));
+
+	count += 3 * countBits(enemy_rooks & (FileMasks8[kingSq % 8] | RankMasks8[kingSq / 8]));
+
+	count += 5 * countBits(enemy_queens & ((diagonalMasks[7 + (kingSq / 8) - (kingSq % 8)] | antidiagonalMasks[(kingSq / 8) + (kingSq % 8)])
+		| (FileMasks8[kingSq % 8] | RankMasks8[kingSq / 8])));
+
+
+	if (count >= sTable_length) {
+		count = sTable_length - 1;
+	}
+	
+
+	return count;
+}
+
+
 int eval::king_mg(const S_BOARD* pos) {
 	int v = 0;
 
-	// If white has castled
-	if (pos->has_castled[0]) {
-		v += castling_bonus;
+	uint64_t white_kingZone = king_zone[pos->kingPos[0]];
+	uint64_t black_kingZone = king_zone[pos->kingPos[1]];
 
-		// In the middlegame, the king receives a penalty for being on a pawnless flank as it is quite weak there.
-		v -= 30 * pawnless_flank(pos, WHITE);
-	}
+	/*
+	WHITE KING
+	*/
 
-	// If black has castled
-	if (pos->has_castled[1]) {
-		v -= castling_bonus;
+	// Safety table penalty
+	v -= safety_mg[king_attackers(pos, WHITE, white_kingZone)];
 
-		// In the middlegame, the king receives a penalty for being on a pawnless flank as it is quite weak there.
-		v += 30 * pawnless_flank(pos, BLACK);
-	}
+
+
+	/*
+	BLACK KING
+	*/
+	v += safety_mg[king_attackers(pos, BLACK, black_kingZone)];
 
 	return v;
 }
@@ -125,8 +173,26 @@ int eval::king_eg(const S_BOARD* pos) {
 	int v = 0;
 
 	// In the endgame, we don't want our king on a pawnless flank as it is needed to help promote.
-	v -= 18 * pawnless_flank(pos, WHITE);
-	v += 18 * pawnless_flank(pos, BLACK);
+	//v -= 18 * pawnless_flank(pos, WHITE);
+	//v += 18 * pawnless_flank(pos, BLACK);
+
+	uint64_t white_kingZone = king_zone[pos->kingPos[0]];
+	uint64_t black_kingZone = king_zone[pos->kingPos[1]];
+
+	/*
+	WHITE KING
+	*/
+
+	// Safety table penalty
+	v -= safety_eg[king_attackers(pos, WHITE, white_kingZone)];
+
+
+
+	/*
+	BLACK KING
+	*/
+	v += safety_eg[king_attackers(pos, BLACK, black_kingZone)];
+
 
 
 	return v;

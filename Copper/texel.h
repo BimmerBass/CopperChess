@@ -33,7 +33,7 @@ const int partitions = 20;
 /*
 SPSA parameters
 */
-const double C_END = 5.0;
+const double C_END = 8.0;
 const double R_END = 0.002;
 
 const double alpha = 0.602;

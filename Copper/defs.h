@@ -87,6 +87,9 @@ extern BitBoard DiagonalAttackRays[4][64];
 // Array containing all Manhattan distances from sq1 to sq2. Indexed by: ManhattanDistance[sq1][sq2]
 extern int ManhattanDistance[64][64];
 
+// Array containing all king attack zones (king-ring + three squares out in each direction).
+extern BitBoard king_zone[64];
+
 // Array of values given to captures depending on the pieces in question (MVV-LVA)
 extern int MvvLva[12][12];
 
@@ -594,6 +597,7 @@ void initManhattanDistances();
 void initOutpostMasks();
 void initReductions();
 void initPhaseMaterial();
+void initKingZones();
 
 
 // makemove.cpp, movegen.cpp and utils.cpp

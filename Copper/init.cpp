@@ -37,6 +37,7 @@ void initAll(BitBoard(&set)[64], BitBoard(&clear)[64]) {
 	initOutpostMasks();
 	initReductions();
 	initPhaseMaterial();
+	initKingZones();
 
 	initPolyBook();
 }
@@ -392,4 +393,127 @@ void initPhaseMaterial() {
 	}
 
 
+}
+
+
+BitBoard king_zone[64] = { 0 };
+
+
+void initKingZones() {
+	uint64_t kz = 0;
+
+	for (int sq = 0; sq < 64; sq++) {
+		kz = 0;
+
+		int rank = sq / 8;
+		int file = sq % 8;
+
+		// Create the king ring
+
+		// Horizontal and vertical
+		kz |= ((uint64_t(1) << sq) & ~RankMasks8[RANK_8]) << 8;
+		kz |= ((uint64_t(1) << sq) & ~RankMasks8[RANK_1]) >> 8;
+		kz |= ((uint64_t(1) << sq) & ~FileMasks8[FILE_A]) >> 1;
+		kz |= ((uint64_t(1) << sq) & ~FileMasks8[FILE_H]) << 1;
+				
+		// Diagonal
+		kz |= ((uint64_t(1) << sq) & ~(FileMasks8[FILE_A] | RankMasks8[RANK_8])) << 7;
+		kz |= ((uint64_t(1) << sq) & ~(FileMasks8[FILE_H] | RankMasks8[RANK_8])) << 9;
+		kz |= ((uint64_t(1) << sq) & ~(FileMasks8[FILE_A] | RankMasks8[RANK_1])) >> 9;
+		kz |= ((uint64_t(1) << sq) & ~(FileMasks8[FILE_H] | RankMasks8[RANK_1])) >> 7;
+
+		// When doing the kingRing for piece attacks, we OR kz with 1 << sq, but this isn't necessary here.
+
+		// Now go through the directions going three squares out for each.
+		int tsq = sq + 8;
+		int sq_cnt = 0;
+
+		// North
+		while (tsq <= 63 && sq_cnt <= 3) {
+			kz |= (uint64_t(1) << tsq);
+			sq_cnt++;
+			tsq += 8;
+		}
+
+		// South
+		tsq = sq - 8;
+		sq_cnt = 0;
+
+		while (tsq >= 0 && sq_cnt <= 3) {
+			kz |= (uint64_t(1) << tsq);
+			sq_cnt++;
+			tsq -= 8;
+		}
+
+		// East
+		tsq = sq + 1;
+		sq_cnt = 0;
+		int tRank = tsq / 8;
+
+		while (tsq >= 0 && tsq <= 63 && tRank == rank && sq_cnt <= 3) {
+			kz |= (uint64_t(1) << tsq);
+			sq_cnt++;
+			tsq += 1;
+
+			tRank = tsq / 8;
+		}
+
+		// West
+		tsq = sq - 1;
+		sq_cnt = 0;
+		tRank = tsq / 8;
+
+		while (tsq >= 0 && tsq <= 63 && tRank == rank && sq_cnt <= 3) {
+			kz |= (uint64_t(1) << tsq);
+			sq_cnt++;
+			tsq -= 1;
+
+			tRank = tsq / 8;
+		}
+
+	
+		// North west
+		BitBoard diagonal = antidiagonalMasks[rank + file];
+
+		tsq = sq + 14;
+
+		for (int i = 0; i < 3; i++) {
+			kz |= ((uint64_t(1) << tsq) & diagonal);
+
+			tsq += 7;
+		}
+
+
+		// South east
+		tsq = sq - 14;
+
+		for (int i = 0; i < 3; i++) {
+			kz |= ((uint64_t(1) << tsq) & diagonal);
+
+			tsq -= 7;
+		}
+
+		// North east
+		diagonal = diagonalMasks[7 + (rank - file)];
+
+		tsq = sq + 18;
+
+		for (int i = 0; i < 3; i++) {
+			kz |= ((uint64_t(1) << tsq) & diagonal);
+
+			tsq += 9;
+		}
+
+		// South west
+
+		tsq = sq - 18;
+
+		for (int i = 0; i < 3; i++) {
+			kz |= ((uint64_t(1) << tsq) & diagonal);
+
+			tsq -= 9;
+		}
+
+		king_zone[sq] = kz;
+	}
 }

@@ -5,6 +5,13 @@
 //#define TUNE
 
 
+constexpr int sTable_length = 24;
+
+extern int safety_mg[sTable_length];
+extern int safety_eg[sTable_length];
+
+
+
 enum PieceType {
 	NO_PIECE_TYPE, PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING,
 	ALL_PIECES = 0,
@@ -53,6 +60,10 @@ int addPsqtVal(int sq, int pce, bool eg);
 int defending_pawns(const S_BOARD* pos, int sq, S_SIDE side);
 
 int pawnless_flank(const S_BOARD* pos, bool side);
+
+// This function counts attackers on the king and returns the index for the safety table.
+int king_attackers(const S_BOARD* pos, bool side, uint64_t kingZone);
+
 namespace eval {
 	int staticEval(const S_BOARD* pos, int alpha, int beta);
 
