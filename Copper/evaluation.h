@@ -223,18 +223,17 @@ constexpr int queen_kingDist_bonus_eg = 4;
 /*
 Mobility coefficients
 */
-extern int knight_mob_mg;
-extern int knight_mob_eg;
+constexpr int knight_mob_mg = 11;
+constexpr int knight_mob_eg = 4;
 
-extern int bishop_mob_mg;
-extern int bishop_mob_eg;
+constexpr int bishop_mob_mg = 5;
+constexpr int bishop_mob_eg = 5;
 
-extern int rook_mob_mg;
-extern int rook_mob_eg;
+constexpr int rook_mob_mg = 7;
+constexpr int rook_mob_eg = 8;
 
-extern int queen_mob_mg;
-extern int queen_mob_eg;
-
+constexpr int queen_mob_mg = 5;
+constexpr int queen_mob_eg = 7;
 
 
 // King bonuses and penalties
