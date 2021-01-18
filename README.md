@@ -2,7 +2,7 @@
 # Copper Chess engine
 ![Icon](https://github.com/BimmerBass/CopperChess/blob/master/Copper/icon.ico)
 
-A UCI-compliant chess engine rated at least 2100, written in C++11 by Niels Abildskov (BimmerBass).
+A UCI-compliant chess engine rated at least 2100, written in C++11.
 
 Copper is a command-line engine only, and can only be used graphically with a chess GUI such as Arena og Lucas Chess.
 
@@ -25,9 +25,8 @@ When it is done, the following things will have been added/changed:
 - Fifty-move rule downscaling will be added to the evaluation function.
 - Prefetch will be added for transposition table lookup and evaluation cache.
 - _mm_popcnt will be added for Intel Compilers.
-- A genetic tuning algorithm will be added.
-    - The entire evaluation function and some search parameters will be tuned with this.
-- If the GA doesn't prove successful, Texel tuning with SPSA for gradient approximation/descent will be implemented.
+- An algorithm called AdamSPSA[1] along with texel tuning will be added and the entire evaluation function will be optimized.
+    - To tune some of the search parameters a genetic algorithm will be implemented and the fitness function will be determined from self-play.
 - An option to change the transposition table size will be added. Perhaps even one to alter the evaluation cache size.
 - Currently, Copper doesn't compile on MacOS (g++). This will be fixed.
 
@@ -49,21 +48,20 @@ The engine still has bugs and weaknesses, and have therefore not been tested tho
     - Legal-move generation function[2].
     - **Perft @ depth 5 speed is around: 1 second.** (from starting position)
 - Static evaluation function.
-    - It is being re-written at the moment.
     - Has the following piece-values in centipawns:
-        - Pawn middlegame: 100
-        - Knight middlegame: 657
-        - Bishop middlegame: 585
-        - Rook middlegame: 821
-        - Queen middlegame: 1625
-        - Pawn endgame: 120
-        - Knight endgame: 311
-        - Bishop endgame: 307
-        - Rook endgame: 531
-        - Queen endgame: 913
+        - Pawn middlegame: 171
+        - Knight middlegame: 866
+        - Bishop middlegame: 823
+        - Rook middlegame: 1084
+        - Queen middlegame: 2218
+        - Pawn endgame: 61
+        - Knight endgame: 364
+        - Bishop endgame: 348
+        - Rook endgame: 631
+        - Queen endgame: 1248
         - King: 20000
         - These values can be tweaked to adjust the engine's playing style.
-    - Piece-square tables. I am working on adjusting the endgame-specific tables (at the moment, many are the same as middlegame psqt's)
+    - Piece-square tables. Both for the middlegame and endgame.
     - King evaluation:
         - Bonus for castling in the middlegame
         - Penalty for being on other ranks than the back rank in middlegame.
@@ -97,7 +95,6 @@ The engine still has bugs and weaknesses, and have therefore not been tested tho
         - Penalty each time a pawn of the same color gets removed from the board.
         - Bonus for being on an outpost. Extra bonus if defended by a pawn.
     - Pawn evaluation (pawn structure evaluation):
-        - I will be implementing a pawn hash table as pawn structure evaluation is quite slow, but i have not found an efficient way to do so yet.
         - Bonus if defended by another pawn.
         - Bonus if it is a passed pawn.
         - Penalty for being doubled.
@@ -106,14 +103,14 @@ The engine still has bugs and weaknesses, and have therefore not been tested tho
         - Bonus for being advanced on the edge in the endgame.
     - Small bonus for tempo (being the side to move).
     - A tapered evaluation will be used to transition into a more endgame-specific evaluation as pieces dissapear from the board.
-- **Automated tuning**: To increase playing strength, we will implement an algorithm to tune the evaluation - and perhaps also search - parameters by decreasing an error function obtained by self-play games with ultra-short time controls (e.g. 1 + 0.08s).
+- **Automated tuning**: Copper uses Texel tuning combined with AdamSPSA[1] stochastic gradient descent, but there will also be a genetic algorithm for tuning the search parameters since the former can't do that.
 - **Search function**: The search includes the following methods and tables
     - Iterative deepening with Alpha-Beta Pruning.
     - Aspiration windows for narrowed search.
     - Quiescence search
         - Delta pruning
         - Bad capture pruning.
-    - 200MB Transposition table, with a (soon to be) depth-based replacement strategy. (Will be reduced when a function that measures the percentage of space used in the transposition table is implemented)
+    - 64MB Transposition table, with a (soon to be) depth-based replacement strategy.
     - Late move reductions
     - Futility pruning
     - Razoring.
@@ -121,8 +118,7 @@ The engine still has bugs and weaknesses, and have therefore not been tested tho
     - Eval-/Static null move pruning.
     - Mate distance pruning. If we have found a forced checkmate, we don't want to examine longer mate sequences than that one.
     - Principal variation search in the root node.
-    - A 50MB evaluation cache that stores previously calculated static evaluations. At the moment, the replacement strategy is replace-all, but i think an age-strategy would be better in the future.
-    - A contempt factor based on the equation from [Pawn advantage, Win percentage and Elo](https://www.chessprogramming.org/Pawn_Advantage,_Win_Percentage,_and_Elo) (The one that gives the win probability). This is done such that a draw will be much worse if we are winning than if we are losing.
+    - A 32MB evaluation cache that stores previously calculated static evaluations. At the moment, the replacement strategy is replace-all, but i think an age-strategy would be better in the future.
     - Move Ordering:
         - Mvv-Lva (Most Valuable Victim - Least Valuable Attacker). Will be replaced by the static exchange evaluation.
         - Killer moves.
@@ -138,5 +134,7 @@ Copper achieves an overall move ordering of around 85-90%. This percentage is th
 5. Some day, I would like to create a convolutional neural network, and train it with self-play[3] to get a better evaluation function. Perhaps even a generative adversarial network will be tested.
 
 ##### Notes and bugs
-1. Although it is inefficient to check all pseudo-legal moves generated, i have decided to keep this implementation as it is more intuitive and the algorithm for doing this is still quite efficient. It works by first seeing if the side to move is in check. If this is true, it tries all moves and see if they still leave the side in check. If it isn't, it creates a bitmask for the king square that has all the squares a queen would be able to move to, and then it checks the moves for pieces that start on these squares. For king moves it checks to see if the destination square is attacked, and for en-passant it just makes the move and sees if the side to move is in check.
-2. Self-play training will be accomplished by creating around 15.000 positions from self-play (first six moves will be randomized so the network won't overfit). Then, a batch of around 2.000 positions will be selected randomly, their evaluations will be compared to the actual outcomes from the games, and the error function will be computed by taking the squared sum of there differences. Backpropagation will be used to adjust the network.
+1. AdamSPSA is an algorithm made to improve Adam if SPSA gradient approximation is used: [Robust and efficient algorithms for high-dimensional
+black-box quantum optimization](https://arxiv.org/pdf/1910.03591.pdf) (after "Parameter update" on page 4).
+2. Although it is inefficient to check all pseudo-legal moves generated, i have decided to keep this implementation as it is more intuitive and the algorithm for doing this is still quite efficient. It works by first seeing if the side to move is in check. If this is true, it tries all moves and see if they still leave the side in check. If it isn't, it creates a bitmask for the king square that has all the squares a queen would be able to move to, and then it checks the moves for pieces that start on these squares. For king moves it checks to see if the destination square is attacked, and for en-passant it just makes the move and sees if the side to move is in check.
+3. Self-play training will be accomplished by creating around 15.000 positions from self-play (first six moves will be randomized so the network won't overfit). Then, a batch of around 2.000 positions will be selected randomly, their evaluations will be compared to the actual outcomes from the games, and the error function will be computed by taking the squared sum of their differences. Backpropagation will be used to adjust the network.
