@@ -1,23 +1,75 @@
 #include "evaluation.h"
 
 
+/*
+-18	,	49	,	17	,	-10	,	22	,	12	,	34	,	11	,
+-2	,	38	,	24	,	21	,	27	,	25	,	21	,	37	,
+21	,	29	,	30	,	10	,	39	,	44	,	9	,	29	,
+36	,	34	,	16	,	13	,	31	,	20	,	28	,	36	,
+36	,	100	,	41	,	13	,	31	,	60	,	41	,	68	,
+56	,	68	,	41	,	82	,	66	,	15	,	80	,	71	,
+115	,	62	,	56	,	32	,	47	,	56	,	69	,	75	,
+39	,	0	,	17	,	3	,	-13	,	37	,	16	,	23
 
-int safety_mg[sTable_length] = {
-	0	,	0	,	5	,	7	,	10	,	15	,
-	20	,	35	,	50	,	75	,	100	,	120	,
-	150	,	200	,	230	,	275	,	325	,	400	,
-	450	,	500	,	500	,	500	,	500	,	500
+
+
+*/
+
+int safety_mg[100] = {
+	0,  0,   1,   2,   3,   5,   7,   9,  12,  15,
+	18,  22,  26,  30,  35,  39,  44,  50,  56,  62,
+	68,  75,  82,  85,  89,  97, 105, 113, 122, 131,
+	140, 150, 169, 180, 191, 202, 213, 225, 237, 248,
+	260, 272, 283, 295, 307, 319, 330, 342, 354, 366,
+	377, 389, 401, 412, 424, 436, 448, 459, 471, 483,
+	494, 500, 500, 500, 500, 500, 500, 500, 500, 500,
+	500, 500, 500, 500, 500, 500, 500, 500, 500, 500,
+	500, 500, 500, 500, 500, 500, 500, 500, 500, 500,
+	500, 500, 500, 500, 500, 500, 500, 500, 500, 500
 };
 
-int safety_eg[sTable_length] = {
-	0	,	0	,	5	,	7	,	10	,	15	,
-	20	,	35	,	50	,	75	,	100	,	120	,
-	150	,	200	,	230	,	275	,	325	,	400	,
-	450	,	500	,	500	,	500	,	500	,	500
+
+
+int safety_eg[100] = {
+	0,  0,   1,   2,   3,   5,   7,   9,  12,  15,
+	18,  22,  26,  30,  35,  39,  44,  50,  56,  62,
+	68,  75,  82,  85,  89,  97, 105, 113, 122, 131,
+	140, 150, 169, 180, 191, 202, 213, 225, 237, 248,
+	260, 272, 283, 295, 307, 319, 330, 342, 354, 366,
+	377, 389, 401, 412, 424, 436, 448, 459, 471, 483,
+	494, 500, 500, 500, 500, 500, 500, 500, 500, 500,
+	500, 500, 500, 500, 500, 500, 500, 500, 500, 500,
+	500, 500, 500, 500, 500, 500, 500, 500, 500, 500,
+	500, 500, 500, 500, 500, 500, 500, 500, 500, 500
 };
+
+
+int psqt::king_defence_mg[64] = {
+	11	,	51	,	25	,	-6	,	19	,	24	,	13	,	27	,
+	60	,	24	,	4	,	29	,	25	,	43	,	46	,	-5	,
+	36	,	25	,	19	,	11	,	7	,	31	,	43	,	5	,
+	15	,	16	,	21	,	41	,	17	,	38	,	2	,	11	,
+	-13	,	-18	,	-9	,	28	,	27	,	37	,	17	,	34	,
+	-4	,	-13	,	-24	,	-16	,	23	,	7	,	5	,	27	,
+	-16	,	-27	,	-17	,	-58	,	-15	,	-45	,	-25	,	4	,
+	14	,	31	,	-14	,	17	,	9	,	32	,	37	,	57
+};
+
+
+int psqt::king_defence_eg[64] = {
+	-18	,	49	,	17	,	-10	,	22	,	12	,	34	,	11	,
+	-2	,	38	,	24	,	21	,	27	,	25	,	21	,	37	,
+	21	,	29	,	30	,	10	,	39	,	44	,	9	,	29	,
+	36	,	34	,	16	,	13	,	31	,	20	,	28	,	36	,
+	36	,	100	,	41	,	13	,	31	,	60	,	41	,	68	,
+	56	,	68	,	41	,	82	,	66	,	15	,	80	,	71	,
+	115	,	62	,	56	,	32	,	47	,	56	,	69	,	75	,
+	39	,	0	,	17	,	3	,	-13	,	37	,	16	,	23
+};
+
 
 // This is the middlegame evaluation
-int eval::mg_evaluate(const S_BOARD* pos, int alpha, int beta) {
+int eval::mg_evaluate(const S_BOARD* pos, int alpha, int beta, KAS* kas) {
 	int v = 0;
 
 	v += material_mg(pos);
@@ -35,15 +87,15 @@ int eval::mg_evaluate(const S_BOARD* pos, int alpha, int beta) {
 
 	v += pawns_mg(pos);
 	v += pieces_mg(pos);
-	v += mobility_mg(pos);
+	v += mobility_mg(pos, kas);
 
-	v += king_mg(pos);
+	v += king_mg(pos, kas);
 	
 	return v;
 }
 
 // This is the endgame evaluation
-int eval::eg_evaluate(const S_BOARD* pos, int alpha, int beta) {
+int eval::eg_evaluate(const S_BOARD* pos, int alpha, int beta, KAS* kas) {
 	int v = 0;
 
 	if (material_draw(pos) == true) {
@@ -67,7 +119,7 @@ int eval::eg_evaluate(const S_BOARD* pos, int alpha, int beta) {
 	v += pieces_eg(pos);
 	v += mobility_eg(pos);
 
-	v += king_eg(pos);
+	v += king_eg(pos, kas);
 
 	return v * (scale_factor(pos, v) / 64);
 }
@@ -146,7 +198,7 @@ int king_attackers(const S_BOARD* pos, bool side, uint64_t kingZone) {
 }
 
 
-int eval::king_mg(const S_BOARD* pos) {
+int eval::king_mg(const S_BOARD* pos, KAS* kas) {
 	int v = 0;
 
 	uint64_t white_kingZone = king_zone[pos->kingPos[0]];
@@ -157,19 +209,34 @@ int eval::king_mg(const S_BOARD* pos) {
 	*/
 
 	// Safety table penalty
-	v -= safety_mg[king_attackers(pos, WHITE, white_kingZone)];
+	if (kas->attackWeights[0] >= 100) { kas->attackWeights[0] = 99; }
+
+	// If black is attacking the white king zone with more than two pieces and has a queen, add the safety table value.
+	if (kas->attacks[0] > 2 && pos->position[BQ] != 0) {
+		v -= safety_mg[kas->attackWeights[0]];
+	}
+
+	// Evaluate pawn shield strength
+	v += pawn_shield<WHITE>(pos, pos->kingPos[0], true);
 
 
 
 	/*
 	BLACK KING
 	*/
-	v += safety_mg[king_attackers(pos, BLACK, black_kingZone)];
+	if (kas->attackWeights[1] >= 100) { kas->attackWeights[1] = 99; }
+
+	if (kas->attacks[1] > 2 && pos->position[WQ] != 0) {
+		v += safety_mg[kas->attackWeights[1]];
+	}
+
+	// Evaluate pawn shield strength
+	v -= pawn_shield<BLACK>(pos, pos->kingPos[1], true);
 
 	return v;
 }
 
-int eval::king_eg(const S_BOARD* pos) {
+int eval::king_eg(const S_BOARD* pos, KAS* kas) {
 	int v = 0;
 
 	// In the endgame, we don't want our king on a pawnless flank as it is needed to help promote.
@@ -184,14 +251,29 @@ int eval::king_eg(const S_BOARD* pos) {
 	*/
 
 	// Safety table penalty
-	v -= safety_eg[king_attackers(pos, WHITE, white_kingZone)];
+	if (kas->attackWeights[0] >= 100) { kas->attackWeights[0] = 99; }
+
+	// If black is attacking the white king zone with more than two pieces and has a queen, add the safety table value.
+	if (kas->attacks[0] > 2 && pos->position[BQ] != 0) {
+		v -= safety_eg[kas->attackWeights[0]];
+	}
+
+	// Evaluate pawn shield strength
+	v += pawn_shield<WHITE>(pos, pos->kingPos[0], false);
 
 
 
 	/*
 	BLACK KING
 	*/
-	v += safety_eg[king_attackers(pos, BLACK, black_kingZone)];
+	if (kas->attackWeights[1] >= 100) { kas->attackWeights[1] = 99; }
+
+	if (kas->attacks[1] > 2 && pos->position[WQ] != 0) {
+		v += safety_eg[kas->attackWeights[1]];
+	}
+
+	// Evaluate pawn shield strength
+	v -= pawn_shield<BLACK>(pos, pos->kingPos[1], false);
 
 
 
@@ -840,20 +922,91 @@ int eval::pieces_eg(const S_BOARD* pos) {
 
 
 
-int eval::mobility_mg(const S_BOARD* pos) {
+int eval::mobility_mg(const S_BOARD* pos, KAS* kas) {
 	int v = 0;
 
-	v += knight_mob_mg * (countBits(mobility<KNIGHT>(pos, WHITE)) - countBits(mobility<KNIGHT>(pos, BLACK)));
-	v += bishop_mob_mg * (countBits(mobility<BISHOP>(pos, WHITE)) - countBits(mobility<BISHOP>(pos, BLACK)));
-	v += rook_mob_mg * (countBits(mobility<ROOK>(pos, WHITE)) - countBits(mobility<ROOK>(pos, BLACK)));
-	v += queen_mob_mg * (countBits(mobility<QUEEN>(pos, WHITE)) - countBits(mobility<QUEEN>(pos, BLACK)));
+	uint64_t wKnightAttacks = mobility<KNIGHT>(pos, WHITE); uint64_t bKnightAttacks = mobility<KNIGHT>(pos, BLACK);
+	uint64_t wBishopAttacks = mobility<BISHOP>(pos, WHITE); uint64_t bBishopAttacks = mobility<BISHOP>(pos, BLACK);
+	uint64_t wRookAttacks = mobility<ROOK>(pos, WHITE); uint64_t bRookAttacks = mobility<ROOK>(pos, BLACK);
+	uint64_t wQueenAttacks = mobility<QUEEN>(pos, WHITE); uint64_t bQueenAttacks = mobility<QUEEN>(pos, BLACK);
+
+	// Give mobility scores:
+	v += knight_mob_mg * (countBits(wKnightAttacks) - countBits(bKnightAttacks));
+	v += bishop_mob_mg * (countBits(wBishopAttacks) - countBits(bBishopAttacks));
+	v += rook_mob_mg * (countBits(wRookAttacks) - countBits(bRookAttacks));
+	v += queen_mob_mg *	(countBits(wQueenAttacks) - countBits(bQueenAttacks));
+
+
+
+	// Now we'll use our mobility bitboards to gather info about king attacks.
+	int sq = 0;
+	int att = 0;
+
+	kas->attacked_squares[0] = (bKnightAttacks | bBishopAttacks | bRookAttacks | bQueenAttacks);
+	kas->attacked_squares[1] = (wKnightAttacks | wBishopAttacks | wRookAttacks | wQueenAttacks);
+
+
+	
+	
+	kas->attackWeights[0] += 2 * countBits(bKnightAttacks & kas->kingZones[0]);
+	kas->attackWeights[0] += 2 * countBits(bBishopAttacks & kas->kingZones[0]);
+	kas->attackWeights[0] += 3 * countBits(bRookAttacks & kas->kingZones[0]);
+	kas->attackWeights[0] += 5 * countBits(bQueenAttacks & kas->kingZones[0]);
+
+	kas->attackWeights[1] += 2 * countBits(wKnightAttacks & kas->kingZones[1]);
+	kas->attackWeights[1] += 2 * countBits(wBishopAttacks & kas->kingZones[1]);
+	kas->attackWeights[1] += 3 * countBits(wRookAttacks & kas->kingZones[1]);
+	kas->attackWeights[1] += 5 * countBits(wQueenAttacks & kas->kingZones[1]);
+
+	// It is too time consuming to determine the exact number of knights attacking, so if the king zone is attacked we'll just assume that it is by one only.
+	kas->attacks[0] += ((bKnightAttacks & kas->kingZones[0]) != 0) ? 2 : 0;
+	kas->attacks[1] += ((wKnightAttacks & kas->kingZones[1]) != 0) ? 2 : 0;
+
+	uint64_t wBishopBrd = pos->position[WB];
+	uint64_t bBishopBrd = pos->position[BB];
+
+	uint64_t wRookBrd = pos->position[WR];
+	uint64_t bRookBrd = pos->position[BR];
+
+	uint64_t wQueenBrd = pos->position[WQ];
+	uint64_t bQueenBrd = pos->position[BQ];
+
+
+	for (int i = 0; i < 8; i++) {
+		if (FileMasks8[i] & wRookBrd & kas->kingZones[1]) { kas->attacks[1]++; }
+		if (RankMasks8[i] & wRookBrd & kas->kingZones[1]) { kas->attacks[1]++; }
+
+		if (FileMasks8[i] & bRookBrd & kas->kingZones[0]) { kas->attacks[0]++; }
+		if (RankMasks8[i] & bRookBrd & kas->kingZones[0]) { kas->attacks[0]++; }
+
+		if (FileMasks8[i] & wQueenBrd & kas->kingZones[1]) { kas->attacks[1]++; }
+		if (RankMasks8[i] & wQueenBrd & kas->kingZones[1]) { kas->attacks[1]++; }
+
+		if (FileMasks8[i] & bQueenBrd & kas->kingZones[0]) { kas->attacks[0]++; }
+		if (RankMasks8[i] & bQueenBrd & kas->kingZones[0]) { kas->attacks[0]++; }
+	}
+
+	for (int i = 0; i < 15; i++) {
+		if (diagonalMasks[i] & wBishopBrd & kas->kingZones[1]) { kas->attacks[1]++; }
+		if (antidiagonalMasks[i] & wBishopBrd & kas->kingZones[1]) { kas->attacks[1]++; }
+
+		if (diagonalMasks[i] & bBishopBrd & kas->kingZones[0]) { kas->attacks[0]++; }
+		if (antidiagonalMasks[i] & bBishopBrd & kas->kingZones[0]) { kas->attacks[0]++; }
+
+		if (diagonalMasks[i] & wQueenBrd & kas->kingZones[1]) { kas->attacks[1]++; }
+		if (antidiagonalMasks[i] & wQueenBrd & kas->kingZones[1]) { kas->attacks[1]++; }
+
+		if (diagonalMasks[i] & bQueenBrd & kas->kingZones[0]) { kas->attacks[0]++; }
+		if (antidiagonalMasks[i] & bQueenBrd & kas->kingZones[0]) { kas->attacks[0]++; }
+	}
+
 
 	return v;
 }
 
 
 
-int eval::mobility_eg(const S_BOARD* pos) {
+int eval::mobility_eg(const S_BOARD* pos, KAS* kas) {
 	int v = 0;
 
 	v += knight_mob_eg * (countBits(mobility<KNIGHT>(pos, WHITE)) - countBits(mobility<KNIGHT>(pos, BLACK)));

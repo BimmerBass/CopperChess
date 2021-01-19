@@ -176,6 +176,14 @@ namespace psqt {
 
 
 
+	// This is the scores for the pawns defending the king.
+	extern int king_defence_mg[64];
+
+	extern int king_defence_eg[64];
+
+
+
+
 	// A pawn-square table for the penalties of blocking a pawn.
 #define S(mg, eg) make_score(mg, eg)
 

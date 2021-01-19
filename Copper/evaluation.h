@@ -7,8 +7,8 @@
 
 constexpr int sTable_length = 24;
 
-extern int safety_mg[sTable_length];
-extern int safety_eg[sTable_length];
+extern int safety_mg[100];
+extern int safety_eg[100];
 
 
 
@@ -17,6 +17,19 @@ enum PieceType {
 	ALL_PIECES = 0,
 	PIECE_TYPE_NB = 8
 };
+
+// Short for KingAttackS
+struct KAS { // For all arrays, the zero'th element is white and the first is black.
+	int attacks[2] = { 0 }; // The amount of attacks
+	int attackWeights[2] = { 0 }; // The index to the safety table
+
+	// Only the attacked squares around the king.
+	BitBoard attacked_squares[2] = { 0 };
+
+	BitBoard kingZones[2] = { 0 };
+};
+
+
 
 inline int doubledCnt(uint64_t pawnBrd) {
 	int cnt = 0;
@@ -71,8 +84,8 @@ namespace eval {
 	// bonus for bishop pair and penalty for rook and knight pair. We also raise and lower the rooks and knights value depending on amount of pawns
 	// respectively
 
-	int mg_evaluate(const S_BOARD* pos, int alpha, int beta);
-	int eg_evaluate(const S_BOARD* pos, int alpha, int beta);
+	int mg_evaluate(const S_BOARD* pos, int alpha, int beta, KAS* kas = nullptr);
+	int eg_evaluate(const S_BOARD* pos, int alpha, int beta, KAS* kas = nullptr);
 
 
 	int material(const S_BOARD* pos, int phase);
@@ -92,16 +105,19 @@ namespace eval {
 	int pieces_mg(const S_BOARD* pos);
 	int pieces_eg(const S_BOARD* pos);
 
-	int king_mg(const S_BOARD* pos);
-	int king_eg(const S_BOARD* pos);
+	int king_mg(const S_BOARD* pos, KAS* kas = nullptr);
+	int king_eg(const S_BOARD* pos, KAS* kas = nullptr);
 
+
+	template <S_SIDE Us>
+	int pawn_shield(const S_BOARD* pos, int kingSq, bool mg);
 
 
 	template <PieceType pce>
 	uint64_t mobility(const S_BOARD* pos, S_SIDE side);
 
-	int mobility_mg(const S_BOARD* pos);
-	int mobility_eg(const S_BOARD* pos);
+	int mobility_mg(const S_BOARD* pos, KAS* kas = nullptr);
+	int mobility_eg(const S_BOARD* pos, KAS* kas = nullptr);
 
 	int scale_factor(const S_BOARD* pos, int eg_eval);
 
@@ -157,6 +173,7 @@ Pawn coefficients.
 */
 constexpr int passedPawnValue[8] = { 0, 12, 19, 34, 80, 167, 193, 0 };
 constexpr int mirrorRankNum[8] = { 7 , 6 , 5 , 4 , 3 , 2 , 1 , 0 };
+constexpr int mirrorFileNum[8] = { FILE_H, FILE_G, FILE_F, FILE_E, FILE_D, FILE_C, FILE_B, FILE_A };
 
 // Penalties for doubled pawns
 constexpr int doubled_penalty_mg = 8;

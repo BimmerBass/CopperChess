@@ -11,6 +11,12 @@ int eval::staticEval(const S_BOARD* pos, int alpha, int beta) {
 	int v_mg = 0;
 	int v_eg = 0;
 
+
+	// Create the kingAttacks structure and find the king zones.
+	KAS kingAttacks;
+
+	kingAttacks.kingZones[0] = king_zone[pos->kingPos[0]];
+	kingAttacks.kingZones[1] = king_zone[pos->kingPos[1]];
 	//assert(!pos->inCheck);
 
 	// Check to see if we get a hit from the evaluation cache.
@@ -24,8 +30,8 @@ int eval::staticEval(const S_BOARD* pos, int alpha, int beta) {
 	int weight_eg = 24 - p;
 
 	// Get the middle- and endgame evaluations.
-	v_mg += mg_evaluate(pos, alpha, beta);
-	v_eg += eg_evaluate(pos, alpha, beta);
+	v_mg += mg_evaluate(pos, alpha, beta, &kingAttacks);
+	v_eg += eg_evaluate(pos, alpha, beta, &kingAttacks);
 
 	v_main = ((v_mg * weight_mg) + (v_eg * weight_eg)) / 24;
 

@@ -162,6 +162,7 @@
     <ClCompile Include="attack.cpp" />
     <ClCompile Include="bitboards.cpp" />
     <ClCompile Include="board.cpp" />
+    <ClCompile Include="king.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="evalcache.cpp" />
     <ClCompile Include="evaluation.cpp" />
