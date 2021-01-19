@@ -17,7 +17,7 @@
 
 
 // The verbose option is for disabling search output during SPSA tuning.
-//#define COPPER_VERBOSE 1
+#define COPPER_VERBOSE 1
 
 
 #define FROMSQ(m) (((m) >> (4)) & (63))

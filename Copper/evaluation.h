@@ -5,18 +5,13 @@
 //#define TUNE
 
 
-constexpr int sTable_length = 24;
-
-extern int safety_mg[100];
-extern int safety_eg[100];
-
-
-
 enum PieceType {
 	NO_PIECE_TYPE, PAWN, KNIGHT, BISHOP, ROOK, QUEEN, KING,
 	ALL_PIECES = 0,
 	PIECE_TYPE_NB = 8
 };
+
+enum KAS_SIDE :int { w = 0, b = 1 };
 
 // Short for KingAttackS
 struct KAS { // For all arrays, the zero'th element is white and the first is black.
@@ -27,6 +22,12 @@ struct KAS { // For all arrays, the zero'th element is white and the first is bl
 	BitBoard attacked_squares[2] = { 0 };
 
 	BitBoard kingZones[2] = { 0 };
+
+	// The below bitboards are in place such that we don't have to run mobility again for all pieces.
+	BitBoard KnightAttacks[2] = { 0 };
+	BitBoard BishopAttacks[2] = { 0 };
+	BitBoard RookAttacks[2] = { 0 };
+	BitBoard QueenAttacks[2] = { 0 };
 };
 
 
@@ -74,8 +75,6 @@ int defending_pawns(const S_BOARD* pos, int sq, S_SIDE side);
 
 int pawnless_flank(const S_BOARD* pos, bool side);
 
-// This function counts attackers on the king and returns the index for the safety table.
-int king_attackers(const S_BOARD* pos, bool side, uint64_t kingZone);
 
 namespace eval {
 	int staticEval(const S_BOARD* pos, int alpha, int beta);
@@ -137,6 +136,7 @@ namespace eval {
 		kingValMg = 20000
 	};
 
+
 	enum egValues : int {
 		pawnValEg = 61,
 		knightValEg = 364,
@@ -145,6 +145,7 @@ namespace eval {
 		queenValEg = 1248,
 		kingValEg = 20000
 	};
+
 
 	static int pieceValMg[13] = { pawnValMg, knightValMg, bishopValMg, rookValMg, queenValMg, kingValMg,
 	pawnValMg, knightValMg, bishopValMg, rookValMg, queenValMg, kingValMg, 0 };
@@ -264,10 +265,40 @@ constexpr int queen_mob_mg = 5;
 constexpr int queen_mob_eg = 7;
 
 
-// King bonuses and penalties
+/*
+King coefficients
+*/
 constexpr int castling_bonus = 25;
 
 
 enum material_type { P = 0, N = 1, B = 2, R = 3, Q = 4, K = 5 };
 
 extern int phase_material[25][6];
+
+constexpr int safety_mg[100] = {
+	0	,	  0		,		1	,	2		,	   3	,	   5	,	   7	,   9	,  12	,  15	,
+	18	,	  22	,	  26	,	30		,	  35	,	  39	,	  44	,  50	,  56	,  62	,
+	68	,	  75	,	  82	,	85		,	  89	,	  97	,	 105	, 113	, 122	, 131	,
+	140	,	 150	,	 169	,	180		,	 191	,	 202	,	 213	, 225	, 237	, 248	,
+	260	,	 272	,	 283	,	295		,	 307	,	 319	,	 330	, 342	, 354	, 366	,
+	377	,	 389	,	 401	,	412		,	 424	,	 436	,	 448	, 459	, 471	, 483	,
+	494	,	 500	,	 500	,	500		,	 500	,	 500	,	 500	, 500	, 500	, 500	,
+	500	,	 500	,	 500	,	500		,	 500	,	 500	,	 500	, 500	, 500	, 500	,
+	500	,	 500	,	 500	,	500		,	 500	,	 500	,	 500	, 500	, 500	, 500	,
+	500	,	 500	,	 500	,	500		,	 500	,	 500	,	 500	, 500	, 500	, 500
+};
+
+
+
+constexpr int safety_eg[100] = {
+	0	,	  0		,		1	,	2		,	   3	,	   5	,	   7	,   9	,  12	,  15	,
+	18	,	  22	,	  26	,	30		,	  35	,	  39	,	  44	,  50	,  56	,  62	,
+	68	,	  75	,	  82	,	85		,	  89	,	  97	,	 105	, 113	, 122	, 131	,
+	140	,	 150	,	 169	,	180		,	 191	,	 202	,	 213	, 225	, 237	, 248	,
+	260	,	 272	,	 283	,	295		,	 307	,	 319	,	 330	, 342	, 354	, 366	,
+	377	,	 389	,	 401	,	412		,	 424	,	 436	,	 448	, 459	, 471	, 483	,
+	494	,	 500	,	 500	,	500		,	 500	,	 500	,	 500	, 500	, 500	, 500	,
+	500	,	 500	,	 500	,	500		,	 500	,	 500	,	 500	, 500	, 500	, 500	,
+	500	,	 500	,	 500	,	500		,	 500	,	 500	,	 500	, 500	, 500	, 500	,
+	500	,	 500	,	 500	,	500		,	 500	,	 500	,	 500	, 500	, 500	, 500
+};

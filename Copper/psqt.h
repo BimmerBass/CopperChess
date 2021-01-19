@@ -5,6 +5,7 @@
 Header file containing all the piece-square tables
 */
 
+
 namespace psqt {
 	// Pawns are incentivized to develop in the center, and to not move in front of a castled king.
 	// Pawns in front of the king will be evaluated in the piece-evaluations.
@@ -177,11 +178,28 @@ namespace psqt {
 
 
 	// This is the scores for the pawns defending the king.
-	extern int king_defence_mg[64];
+	constexpr int king_defence_mg[64] = {
+		11	,	51	,	25	,	-6	,	19	,	24	,	13	,	27	,
+		60	,	24	,	4	,	29	,	25	,	43	,	46	,	-5	,
+		36	,	25	,	19	,	11	,	7	,	31	,	43	,	5	,
+		15	,	16	,	21	,	41	,	17	,	38	,	2	,	11	,
+		-13	,	-18	,	-9	,	28	,	27	,	37	,	17	,	34	,
+		-4	,	-13	,	-24	,	-16	,	23	,	7	,	5	,	27	,
+		-16	,	-27	,	-17	,	-58	,	-15	,	-45	,	-25	,	4	,
+		14	,	31	,	-14	,	17	,	9	,	32	,	37	,	57
+	};
 
-	extern int king_defence_eg[64];
 
-
+	constexpr int king_defence_eg[64] = {
+		-18	,	49	,	17	,	-10	,	22	,	12	,	34	,	11	,
+		-2	,	38	,	24	,	21	,	27	,	25	,	21	,	37	,
+		21	,	29	,	30	,	10	,	39	,	44	,	9	,	29	,
+		36	,	34	,	16	,	13	,	31	,	20	,	28	,	36	,
+		36	,	100	,	41	,	13	,	31	,	60	,	41	,	68	,
+		56	,	68	,	41	,	82	,	66	,	15	,	80	,	71	,
+		115	,	62	,	56	,	32	,	47	,	56	,	69	,	75	,
+		39	,	0	,	17	,	3	,	-13	,	37	,	16	,	23
+	};
 
 
 	// A pawn-square table for the penalties of blocking a pawn.

@@ -435,5 +435,5 @@ void texel::tune(std::vector<texel::Parameter> initial_guess, std::string epd_fi
 		}
 	}
 
-
+	delete EPDS;
 }
