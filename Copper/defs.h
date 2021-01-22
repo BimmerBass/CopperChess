@@ -3,6 +3,9 @@
 #include <string>
 #include <vector>
 #include <chrono>
+
+#include <mutex>
+#include <thread>
 //#undef NDEBUG
 #include <assert.h>
 
@@ -34,6 +37,19 @@
 // Here we define the minimum and maximum allowable hash size in megabytes
 #define MIN_HASH 1
 #define MAX_HASH 1000
+
+#define DEFAULT_TT_SIZE 32
+#define DEFAULT_EVAL_SIZE 16
+#define DEFAULT_PAWNHASH_SIZE 1
+
+/*
+For multithreaded search
+*/
+#define THREAD_WORKING     0x01  /* Thread is currently searching */
+#define THREAD_SLEEPING    0x02  /* Thread is sleeping */
+#define THREAD_WAITING     0x04  /* Thread is waiting to be assigned work */
+#define THREAD_SCHEDULED   0x08  /* Thread has been assigned work but has not started searching yet */
+
 
 
 #define MAXPOSITIONMOVES 256  // Maximum amount of expected moves for a position (more than enough)
@@ -309,6 +325,14 @@ struct S_HISTORY {
 	int moveCount = 0; // In plies. (E.g. 1. e4, e5 would give moveCount = 2).
 };
 
+// All tables should be outside the board structure since they will take up too much space if each S_BOARD has them when copper becomes multithreaded.
+// They are all initialized in init.cpp
+extern S_TABLE* tt;
+extern S_EVALCACHE* ec;
+
+extern PawnHashTable* ph_mg;
+extern PawnHashTable* ph_eg;
+
 // Primary board structure. Contains bitboards and other useful information. Pass this by pointer or reference whenever possible, as it is more efficient.
 struct S_BOARD {
 	// General position
@@ -333,17 +357,17 @@ struct S_BOARD {
 	BitBoard BLACK_PIECES = 0;
 	int fiftyMove = 0;
 	
-	// Create a transposition table with default size of 200MB.
-	S_TABLE *transpositionTable = new S_TABLE(1);
-	S_EVALCACHE* evaluationCache = new S_EVALCACHE(1); // Allocate 50MB for static evaluations.
+	// Create a transposition table with default size of 32MB.
+	S_TABLE* transpositionTable = tt;
+	S_EVALCACHE* evaluationCache = ec;
 
 	/*
 	PAWN HASH TABLES
 		- Since we have separate evaluations for pawn structures in endgame and middlegame, we need two different pawn hash tables.
-		They will have a size of 2MB each.
+		They will have a size of 1MB each.
 	*/
-	PawnHashTable* pawn_table_mg = new PawnHashTable(1);
-	PawnHashTable* pawn_table_eg = new PawnHashTable(1);
+	PawnHashTable* pawn_table_mg = ph_mg;
+	PawnHashTable* pawn_table_eg = ph_eg;
 
 	bool is_checkmate = false;
 	bool is_stalemate = false;
@@ -362,6 +386,53 @@ struct S_BOARD {
 
 	~S_BOARD();
 };
+
+
+
+
+
+/*
+THE TWO STRUCTURES BELOW ARE FOR WHEN COPPER WILL BE MADE MULTITHREADED AND ARE NOT IN USE YET.
+*/
+
+struct SplitPoint {
+	S_BOARD* pos;
+	S_MOVELIST* movelist;
+
+	int static_eval;
+
+	volatile uint32_t workers;
+	volatile int alpha;
+	volatile int beta;
+	volatile int score;
+	volatile int draft;
+	volatile int depth;
+
+	volatile S_MOVE best_move;
+
+	volatile bool stop;
+
+	SplitPoint* parent;
+
+	std::mutex lock;
+};
+
+struct Thread_t {
+	S_BOARD* pos;
+
+	SplitPoint* split_point;
+
+	int threadId;
+
+	volatile int active_splits;
+	volatile uint8_t state;
+	volatile bool must_die;
+
+	std::thread::id joinId;
+
+	char barrier[128];
+};
+
 
 struct S_SEARCHINFO{
 	long long starttime = 0;

@@ -110,7 +110,7 @@ The engine still has bugs and weaknesses, and have therefore not been tested tho
     - Quiescence search
         - Delta pruning
         - Bad capture pruning.
-    - 64MB Transposition table, with a (soon to be) depth-based replacement strategy.
+    - 32MB Transposition table, with a (soon to be) depth-based replacement strategy.
     - Late move reductions
     - Futility pruning
     - Razoring.
@@ -118,7 +118,7 @@ The engine still has bugs and weaknesses, and have therefore not been tested tho
     - Eval-/Static null move pruning.
     - Mate distance pruning. If we have found a forced checkmate, we don't want to examine longer mate sequences than that one.
     - Principal variation search in the root node.
-    - A 32MB evaluation cache that stores previously calculated static evaluations. At the moment, the replacement strategy is replace-all, but i think an age-strategy would be better in the future.
+    - A 16MB evaluation cache that stores previously calculated static evaluations. At the moment, the replacement strategy is replace-all, but i think an age-strategy would be better in the future.
     - Move Ordering:
         - Mvv-Lva (Most Valuable Victim - Least Valuable Attacker). Will be replaced by the static exchange evaluation.
         - Killer moves.

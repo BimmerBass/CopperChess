@@ -203,10 +203,10 @@ void Uci_Loop() {
 	printf("id name %s\n", NAME);
 	printf("id author BimmerBass\n");
 	printf("option name Book type check default true\n");
-	printf("option name Hash type spin default 100 min %d max %d\n", MIN_HASH, MAX_HASH); // The default hash size is 200MB with minimum 1MB and maximum 1GB
+	printf("option name Hash type spin default %d min %d max %d\n", DEFAULT_TT_SIZE, MIN_HASH, MAX_HASH); // The default hash size is 200MB with minimum 1MB and maximum 1GB
 	printf("uciok\n");
 
-	int MB = 200;
+	int MB = DEFAULT_TT_SIZE;
 
 	while (true) {
 		memset(&line[0], 0, sizeof(line));

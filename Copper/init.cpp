@@ -14,6 +14,15 @@ INCLUDES THE FUNCTIONS:
 */
 
 
+// Initialize all caches.
+S_TABLE* tt = new S_TABLE(DEFAULT_TT_SIZE);
+S_EVALCACHE* ec = new S_EVALCACHE(DEFAULT_EVAL_SIZE);
+
+PawnHashTable* ph_mg = new PawnHashTable(DEFAULT_PAWNHASH_SIZE);
+PawnHashTable* ph_eg = new PawnHashTable(DEFAULT_PAWNHASH_SIZE);
+
+
+
 S_OPTIONS* engineOptions = new S_OPTIONS();
 
 
