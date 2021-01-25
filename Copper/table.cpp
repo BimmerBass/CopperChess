@@ -50,11 +50,30 @@ void TT::clearTable(S_TABLE* table){
 		table->tableEntry[i].score = 0;
 		table->tableEntry[i].depth = 0;
 	}
+
+	table->overWrite = 0;
+	table->hit = 0;
+	table->cut = 0;
+	table->newWrite = 0;
 }
 
 
 void TT::storeEntry(S_BOARD* pos, int move, int depth, TT_FLAG flg, int score){
 	int index = pos->posKey % pos->transpositionTable->numEntries;
+
+	if (pos->transpositionTable->tableEntry[index].posKey == 0) {
+		pos->transpositionTable->newWrite++;
+	}
+	else {
+		pos->transpositionTable->overWrite++;
+	}
+
+	if (score > MATE) {
+		score += pos->ply;
+	}
+	else if (score < -MATE) {
+		score -= pos->ply;
+	}
 
 	pos->transpositionTable->tableEntry[index].posKey = pos->posKey;
 	pos->transpositionTable->tableEntry[index].move = move;
@@ -93,10 +112,11 @@ int TT::probePos(const S_BOARD* pos, int depth, int alpha, int beta, int* move, 
 		*score = pos->transpositionTable->tableEntry[index].score;
 
 		if (*score > MATE) { *score -= pos->ply; }
-		else if (*score < MATE) { *score += pos->ply; }
+		else if (*score < -MATE) { *score += pos->ply; }
 
 
 		if (pos->transpositionTable->tableEntry[index].depth >= depth) {
+			pos->transpositionTable->hit++;
 
 			switch (pos->transpositionTable->tableEntry[index].flag) {
 			case LOWER:

@@ -314,15 +314,18 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 		switch (ttFlag) {
 		case LOWER:
 			if (ttScore <= alpha) {
+				pos->transpositionTable->cut++;
 				return alpha;
 			}
 			break;
 		case UPPER:
 			if (ttScore >= beta) {
+				pos->transpositionTable->cut++;
 				return beta;
 			}
 			break;
 		case EXACT:
+			pos->transpositionTable->cut++;
 			return ttScore;
 		}
 	}
@@ -652,7 +655,7 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 		}
 		else {
 			score = -alphabeta(pos, info, new_depth, -(alpha + 1), -alpha, true, false);
-			if (score > alpha) {
+			if (score > alpha && score < beta) {
 				score = -alphabeta(pos, info, new_depth, -beta, -alpha, true, true);
 			}
 		}
@@ -674,6 +677,7 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 
 		if (score > alpha) {
 			bestMove = pos_moves.moves[moveNum].move;
+			alpha = score;
 
 			if (score >= beta) {
 				if (moveNum == 0) {
@@ -707,7 +711,7 @@ int Search::alphabeta(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, in
 				return beta;
 			}
 
-			alpha = score;
+
 			raised_alpha = true;
 		}
 	}
@@ -793,7 +797,7 @@ int Search::searchRoot(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, i
 		}
 		else {
 			value = -alphabeta(pos, info, depth - 1, -(alpha + 1), -alpha, true, false);
-			if (value > alpha) {
+			if (value > alpha && value < beta) {
 				value = -alphabeta(pos, info, depth - 1, -beta, -alpha, true, true);
 			}
 		}
@@ -803,6 +807,7 @@ int Search::searchRoot(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, i
 		if (value > alpha) {
 
 			bestMove = moves.moves[i].move;
+			alpha = value;
 
 			if (value >= beta) {
 
@@ -817,7 +822,6 @@ int Search::searchRoot(S_BOARD* pos, S_SEARCHINFO* info, int depth, int alpha, i
 			}
 
 			raised_alpha = true;
-			alpha = value;
 		}
 	}
 
@@ -926,10 +930,15 @@ int Search::searchPosition(S_BOARD* pos, S_SEARCHINFO* info) {
 
 			pvMoves = TT::getPvLine(pos, currDepth);
 			bestMove = pos->pvArray[0];
+
+			// This is displayed as the amount of hash usage in permill
+			int hashUsed = (double(pos->transpositionTable->newWrite) / double(pos->transpositionTable->numEntries)) * 1000.0;
+
 #if defined(COPPER_VERBOSE)
 			if (mateDist != 0) { // If there has been found a mate, print score in mate distance instead of centipawns
 				std::cout << "info score mate " << mateDist << " depth " << currDepth
-					<< " nodes " << info->nodes << " time " << getTimeMs() - info->starttime << " nps " << nps;
+					<< " nodes " << info->nodes << " time " << getTimeMs() - info->starttime << " nps " << nps
+					<< " hashfull " << hashUsed;
 
 				std::cout << " pv ";
 				for (int i = 0; i < pvMoves; i++) {
@@ -941,7 +950,8 @@ int Search::searchPosition(S_BOARD* pos, S_SEARCHINFO* info) {
 
 			else {
 				std::cout << "info score cp " << score << " depth " << currDepth
-					<< " nodes " << info->nodes << " time " << getTimeMs() - info->starttime << " nps " << nps;
+					<< " nodes " << info->nodes << " time " << getTimeMs() - info->starttime << " nps " << nps
+					<< " hashfull " << hashUsed;
 
 				std::cout << " pv ";
 				for (int i = 0; i < pvMoves; i++) {
@@ -984,5 +994,10 @@ void Search::clearForSearch(S_BOARD* pos, S_SEARCHINFO *info){
 	for (int i = 0; i < MAXDEPTH; i++) {
 		static_eval[i] = 0;
 	}
+
+	pos->transpositionTable->hit = 0;
+	pos->transpositionTable->cut = 0;
+	pos->transpositionTable->overWrite = 0;
+	pos->transpositionTable->newWrite = 0;
 
 }

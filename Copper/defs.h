@@ -38,8 +38,8 @@
 #define MIN_HASH 1
 #define MAX_HASH 1000
 
-#define DEFAULT_TT_SIZE 32
-#define DEFAULT_EVAL_SIZE 16
+#define DEFAULT_TT_SIZE 16
+#define DEFAULT_EVAL_SIZE 8
 #define DEFAULT_PAWNHASH_SIZE 1
 
 /*
@@ -242,6 +242,11 @@ struct S_TABLE{
 
 	void resize(uint64_t mb_size);
 
+	int hit = 0;
+	int cut = 0;
+	int overWrite = 0;
+	int newWrite = 0;
+
 	~S_TABLE();
 };
 
@@ -428,8 +433,8 @@ struct Thread_t {
 	volatile uint8_t state;
 	volatile bool must_die;
 
-	std::thread::id joinId;
-
+	std::thread::id std_threadId;
+	
 	char barrier[128];
 };
 
